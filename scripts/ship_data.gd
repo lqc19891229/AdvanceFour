@@ -7,7 +7,7 @@ var next_uid := 1
 
 func has_core() -> bool:
 	for m in modules:
-		if m.definition.module_type == ShipModuleDefinition.ModuleType.CORE:
+		if m.definition is CoreModuleDefinition:
 			return true
 	return false
 
@@ -29,7 +29,7 @@ func can_place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -
 		if occupied_cells.has(c):
 			return {"ok": false, "reason": "模块与现有模块重叠"}
 
-	if definition.module_type == ShipModuleDefinition.ModuleType.CORE and has_core():
+	if definition is CoreModuleDefinition and has_core():
 		return {"ok": false, "reason": "当前原型每艘飞船只能安装 1 个核心模块"}
 
 	# 模块之间不要求相邻或连通。
@@ -89,7 +89,8 @@ func get_mass() -> float:
 func get_energy_output() -> float:
 	var v := 0.0
 	for m in modules:
-		v += m.definition.energy_output
+		if m.definition is EnergyModuleDefinition:
+			v += (m.definition as EnergyModuleDefinition).energy_output
 	return v
 
 func get_energy_cost() -> float:
@@ -101,19 +102,22 @@ func get_energy_cost() -> float:
 func get_thrust() -> float:
 	var v := 0.0
 	for m in modules:
-		v += m.definition.thrust
+		if m.definition is PropulsionModuleDefinition:
+			v += (m.definition as PropulsionModuleDefinition).thrust
 	return v
 
 func get_firepower() -> float:
 	var v := 0.0
 	for m in modules:
-		v += m.definition.firepower
+		if m.definition is WeaponModuleDefinition:
+			v += (m.definition as WeaponModuleDefinition).firepower
 	return v
 
 func get_protection() -> float:
 	var v := 0.0
 	for m in modules:
-		v += m.definition.protection
+		if m.definition is DefenseModuleDefinition:
+			v += (m.definition as DefenseModuleDefinition).protection
 	return v
 
 func get_acceleration_score() -> float:

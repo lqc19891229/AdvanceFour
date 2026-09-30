@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ShipModuleDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="PropulsionModuleDefinition" load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/module_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/module_definition.gd" id="1_base"]
+[ext_resource type="Script" path="res://scripts/module_types/propulsion_module_definition.gd" id="2_type"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_type")
 id = &"propulsion_engine"
 display_name = "主引擎"
 module_type = 1

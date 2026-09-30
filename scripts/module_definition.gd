@@ -19,14 +19,6 @@ enum ModuleType {
 @export var mass: float = 0.0
 @export var energy_cost: float = 0.0
 
-@export_group("类型专属参数")
-@export var energy_output: float = 0.0
-@export var thrust: float = 0.0
-@export var firepower: float = 0.0
-@export var protection: float = 0.0
-@export var special_function: StringName = &""
-@export var special_value: float = 0.0
-
 func get_type_name() -> String:
 	match module_type:
 		ModuleType.ENERGY:

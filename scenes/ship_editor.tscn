@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ship_editor.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ship_grid_view.gd" id="2"]
+[ext_resource type="Resource" path="res://data/module_database.tres" id="3_db"]
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
 bg_color = Color(0.07, 0.085, 0.11, 1)
@@ -49,32 +50,11 @@ text = "模块"
 
 [node name="SelectedLabel" type="Label" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
 layout_mode = 2
-text = "当前：舰桥"
+text = "当前：未选择"
 
-[node name="EnergyButton" type="Button" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
-custom_minimum_size = Vector2(0, 44)
+[node name="ModuleButtons" type="VBoxContainer" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
 layout_mode = 2
-text = "能量模块｜小型反应堆"
-[node name="PropulsionButton" type="Button" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-text = "动力模块｜主引擎"
-[node name="WeaponButton" type="Button" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-text = "武器模块｜机炮"
-[node name="DefenseButton" type="Button" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-text = "防护模块｜装甲"
-[node name="FunctionButton" type="Button" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-text = "功能模块｜雷达"
-[node name="CoreButton" type="Button" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-text = "核心模块｜舰桥"
+theme_override_constants/separation = 8
 
 [node name="Center" type="MarginContainer" parent="MainLayout"]
 layout_mode = 2
@@ -83,41 +63,50 @@ theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
+
 [node name="Grid" type="Control" parent="MainLayout/Center"]
 layout_mode = 2
 mouse_filter = 0
 script = ExtResource("2")
+module_database = ExtResource("3_db")
 
 [node name="RightPanel" type="PanelContainer" parent="MainLayout"]
 custom_minimum_size = Vector2(270, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
+
 [node name="RightMargin" type="MarginContainer" parent="MainLayout/RightPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
+
 [node name="RightVBox" type="VBoxContainer" parent="MainLayout/RightPanel/RightMargin"]
 layout_mode = 2
 theme_override_constants/separation = 10
+
 [node name="Title" type="Label" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "飞船属性"
+
 [node name="StatsLabel" type="Label" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 layout_mode = 2
 size_flags_vertical = 3
 text = "..."
 autowrap_mode = 2
+
 [node name="RotateButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 text = "旋转模块（R）"
+
 [node name="CenterButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 text = "视图居中"
+
 [node name="ClearButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
@@ -132,12 +121,14 @@ anchor_bottom = 1.0
 offset_top = -48.0
 grow_horizontal = 2
 grow_vertical = 0
+
 [node name="BottomMargin" type="MarginContainer" parent="BottomBar"]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 8
+
 [node name="StatusLabel" type="Label" parent="BottomBar/BottomMargin"]
 layout_mode = 2
 text = "状态"

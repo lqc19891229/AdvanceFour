@@ -33,19 +33,20 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	lines.append("尺寸：%d×%d" % [definition.size.x, definition.size.y])
 	lines.append("质量：%.1f" % definition.mass)
 	lines.append("耗能：%.1f" % definition.energy_cost)
-	match definition.module_type:
-		ShipModuleDefinition.ModuleType.ENERGY:
-			lines.append("供能：%.1f" % definition.energy_output)
-		ShipModuleDefinition.ModuleType.PROPULSION:
-			lines.append("动力：%.1f" % definition.thrust)
-		ShipModuleDefinition.ModuleType.WEAPON:
-			lines.append("火力：%.1f" % definition.firepower)
-		ShipModuleDefinition.ModuleType.DEFENSE:
-			lines.append("防护：%.1f" % definition.protection)
-		ShipModuleDefinition.ModuleType.FUNCTION:
-			lines.append("功能：%s（%.1f）" % [String(definition.special_function), definition.special_value])
-		ShipModuleDefinition.ModuleType.CORE:
-			lines.append("核心模块：被击毁时判定沉没")
+
+	if definition is EnergyModuleDefinition:
+		lines.append("供能：%.1f" % (definition as EnergyModuleDefinition).energy_output)
+	elif definition is PropulsionModuleDefinition:
+		lines.append("动力：%.1f" % (definition as PropulsionModuleDefinition).thrust)
+	elif definition is WeaponModuleDefinition:
+		lines.append("火力：%.1f" % (definition as WeaponModuleDefinition).firepower)
+	elif definition is DefenseModuleDefinition:
+		lines.append("防护：%.1f" % (definition as DefenseModuleDefinition).protection)
+	elif definition is FunctionModuleDefinition:
+		lines.append("功能模块：暂无额外参数")
+	elif definition is CoreModuleDefinition:
+		lines.append("核心模块：被击毁时判定沉没")
+
 	return "\n".join(lines)
 
 func _bind_common_buttons() -> void:
