@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://game/ship/definitions/core_module_definition.gd" id="7_uyp4t"]
 [ext_resource type="Script" uid="uid://b4dblht8w258h" path="res://game/ship/data/module_database.gd" id="8_banwa"]
 
-[sub_resource type="Resource" id="Resource_a2lp8"]
+[sub_resource type="Resource" id="Resource_vu7qi"]
 script = ExtResource("2_vue2a")
 energy_output = 20.0
 id = &"energy_smallreactor"
@@ -18,7 +18,7 @@ module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
 mass = 10.0
 
-[sub_resource type="Resource" id="Resource_tkhon"]
+[sub_resource type="Resource" id="Resource_vue2a"]
 script = ExtResource("3_82fgq")
 thrust = 10.0
 id = &"propulsion_smallengine"
@@ -28,7 +28,7 @@ description = "基础动力模块，为飞船提供主要推进力。"
 mass = 10.0
 energy_cost = 5.0
 
-[sub_resource type="Resource" id="Resource_t4fk4"]
+[sub_resource type="Resource" id="Resource_82fgq"]
 script = ExtResource("4_w5ypd")
 firepower = 5.0
 id = &"weapon_cannon"
@@ -38,7 +38,7 @@ description = "基础武器模块，提供稳定的常规火力。"
 mass = 5.0
 energy_cost = 5.0
 
-[sub_resource type="Resource" id="Resource_h4yc2"]
+[sub_resource type="Resource" id="Resource_w5ypd"]
 script = ExtResource("5_3kk2a")
 protection = 10.0
 id = &"defense_lightarmor"
@@ -47,7 +47,7 @@ module_type = 3
 description = "基础防护模块，为飞船提供结构防护。"
 mass = 5.0
 
-[sub_resource type="Resource" id="Resource_wkwuo"]
+[sub_resource type="Resource" id="Resource_3kk2a"]
 script = ExtResource("6_51is1")
 id = &"function_radar"
 display_name = "雷达"
@@ -55,7 +55,7 @@ description = "基础功能模块。现阶段暂无额外参数。"
 mass = 5.0
 energy_cost = 10.0
 
-[sub_resource type="Resource" id="Resource_8q15v"]
+[sub_resource type="Resource" id="Resource_51is1"]
 script = ExtResource("7_uyp4t")
 id = &"core_bridge"
 display_name = "舰桥"
@@ -67,4 +67,4 @@ energy_cost = 20.0
 
 [resource]
 script = ExtResource("8_banwa")
-modules = Array[ExtResource("1_vu7qi")]([SubResource("Resource_a2lp8"), SubResource("Resource_tkhon"), SubResource("Resource_t4fk4"), SubResource("Resource_h4yc2"), SubResource("Resource_wkwuo"), SubResource("Resource_8q15v")])
+modules = Array[ExtResource("1_vu7qi")]([SubResource("Resource_vu7qi"), SubResource("Resource_vue2a"), SubResource("Resource_82fgq"), SubResource("Resource_w5ypd"), SubResource("Resource_3kk2a"), SubResource("Resource_51is1")])
