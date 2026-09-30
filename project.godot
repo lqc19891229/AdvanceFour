@@ -10,7 +10,8 @@ config_version=5
 
 [application]
 
-config/name="新建游戏项目"
+config/name="AdvanceFour"
+run/main_scene="res://game/ship/editor/ship_editor.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
