@@ -7,7 +7,7 @@ var next_uid := 1
 
 func has_core() -> bool:
 	for m in modules:
-		if m.definition.type == ShipModuleDefinition.ModuleType.CORE:
+		if m.definition.module_type == ShipModuleDefinition.ModuleType.CORE:
 			return true
 	return false
 
@@ -21,14 +21,19 @@ func rebuild_occupancy() -> void:
 			occupied_cells[c] = m
 
 func can_place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -> Dictionary:
+	if definition == null:
+		return {"ok": false, "reason": "没有选择模块"}
+
 	var temp := ShipModuleInstance.new(-1, definition, pos, rotation)
 	for c in temp.get_cells():
 		if occupied_cells.has(c):
 			return {"ok": false, "reason": "模块与现有模块重叠"}
-	if definition.type == ShipModuleDefinition.ModuleType.CORE and has_core():
+
+	if definition.module_type == ShipModuleDefinition.ModuleType.CORE and has_core():
 		return {"ok": false, "reason": "当前原型每艘飞船只能安装 1 个核心模块"}
-	# 编辑阶段不以能源不足阻止放置。
-	# 能源约束在“设计合法性/出航检查”阶段统一验证。
+
+	# 模块之间不要求相邻或连通。
+	# 编辑阶段也不以能源不足阻止放置。
 	return {"ok": true, "reason": ""}
 
 func place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -> ShipModuleInstance:
@@ -45,8 +50,6 @@ func place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -> Sh
 func can_remove(target: ShipModuleInstance) -> Dictionary:
 	if target == null:
 		return {"ok": false, "reason": "这里没有模块"}
-	# 模块之间不要求相连，因此删除模块不做连通性检查。
-	# 编辑阶段允许删除任何模块，即使删除后暂时能源不足。
 	return {"ok": true, "reason": ""}
 
 func remove(target: ShipModuleInstance) -> bool:
@@ -66,7 +69,7 @@ func is_energy_valid() -> bool:
 	return get_energy_cost() <= get_energy_output()
 
 func is_design_valid() -> bool:
-	return has_core() and is_energy_valid() and not modules.is_empty()
+	return not modules.is_empty() and has_core() and is_energy_valid()
 
 func get_design_invalid_reason() -> String:
 	if modules.is_empty():
@@ -79,31 +82,39 @@ func get_design_invalid_reason() -> String:
 
 func get_mass() -> float:
 	var v := 0.0
-	for m in modules: v += m.definition.mass
+	for m in modules:
+		v += m.definition.mass
 	return v
+
 func get_energy_output() -> float:
 	var v := 0.0
-	for m in modules: v += m.definition.energy_output
+	for m in modules:
+		v += m.definition.energy_output
 	return v
+
 func get_energy_cost() -> float:
 	var v := 0.0
-	for m in modules: v += m.definition.energy_cost
+	for m in modules:
+		v += m.definition.energy_cost
 	return v
+
 func get_thrust() -> float:
 	var v := 0.0
-	for m in modules: v += m.definition.thrust
+	for m in modules:
+		v += m.definition.thrust
 	return v
+
 func get_firepower() -> float:
 	var v := 0.0
-	for m in modules: v += m.definition.firepower
+	for m in modules:
+		v += m.definition.firepower
 	return v
+
 func get_protection() -> float:
 	var v := 0.0
-	for m in modules: v += m.definition.protection
+	for m in modules:
+		v += m.definition.protection
 	return v
-func get_total_hp() -> float:
-	var v := 0.0
-	for m in modules: v += m.definition.max_hp
-	return v
+
 func get_acceleration_score() -> float:
 	return 0.0 if get_mass() <= 0.0 else get_thrust() / get_mass()

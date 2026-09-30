@@ -1,31 +1,67 @@
 extends Control
 
 @onready var grid: ShipGridView = $MainLayout/Center/Grid
+@onready var module_buttons: VBoxContainer = $MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons
 @onready var stats_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/StatsLabel
 @onready var status_label: Label = $BottomBar/BottomMargin/StatusLabel
 @onready var selected_label: Label = $MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
 
 func _ready() -> void:
-	_bind_buttons()
+	_build_module_buttons()
+	_bind_common_buttons()
 	grid.ship_changed.connect(_refresh_stats)
 	grid.status_message.connect(_show_status)
+	_refresh_selected_label()
 	_refresh_stats()
 	_show_status("左键放置｜右键删除｜R 旋转｜中键拖动画布")
 
-func _bind_buttons() -> void:
-	$MainLayout/LeftPanel/LeftMargin/LeftVBox/EnergyButton.pressed.connect(func(): _select("energy_reactor"))
-	$MainLayout/LeftPanel/LeftMargin/LeftVBox/PropulsionButton.pressed.connect(func(): _select("propulsion_engine"))
-	$MainLayout/LeftPanel/LeftMargin/LeftVBox/WeaponButton.pressed.connect(func(): _select("weapon_cannon"))
-	$MainLayout/LeftPanel/LeftMargin/LeftVBox/DefenseButton.pressed.connect(func(): _select("defense_armor"))
-	$MainLayout/LeftPanel/LeftMargin/LeftVBox/FunctionButton.pressed.connect(func(): _select("function_radar"))
-	$MainLayout/LeftPanel/LeftMargin/LeftVBox/CoreButton.pressed.connect(func(): _select("core_bridge"))
+func _build_module_buttons() -> void:
+	for child in module_buttons.get_children():
+		child.queue_free()
+
+	for definition in grid.get_all_definitions():
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(0, 44)
+		button.text = "%s｜%s" % [definition.get_type_name(), definition.display_name]
+		button.tooltip_text = _build_module_tooltip(definition)
+		button.pressed.connect(func(): _select(String(definition.id)))
+		module_buttons.add_child(button)
+
+func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
+	var lines: Array[String] = []
+	lines.append(definition.description)
+	lines.append("尺寸：%d×%d" % [definition.size.x, definition.size.y])
+	lines.append("质量：%.1f" % definition.mass)
+	lines.append("耗能：%.1f" % definition.energy_cost)
+	match definition.module_type:
+		ShipModuleDefinition.ModuleType.ENERGY:
+			lines.append("供能：%.1f" % definition.energy_output)
+		ShipModuleDefinition.ModuleType.PROPULSION:
+			lines.append("动力：%.1f" % definition.thrust)
+		ShipModuleDefinition.ModuleType.WEAPON:
+			lines.append("火力：%.1f" % definition.firepower)
+		ShipModuleDefinition.ModuleType.DEFENSE:
+			lines.append("防护：%.1f" % definition.protection)
+		ShipModuleDefinition.ModuleType.FUNCTION:
+			lines.append("功能：%s（%.1f）" % [String(definition.special_function), definition.special_value])
+		ShipModuleDefinition.ModuleType.CORE:
+			lines.append("核心模块：被击毁时判定沉没")
+	return "\n".join(lines)
+
+func _bind_common_buttons() -> void:
 	$MainLayout/RightPanel/RightMargin/RightVBox/RotateButton.pressed.connect(grid.rotate_preview)
 	$MainLayout/RightPanel/RightMargin/RightVBox/CenterButton.pressed.connect(grid.center_view)
 	$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.pressed.connect(grid.clear_ship)
 
 func _select(id: String) -> void:
 	grid.select_definition(id)
-	selected_label.text = "当前：%s" % grid.selected_definition.display_name
+	_refresh_selected_label()
+
+func _refresh_selected_label() -> void:
+	if grid.selected_definition == null:
+		selected_label.text = "当前：未选择"
+	else:
+		selected_label.text = "当前：%s" % grid.selected_definition.display_name
 
 func _refresh_stats() -> void:
 	var s := grid.ship
@@ -34,7 +70,6 @@ func _refresh_stats() -> void:
 	stats_label.text = """模块数量：%d
 
 质量：%.1f
-总耐久：%.1f
 
 能量：%.1f / %.1f
 动力：%.1f
@@ -53,7 +88,6 @@ func _refresh_stats() -> void:
 出航时总耗能必须 ≤ 总供能。""" % [
 		s.modules.size(),
 		s.get_mass(),
-		s.get_total_hp(),
 		s.get_energy_cost(),
 		s.get_energy_output(),
 		s.get_thrust(),

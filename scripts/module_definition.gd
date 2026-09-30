@@ -1,34 +1,44 @@
 class_name ShipModuleDefinition
 extends Resource
 
-enum ModuleType { ENERGY, PROPULSION, WEAPON, DEFENSE, FUNCTION, CORE }
+enum ModuleType {
+	ENERGY,
+	PROPULSION,
+	WEAPON,
+	DEFENSE,
+	FUNCTION,
+	CORE
+}
 
-var id: StringName
-var display_name: String
-var type: ModuleType
-var size: Vector2i = Vector2i.ONE
-var mass: float = 0.0
-var max_hp: float = 100.0
-var energy_output: float = 0.0
-var energy_cost: float = 0.0
-var thrust: float = 0.0
-var firepower: float = 0.0
-var protection: float = 0.0
-var special_text: String = ""
+@export_group("基础信息")
+@export var id: StringName = &""
+@export var display_name: String = ""
+@export var module_type: ModuleType = ModuleType.FUNCTION
+@export_multiline var description: String = ""
+@export var size: Vector2i = Vector2i.ONE
+@export var mass: float = 0.0
+@export var energy_cost: float = 0.0
 
-func _init(p_id: StringName = &"", p_display_name: String = "", p_type: ModuleType = ModuleType.FUNCTION,
-	p_size: Vector2i = Vector2i.ONE, p_mass: float = 0.0, p_max_hp: float = 100.0,
-	p_energy_output: float = 0.0, p_energy_cost: float = 0.0, p_thrust: float = 0.0,
-	p_firepower: float = 0.0, p_protection: float = 0.0, p_special_text: String = "") -> void:
-	id = p_id
-	display_name = p_display_name
-	type = p_type
-	size = p_size
-	mass = p_mass
-	max_hp = p_max_hp
-	energy_output = p_energy_output
-	energy_cost = p_energy_cost
-	thrust = p_thrust
-	firepower = p_firepower
-	protection = p_protection
-	special_text = p_special_text
+@export_group("类型专属参数")
+@export var energy_output: float = 0.0
+@export var thrust: float = 0.0
+@export var firepower: float = 0.0
+@export var protection: float = 0.0
+@export var special_function: StringName = &""
+@export var special_value: float = 0.0
+
+func get_type_name() -> String:
+	match module_type:
+		ModuleType.ENERGY:
+			return "能量模块"
+		ModuleType.PROPULSION:
+			return "动力模块"
+		ModuleType.WEAPON:
+			return "武器模块"
+		ModuleType.DEFENSE:
+			return "防护模块"
+		ModuleType.FUNCTION:
+			return "功能模块"
+		ModuleType.CORE:
+			return "核心模块"
+	return "未知模块"
