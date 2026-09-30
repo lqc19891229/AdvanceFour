@@ -19,9 +19,10 @@
 1. 修改 source/game_data.xlsx。
 2. 在 Godot 顶部菜单执行“前进四：验证模块数据”。
 3. 验证通过后执行“前进四：导入模块数据”。
-4. 插件读取 cache/modules.json，并在 res://data/generated/ 下生成 .tres。
+4. 插件读取 cache/modules.json；验证通过后清理 res://data/generated/modules/ 六类目录中的旧 .tres，再生成当前 Excel 对应的 .tres。
 
 规则：
 - 不要手动修改 cache/modules.json。
 - 不要把运行时 .tres 放在本目录。
+- 重新导入时，Excel 中已经删除或改名的模块，其旧 .tres 会自动清理；README.txt 等非 .tres 文件不会被删除。
 - 新的数据导入脚本、源表和缓存文件统一放在这里管理。
