@@ -39,6 +39,8 @@ func _import_all() -> void:
 		_report_errors(payload)
 		return
 
+	_clear_generated_module_resources()
+
 	var modules: Array[ShipModuleDefinition] = []
 	var ids: Dictionary = {}
 	for row in payload.get("modules", []):
@@ -162,6 +164,26 @@ func _type_folder(type_name: String) -> String:
 func _ensure_dir(res_path: String) -> void:
 	var global_path := ProjectSettings.globalize_path(res_path)
 	DirAccess.make_dir_recursive_absolute(global_path)
+
+func _clear_generated_module_resources() -> void:
+	var type_folders := ["energy", "propulsion", "weapon", "defense", "function", "core"]
+	for type_folder in type_folders:
+		var folder := "%s/%s" % [GENERATED_ROOT, type_folder]
+		_ensure_dir(folder)
+		var dir := DirAccess.open(folder)
+		if dir == null:
+			push_error("无法打开生成模块目录：%s" % folder)
+			continue
+
+		dir.list_dir_begin()
+		var file_name := dir.get_next()
+		while not file_name.is_empty():
+			if not dir.current_is_dir() and file_name.get_extension().to_lower() == "tres":
+				var err := dir.remove(file_name)
+				if err != OK:
+					push_error("删除旧模块失败：%s/%s (error %d)" % [folder, file_name, err])
+			file_name = dir.get_next()
+		dir.list_dir_end()
 
 func _report_errors(payload: Dictionary) -> void:
 	var errors: Array = payload.get("errors", [])
