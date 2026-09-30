@@ -1,0 +1,56 @@
+extends Control
+
+@onready var grid: ShipGridView = $MainLayout/Center/Grid
+@onready var stats_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/StatsLabel
+@onready var status_label: Label = $BottomBar/BottomMargin/StatusLabel
+@onready var selected_label: Label = $MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
+
+func _ready() -> void:
+	_bind_buttons()
+	grid.ship_changed.connect(_refresh_stats)
+	grid.status_message.connect(_show_status)
+	_refresh_stats()
+	_show_status("左键放置｜右键删除｜R 旋转｜中键拖动画布")
+
+func _bind_buttons() -> void:
+	$MainLayout/LeftPanel/LeftMargin/LeftVBox/EnergyButton.pressed.connect(func(): _select("energy_reactor"))
+	$MainLayout/LeftPanel/LeftMargin/LeftVBox/PropulsionButton.pressed.connect(func(): _select("propulsion_engine"))
+	$MainLayout/LeftPanel/LeftMargin/LeftVBox/WeaponButton.pressed.connect(func(): _select("weapon_cannon"))
+	$MainLayout/LeftPanel/LeftMargin/LeftVBox/DefenseButton.pressed.connect(func(): _select("defense_armor"))
+	$MainLayout/LeftPanel/LeftMargin/LeftVBox/FunctionButton.pressed.connect(func(): _select("function_radar"))
+	$MainLayout/LeftPanel/LeftMargin/LeftVBox/CoreButton.pressed.connect(func(): _select("core_bridge"))
+	$MainLayout/RightPanel/RightMargin/RightVBox/RotateButton.pressed.connect(grid.rotate_preview)
+	$MainLayout/RightPanel/RightMargin/RightVBox/CenterButton.pressed.connect(grid.center_view)
+	$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.pressed.connect(grid.clear_ship)
+
+func _select(id: String) -> void:
+	grid.select_definition(id)
+	selected_label.text = "当前：%s" % grid.selected_definition.display_name
+
+func _refresh_stats() -> void:
+	var s := grid.ship
+	stats_label.text = """模块数量：%d
+
+质量：%.1f
+总耐久：%.1f
+
+能量：%.1f / %.1f
+动力：%.1f
+推重比：%.2f
+
+火力：%.1f
+防护：%.1f
+
+核心：%s
+沉没判定：%s
+
+能量规则：
+总耗能不能高于
+能量模块总供能。""" % [
+		s.modules.size(), s.get_mass(), s.get_total_hp(), s.get_energy_cost(), s.get_energy_output(),
+		s.get_thrust(), s.get_acceleration_score(), s.get_firepower(), s.get_protection(),
+		"已安装" if s.has_core() else "未安装", "核心被击毁 → 沉没" if s.has_core() else "需要核心模块"
+	]
+
+func _show_status(text: String) -> void:
+	status_label.text = text
