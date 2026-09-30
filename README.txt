@@ -1,17 +1,120 @@
-《前进四》Godot 飞船编辑器 Prototype v0.7
+《前进四 / ADVANCE FOUR》Godot 飞船编辑器 Prototype v0.8
 
-本版本确认模块 Resource 采用“两部分”结构：
+本版本重点：
+1. 初步整理项目目录结构。
+2. Excel 作为模块唯一源数据。
+3. 一键验证/导入 Excel。
+4. 自动生成六类模块 .tres。
+5. 自动生成 ModuleDatabase.tres。
+6. 增加 DataManager 作为运行时数据入口。
 
-一、所有模块统一基础信息
-- id
-- display_name
-- module_type
-- description
-- size
-- mass
-- energy_cost
+==================================================
+一、模块数据工作流
+==================================================
 
-二、类型专属参数
+唯一源数据：
+res://data_source/game_data.xlsx
+
+数据流：
+Excel
+→ tools/data_import/import_excel.py
+→ data/import_cache/modules.json
+→ Godot EditorPlugin
+→ data/generated/modules/*.tres
+→ data/generated/module_database.tres
+→ 游戏系统读取
+
+原则：
+不要手工编辑 data/generated/ 中的文件。
+需要修改模块参数时，只修改 game_data.xlsx，然后重新导入。
+
+==================================================
+二、第一次使用
+==================================================
+
+1. 使用 Godot 4.x 打开 project.godot。
+2. 插件已配置为启用；如未启用：
+   项目 → 项目设置 → 插件 → Advance Four Data Importer → 启用。
+3. 确保电脑安装 Python 3，且以下任一命令可使用：
+   python
+   python3
+   py
+4. 修改 res://data_source/game_data.xlsx。
+5. 在 Godot 顶部菜单选择：
+   项目 → 工具 → 前进四：验证模块数据
+6. 验证通过后选择：
+   项目 → 工具 → 前进四：导入模块数据
+7. 插件自动生成 .tres 与 ModuleDatabase.tres。
+
+说明：
+Python 导入脚本只使用 Python 标准库，不依赖 openpyxl。
+
+==================================================
+三、Excel Modules 表字段
+==================================================
+
+基础字段：
+id
+display_name
+module_type
+description
+width
+height
+mass
+energy_cost
+
+类型专属字段：
+ENERGY      → energy_output
+PROPULSION  → thrust
+WEAPON      → firepower
+DEFENSE     → protection
+FUNCTION    → 暂无
+CORE        → 暂无
+
+合法 module_type：
+ENERGY
+PROPULSION
+WEAPON
+DEFENSE
+FUNCTION
+CORE
+
+==================================================
+四、当前目录职责
+==================================================
+
+core/
+项目级公共系统、Autoload。
+
+game/ship/definitions/
+模块定义 Resource 类。
+
+game/ship/data/
+ShipData、ModuleInstance、ModuleDatabase 等数据结构。
+
+game/ship/editor/
+飞船编辑器场景与逻辑。
+
+data_source/
+策划源数据。Excel 放这里。
+
+data/generated/
+自动生成的运行时 Resource。禁止手改。
+
+data/import_cache/
+Excel 转换后的中间 JSON。
+
+tools/data_import/
+Excel 解析和数据校验脚本。
+
+addons/advance_four_data_importer/
+Godot EditorPlugin，一键执行验证和导入。
+
+==================================================
+五、当前模块规则
+==================================================
+
+模块类型：
 1. 能量模块：energy_output
 2. 动力模块：thrust
 3. 武器模块：firepower
@@ -19,38 +122,24 @@
 5. 功能模块：暂无额外参数
 6. 核心模块：暂无额外参数
 
-Resource 类结构：
-ShipModuleDefinition
-├─ EnergyModuleDefinition -> energy_output
-├─ PropulsionModuleDefinition -> thrust
-├─ WeaponModuleDefinition -> firepower
-├─ DefenseModuleDefinition -> protection
-├─ FunctionModuleDefinition -> 无额外字段
-└─ CoreModuleDefinition -> 无额外字段
+共同基础参数：
+id
+display_name
+module_type
+description
+size
+mass
+energy_cost
 
-当前测试模块：
-- 小型反应堆
-- 主引擎
-- 机炮
-- 装甲
-- 雷达
-- 舰桥
+编辑器规则：
+- 模块不能重叠。
+- 模块之间不要求连接。
+- 编辑阶段允许临时能量不足。
+- 出航设计必须至少有核心模块。
+- 出航设计总耗能必须 <= 总供能。
 
-编辑规则：
-- 左键放置
-- 右键删除
-- R 旋转
-- 中键拖动画布
-- 模块不可重叠
-- 模块之间不要求连接
-- 编辑阶段允许临时能量不足
-- 出航时总耗能必须 <= 总供能
-- 当前原型只允许 1 个核心模块
-- 核心模块被击毁作为未来沉没判定入口
-
-v0.7 变更：
-- 删除 FunctionModuleDefinition 的 special_function
-- 删除 FunctionModuleDefinition 的 special_value
-- radar.tres 不再包含任何类型专属字段
-- 核心模块仍无额外参数
-- 编辑器 Tooltip 同步更新
+V0.9：
+- game_data.xlsx 的 Modules 拆分为 Energy / Propulsion / Weapon / Defense / Function / Core 六个 Sheet。
+- module_type 由 Sheet 自动决定，不再由每行填写。
+- 导入器支持六 Sheet 统一校验和跨 Sheet ID 重复检查。
+- 主要项目目录新增 README.txt，说明内部文件、场景、脚本的功能和用法。

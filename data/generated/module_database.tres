@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ModuleDatabase" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://game/ship/data/module_database.gd" id="1_db"]
+[ext_resource type="Resource" path="res://data/generated/modules/energy/energy_reactor.tres" id="2_module"]
+[ext_resource type="Resource" path="res://data/generated/modules/propulsion/propulsion_engine.tres" id="3_module"]
+[ext_resource type="Resource" path="res://data/generated/modules/weapon/weapon_cannon.tres" id="4_module"]
+[ext_resource type="Resource" path="res://data/generated/modules/defense/defense_armor.tres" id="5_module"]
+[ext_resource type="Resource" path="res://data/generated/modules/function/function_radar.tres" id="6_module"]
+[ext_resource type="Resource" path="res://data/generated/modules/core/core_bridge.tres" id="7_module"]
+
+[resource]
+script = ExtResource("1_db")
+modules = Array[ExtResource("res://game/ship/definitions/module_definition.gd")]([ExtResource("2_module"), ExtResource("3_module"), ExtResource("4_module"), ExtResource("5_module"), ExtResource("6_module"), ExtResource("7_module")])

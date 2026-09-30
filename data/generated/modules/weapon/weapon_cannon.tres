@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="WeaponModuleDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://game/ship/definitions/module_definition.gd" id="1_base"]
+[ext_resource type="Script" path="res://game/ship/definitions/weapon_module_definition.gd" id="2_type"]
+
+[resource]
+script = ExtResource("2_type")
+id = &"weapon_cannon"
+display_name = "机炮"
+module_type = 2
+description = "基础武器模块，提供稳定的常规火力。"
+size = Vector2i(1, 2)
+mass = 10.0
+energy_cost = 4.0
+firepower = 25.0

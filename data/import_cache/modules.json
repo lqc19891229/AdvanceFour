@@ -1,0 +1,99 @@
+{
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "counts": {
+    "Energy": 1,
+    "Propulsion": 1,
+    "Weapon": 1,
+    "Defense": 1,
+    "Function": 1,
+    "Core": 1
+  },
+  "modules": [
+    {
+      "id": "energy_reactor",
+      "display_name": "小型反应堆",
+      "module_type": "ENERGY",
+      "description": "基础能量模块，为飞船提供持续能量。",
+      "width": 2,
+      "height": 2,
+      "mass": 24.0,
+      "energy_cost": 0.0,
+      "energy_output": 16.0,
+      "thrust": 0.0,
+      "firepower": 0.0,
+      "protection": 0.0
+    },
+    {
+      "id": "propulsion_engine",
+      "display_name": "主引擎",
+      "module_type": "PROPULSION",
+      "description": "基础动力模块，为飞船提供主要推进力。",
+      "width": 1,
+      "height": 2,
+      "mass": 12.0,
+      "energy_cost": 3.0,
+      "energy_output": 0.0,
+      "thrust": 120.0,
+      "firepower": 0.0,
+      "protection": 0.0
+    },
+    {
+      "id": "weapon_cannon",
+      "display_name": "机炮",
+      "module_type": "WEAPON",
+      "description": "基础武器模块，提供稳定的常规火力。",
+      "width": 1,
+      "height": 2,
+      "mass": 10.0,
+      "energy_cost": 4.0,
+      "energy_output": 0.0,
+      "thrust": 0.0,
+      "firepower": 25.0,
+      "protection": 0.0
+    },
+    {
+      "id": "defense_armor",
+      "display_name": "装甲",
+      "module_type": "DEFENSE",
+      "description": "基础防护模块，为飞船提供结构防护。",
+      "width": 1,
+      "height": 1,
+      "mass": 9.0,
+      "energy_cost": 0.0,
+      "energy_output": 0.0,
+      "thrust": 0.0,
+      "firepower": 0.0,
+      "protection": 30.0
+    },
+    {
+      "id": "function_radar",
+      "display_name": "雷达",
+      "module_type": "FUNCTION",
+      "description": "基础功能模块。现阶段暂无额外参数。",
+      "width": 1,
+      "height": 1,
+      "mass": 5.0,
+      "energy_cost": 2.0,
+      "energy_output": 0.0,
+      "thrust": 0.0,
+      "firepower": 0.0,
+      "protection": 0.0
+    },
+    {
+      "id": "core_bridge",
+      "display_name": "舰桥",
+      "module_type": "CORE",
+      "description": "飞船核心区域。核心模块被击毁时，飞船判定为沉没。",
+      "width": 2,
+      "height": 2,
+      "mass": 18.0,
+      "energy_cost": 2.0,
+      "energy_output": 0.0,
+      "thrust": 0.0,
+      "firepower": 0.0,
+      "protection": 0.0
+    }
+  ]
+}
