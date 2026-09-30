@@ -1,13 +1,11 @@
-《前进四》数据导入插件说明
+Advance Four Data Importer - Godot 插件入口
 
 文件：
-- plugin.cfg：Godot EditorPlugin 注册信息。
-- plugin.gd：编辑器插件主体。
+- plugin.cfg：EditorPlugin 注册配置。
+- plugin.gd：Godot 编辑器菜单入口，负责调用 tools/data_import 中的导入流程，并生成 .tres。
 
-功能：
-- “前进四：验证模块数据”：调用 Python 解析六个 Excel Sheet 并检查错误。
-- “前进四：导入模块数据”：验证通过后生成六类 .tres，并重建 module_database.tres。
-
-输入：res://data_source/game_data.xlsx
-缓存：res://data/import_cache/modules.json
-输出：res://data/generated/modules/ 与 module_database.tres
+职责边界：
+- addons 只负责 Godot EditorPlugin 接入。
+- Excel、Python 和 JSON cache 不放在 addons。
+- 真正的数据导入资源统一位于 res://tools/data_import/。
+- 最终运行数据输出到 res://data/generated/。

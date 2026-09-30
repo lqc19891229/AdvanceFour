@@ -1,8 +1,8 @@
 @tool
 extends EditorPlugin
 
-const EXCEL_PATH := "res://data_source/game_data.xlsx"
-const JSON_PATH := "res://data/import_cache/modules.json"
+const EXCEL_PATH := "res://tools/data_import/source/game_data.xlsx"
+const JSON_PATH := "res://tools/data_import/cache/modules.json"
 const GENERATED_ROOT := "res://data/generated/modules"
 const DATABASE_PATH := "res://data/generated/module_database.tres"
 

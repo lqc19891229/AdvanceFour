@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.9
+《前进四》项目目录规划 V0.10
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -10,44 +10,46 @@ res://
 │     ├─ data/                  # ShipData / ModuleInstance / Database
 │     └─ editor/                # 飞船编辑器场景与逻辑
 │
-├─ data_source/
-│  └─ game_data.xlsx            # 策划数据唯一真源
-│     ├─ Energy
-│     ├─ Propulsion
-│     ├─ Weapon
-│     ├─ Defense
-│     ├─ Function
-│     └─ Core
-│
-├─ data/
-│  ├─ import_cache/             # Excel -> JSON 中间缓存
-│  └─ generated/                # 自动生成，禁止手动修改
-│     ├─ modules/
-│     │  ├─ energy/
-│     │  ├─ propulsion/
-│     │  ├─ weapon/
-│     │  ├─ defense/
-│     │  ├─ function/
-│     │  └─ core/
-│     └─ module_database.tres
+├─ addons/
+│  └─ advance_four_data_importer/
+│     ├─ plugin.cfg             # Godot EditorPlugin 注册入口
+│     └─ plugin.gd              # Godot 编辑器菜单与 .tres 生成入口
 │
 ├─ tools/
-│  └─ data_import/
-│     └─ import_excel.py
+│  └─ data_import/              # 数据导入系统
+│     ├─ source/
+│     │  └─ game_data.xlsx      # 策划数据唯一真源
+│     │     ├─ Energy
+│     │     ├─ Propulsion
+│     │     ├─ Weapon
+│     │     ├─ Defense
+│     │     ├─ Function
+│     │     └─ Core
+│     ├─ cache/
+│     │  └─ modules.json        # Excel -> JSON 中间缓存
+│     └─ import_excel.py        # Excel 解析与数据校验
 │
-└─ addons/
-   └─ advance_four_data_importer/
-      ├─ plugin.cfg
-      └─ plugin.gd
+└─ data/
+   └─ generated/                # 自动生成，禁止手动修改
+      ├─ modules/
+      │  ├─ energy/
+      │  ├─ propulsion/
+      │  ├─ weapon/
+      │  ├─ defense/
+      │  ├─ function/
+      │  └─ core/
+      └─ module_database.tres
 
 目录文档规则：
 - 每个主要功能目录都放 README.txt。
-- README.txt 说明该目录负责什么、内部文件/场景/脚本用途以及基本使用方式。
-- 新增重要文件时，应同步更新所在目录 README.txt。
+- README.txt 说明目录职责、内部文件/场景/脚本功能与基本用法。
+- 新增或删除重要文件时，同步更新所在目录 README.txt。
 
 数据原则：
-1. Excel 是策划真源。
-2. 六类模块分别维护在六个 Sheet，不再重复填写 module_type。
-3. Python 根据 Sheet 名自动确定 module_type。
-4. generated .tres 是生成结果，不手动修改。
-5. 游戏系统通过 ModuleDatabase / DataManager 使用模块数据。
+1. Excel 是策划数据唯一真源。
+2. 六类模块分别维护在六个 Sheet，不重复填写 module_type。
+3. Python 根据 Sheet 名确定 module_type，并负责校验和生成 JSON cache。
+4. addons 仅作为 Godot 插件入口，不承载数据源或解析逻辑。
+5. tools/data_import 集中管理 Excel、Python、JSON cache 和导入逻辑。
+6. data/generated 只保存最终运行时 .tres，不手动修改。
+7. 游戏系统通过 ModuleDatabase / DataManager 访问模块数据。

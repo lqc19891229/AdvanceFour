@@ -1,16 +1,27 @@
-《前进四》tools/data_import 目录说明
+《前进四》数据导入系统
 
-文件：
+目录职责：
+集中管理所有“策划数据 -> Godot 运行数据”的导入内容。
+
+目录结构：
+- source/game_data.xlsx
+  策划数据唯一真源。模块数据维护在六个 Sheet：
+  Energy / Propulsion / Weapon / Defense / Function / Core。
+
 - import_excel.py
-  功能：读取 game_data.xlsx 的六个模块 Sheet，校验字段和 ID，并输出 data/import_cache/modules.json。
-  依赖：仅使用 Python 标准库，不依赖 openpyxl。
+  读取 Excel、校验字段、根据 Sheet 判断模块类型，并生成 JSON cache。
 
-六 Sheet 映射：
-Energy -> ENERGY
-Propulsion -> PROPULSION
-Weapon -> WEAPON
-Defense -> DEFENSE
-Function -> FUNCTION
-Core -> CORE
+- cache/modules.json
+  Excel 解析后的中间数据，仅用于导入流程。
+  可以删除，重新导入时会再次生成。
 
-一般不需要手动运行，由 Godot EditorPlugin 调用。
+使用流程：
+1. 修改 source/game_data.xlsx。
+2. 在 Godot 顶部菜单执行“前进四：验证模块数据”。
+3. 验证通过后执行“前进四：导入模块数据”。
+4. 插件读取 cache/modules.json，并在 res://data/generated/ 下生成 .tres。
+
+规则：
+- 不要手动修改 cache/modules.json。
+- 不要把运行时 .tres 放在本目录。
+- 新的数据导入脚本、源表和缓存文件统一放在这里管理。

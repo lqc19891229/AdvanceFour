@@ -13,12 +13,12 @@
 ==================================================
 
 唯一源数据：
-res://data_source/game_data.xlsx
+res://tools/data_import/source/game_data.xlsx
 
 数据流：
 Excel
 → tools/data_import/import_excel.py
-→ data/import_cache/modules.json
+→ tools/data_import/cache/modules.json
 → Godot EditorPlugin
 → data/generated/modules/*.tres
 → data/generated/module_database.tres
@@ -39,7 +39,7 @@ Excel
    python
    python3
    py
-4. 修改 res://data_source/game_data.xlsx。
+4. 修改 res://tools/data_import/source/game_data.xlsx。
 5. 在 Godot 顶部菜单选择：
    项目 → 工具 → 前进四：验证模块数据
 6. 验证通过后选择：
@@ -95,13 +95,13 @@ ShipData、ModuleInstance、ModuleDatabase 等数据结构。
 game/ship/editor/
 飞船编辑器场景与逻辑。
 
-data_source/
+tools/data_import/source/
 策划源数据。Excel 放这里。
 
 data/generated/
 自动生成的运行时 Resource。禁止手改。
 
-data/import_cache/
+tools/data_import/cache/
 Excel 转换后的中间 JSON。
 
 tools/data_import/

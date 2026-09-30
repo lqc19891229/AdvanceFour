@@ -8,4 +8,4 @@
 
 重要：
 这里的 .tres 是生成结果，不是真源。
-需要修改模块参数时，请修改 data_source/game_data.xlsx 后重新导入。
+需要修改模块参数时，请修改 tools/data_import/source/game_data.xlsx 后重新导入。

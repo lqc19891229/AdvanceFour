@@ -7,5 +7,5 @@
 - generated/：由导入工具自动生成的 .tres 和数据库。
 
 重要：
-- 策划数据只修改 data_source/game_data.xlsx。
+- 策划数据只修改 tools/data_import/source/game_data.xlsx。
 - data/generated 下的文件原则上禁止手工修改。
