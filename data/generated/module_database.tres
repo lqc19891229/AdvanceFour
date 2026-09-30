@@ -1,13 +1,70 @@
-[gd_resource type="Resource" script_class="ModuleDatabase" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="ModuleDatabase" format=3 uid="uid://bldmgjoufd6v"]
 
-[ext_resource type="Script" path="res://game/ship/data/module_database.gd" id="1_db"]
-[ext_resource type="Resource" path="res://data/generated/modules/energy/energy_reactor.tres" id="2_module"]
-[ext_resource type="Resource" path="res://data/generated/modules/propulsion/propulsion_engine.tres" id="3_module"]
-[ext_resource type="Resource" path="res://data/generated/modules/weapon/weapon_cannon.tres" id="4_module"]
-[ext_resource type="Resource" path="res://data/generated/modules/defense/defense_armor.tres" id="5_module"]
-[ext_resource type="Resource" path="res://data/generated/modules/function/function_radar.tres" id="6_module"]
-[ext_resource type="Resource" path="res://data/generated/modules/core/core_bridge.tres" id="7_module"]
+[ext_resource type="Script" uid="uid://cl7bm0wvkle5g" path="res://game/ship/definitions/module_definition.gd" id="1_vu7qi"]
+[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://game/ship/definitions/energy_module_definition.gd" id="2_vue2a"]
+[ext_resource type="Script" uid="uid://li02sb2a2ata" path="res://game/ship/definitions/propulsion_module_definition.gd" id="3_82fgq"]
+[ext_resource type="Script" uid="uid://cieg7176rd0wq" path="res://game/ship/definitions/weapon_module_definition.gd" id="4_w5ypd"]
+[ext_resource type="Script" uid="uid://dw8g3d8ctmge3" path="res://game/ship/definitions/defense_module_definition.gd" id="5_3kk2a"]
+[ext_resource type="Script" uid="uid://vt1mdpchd5pw" path="res://game/ship/definitions/function_module_definition.gd" id="6_51is1"]
+[ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://game/ship/definitions/core_module_definition.gd" id="7_uyp4t"]
+[ext_resource type="Script" uid="uid://b4dblht8w258h" path="res://game/ship/data/module_database.gd" id="8_banwa"]
+
+[sub_resource type="Resource" id="Resource_a2lp8"]
+script = ExtResource("2_vue2a")
+energy_output = 20.0
+id = &"energy_smallreactor"
+display_name = "小型反应堆"
+module_type = 0
+description = "基础能量模块，为飞船提供持续能量。"
+mass = 10.0
+
+[sub_resource type="Resource" id="Resource_tkhon"]
+script = ExtResource("3_82fgq")
+thrust = 10.0
+id = &"propulsion_smallengine"
+display_name = "小型引擎"
+module_type = 1
+description = "基础动力模块，为飞船提供主要推进力。"
+mass = 10.0
+energy_cost = 5.0
+
+[sub_resource type="Resource" id="Resource_t4fk4"]
+script = ExtResource("4_w5ypd")
+firepower = 5.0
+id = &"weapon_cannon"
+display_name = "机炮"
+module_type = 2
+description = "基础武器模块，提供稳定的常规火力。"
+mass = 5.0
+energy_cost = 5.0
+
+[sub_resource type="Resource" id="Resource_h4yc2"]
+script = ExtResource("5_3kk2a")
+protection = 10.0
+id = &"defense_lightarmor"
+display_name = "轻型装甲"
+module_type = 3
+description = "基础防护模块，为飞船提供结构防护。"
+mass = 5.0
+
+[sub_resource type="Resource" id="Resource_wkwuo"]
+script = ExtResource("6_51is1")
+id = &"function_radar"
+display_name = "雷达"
+description = "基础功能模块。现阶段暂无额外参数。"
+mass = 5.0
+energy_cost = 10.0
+
+[sub_resource type="Resource" id="Resource_8q15v"]
+script = ExtResource("7_uyp4t")
+id = &"core_bridge"
+display_name = "舰桥"
+module_type = 5
+description = "飞船核心区域。核心模块被击毁时，飞船判定为沉没。"
+size = Vector2i(2, 2)
+mass = 40.0
+energy_cost = 20.0
 
 [resource]
-script = ExtResource("1_db")
-modules = Array[ExtResource("res://game/ship/definitions/module_definition.gd")]([ExtResource("2_module"), ExtResource("3_module"), ExtResource("4_module"), ExtResource("5_module"), ExtResource("6_module"), ExtResource("7_module")])
+script = ExtResource("8_banwa")
+modules = Array[ExtResource("1_vu7qi")]([SubResource("Resource_a2lp8"), SubResource("Resource_tkhon"), SubResource("Resource_t4fk4"), SubResource("Resource_h4yc2"), SubResource("Resource_wkwuo"), SubResource("Resource_8q15v")])

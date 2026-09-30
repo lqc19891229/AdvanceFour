@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PropulsionModuleDefinition" format=3 uid="uid://d4mhsglj3vxk3"]
+
+[ext_resource type="Script" uid="uid://li02sb2a2ata" path="res://game/ship/definitions/propulsion_module_definition.gd" id="1_c3fcf"]
+
+[resource]
+script = ExtResource("1_c3fcf")
+thrust = 10.0
+id = &"propulsion_smallengine"
+display_name = "小型引擎"
+module_type = 1
+description = "基础动力模块，为飞船提供主要推进力。"
+mass = 10.0
+energy_cost = 5.0

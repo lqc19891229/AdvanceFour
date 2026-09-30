@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EnergyModuleDefinition" format=3 uid="uid://cmcvn2lj2g03n"]
+
+[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://game/ship/definitions/energy_module_definition.gd" id="1_1dcru"]
+
+[resource]
+script = ExtResource("1_1dcru")
+energy_output = 20.0
+id = &"energy_smallreactor"
+display_name = "小型反应堆"
+module_type = 0
+description = "基础能量模块，为飞船提供持续能量。"
+mass = 10.0
