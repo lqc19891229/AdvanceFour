@@ -1,22 +1,23 @@
-[application]
-config/name="Advance Four - Ship Editor Prototype"
-run/main_scene="res://game/ship/editor/ship_editor.tscn"
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
-[display]
-window/size/viewport_width=1280
-window/size/viewport_height=720
-window/size/window_width_override=1280
-window/size/window_height_override=720
-window/stretch/mode="canvas_items"
+config_version=5
+
+[application]
+
+config/name="新建游戏项目"
+config/features=PackedStringArray("4.6", "Forward Plus")
+config/icon="res://icon.svg"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
 
 [rendering]
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
 
-[autoload]
-
-DataManager="*res://core/autoload/data_manager.gd"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/advance_four_data_importer/plugin.cfg")
+rendering_device/driver.windows="d3d12"
