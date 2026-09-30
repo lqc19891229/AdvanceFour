@@ -27,12 +27,8 @@ func can_place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -
 			return {"ok": false, "reason": "模块与现有模块重叠"}
 	if definition.type == ShipModuleDefinition.ModuleType.CORE and has_core():
 		return {"ok": false, "reason": "当前原型每艘飞船只能安装 1 个核心模块"}
-	if not modules.is_empty() and not _touches_ship(temp.get_cells()):
-		return {"ok": false, "reason": "新模块必须与现有飞船上下左右相连"}
-	var output_after := get_energy_output() + definition.energy_output
-	var cost_after := get_energy_cost() + definition.energy_cost
-	if cost_after > output_after:
-		return {"ok": false, "reason": "能量不足：安装后耗能 %.1f，高于供能 %.1f" % [cost_after, output_after]}
+	# 编辑阶段不以能源不足阻止放置。
+	# 能源约束在“设计合法性/出航检查”阶段统一验证。
 	return {"ok": true, "reason": ""}
 
 func place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -> ShipModuleInstance:
@@ -49,36 +45,8 @@ func place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -> Sh
 func can_remove(target: ShipModuleInstance) -> Dictionary:
 	if target == null:
 		return {"ok": false, "reason": "这里没有模块"}
-	var remaining: Array[ShipModuleInstance] = []
-	for m in modules:
-		if m != target:
-			remaining.append(m)
-	if remaining.is_empty():
-		return {"ok": true, "reason": ""}
-	var cells: Dictionary = {}
-	for m in remaining:
-		for c in m.get_cells():
-			cells[c] = true
-	var start: Vector2i = cells.keys()[0]
-	var visited: Dictionary = {start: true}
-	var queue: Array[Vector2i] = [start]
-	var dirs := [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN]
-	while not queue.is_empty():
-		var current = queue.pop_front()
-		for d in dirs:
-			var n = current + d
-			if cells.has(n) and not visited.has(n):
-				visited[n] = true
-				queue.append(n)
-	if visited.size() != cells.size():
-		return {"ok": false, "reason": "删除后飞船会断开"}
-	var out := 0.0
-	var cost := 0.0
-	for m in remaining:
-		out += m.definition.energy_output
-		cost += m.definition.energy_cost
-	if cost > out:
-		return {"ok": false, "reason": "删除后能量不足：耗能 %.1f，高于供能 %.1f" % [cost, out]}
+	# 模块之间不要求相连，因此删除模块不做连通性检查。
+	# 编辑阶段允许删除任何模块，即使删除后暂时能源不足。
 	return {"ok": true, "reason": ""}
 
 func remove(target: ShipModuleInstance) -> bool:
@@ -94,13 +62,20 @@ func clear() -> void:
 	occupied_cells.clear()
 	next_uid = 1
 
-func _touches_ship(cells: Array[Vector2i]) -> bool:
-	var dirs := [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN]
-	for c in cells:
-		for d in dirs:
-			if occupied_cells.has(c + d):
-				return true
-	return false
+func is_energy_valid() -> bool:
+	return get_energy_cost() <= get_energy_output()
+
+func is_design_valid() -> bool:
+	return has_core() and is_energy_valid() and not modules.is_empty()
+
+func get_design_invalid_reason() -> String:
+	if modules.is_empty():
+		return "飞船为空"
+	if not has_core():
+		return "缺少核心模块"
+	if not is_energy_valid():
+		return "能量不足：耗能 %.1f，高于供能 %.1f" % [get_energy_cost(), get_energy_output()]
+	return ""
 
 func get_mass() -> float:
 	var v := 0.0

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ShipModuleDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/module_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"core_bridge"
+display_name = "舰桥"
+module_type = 5
+description = "飞船核心区域。核心模块被击毁时，飞船判定为沉没。"
+size = Vector2i(2, 2)
+mass = 18.0
+energy_cost = 2.0

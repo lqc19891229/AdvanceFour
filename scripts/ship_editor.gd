@@ -29,6 +29,8 @@ func _select(id: String) -> void:
 
 func _refresh_stats() -> void:
 	var s := grid.ship
+	var design_status := "可出航" if s.is_design_valid() else "不可出航：%s" % s.get_design_invalid_reason()
+
 	stats_label.text = """模块数量：%d
 
 质量：%.1f
@@ -44,12 +46,23 @@ func _refresh_stats() -> void:
 核心：%s
 沉没判定：%s
 
+设计状态：%s
+
 能量规则：
-总耗能不能高于
-能量模块总供能。""" % [
-		s.modules.size(), s.get_mass(), s.get_total_hp(), s.get_energy_cost(), s.get_energy_output(),
-		s.get_thrust(), s.get_acceleration_score(), s.get_firepower(), s.get_protection(),
-		"已安装" if s.has_core() else "未安装", "核心被击毁 → 沉没" if s.has_core() else "需要核心模块"
+编辑时允许临时超额耗能；
+出航时总耗能必须 ≤ 总供能。""" % [
+		s.modules.size(),
+		s.get_mass(),
+		s.get_total_hp(),
+		s.get_energy_cost(),
+		s.get_energy_output(),
+		s.get_thrust(),
+		s.get_acceleration_score(),
+		s.get_firepower(),
+		s.get_protection(),
+		"已安装" if s.has_core() else "未安装",
+		"核心被击毁 → 沉没" if s.has_core() else "需要核心模块",
+		design_status
 	]
 
 func _show_status(text: String) -> void:

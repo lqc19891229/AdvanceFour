@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShipModuleDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/module_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"function_radar"
+display_name = "雷达"
+module_type = 4
+description = "基础功能模块，提高飞船的探测能力。"
+size = Vector2i(1, 1)
+mass = 5.0
+energy_cost = 2.0
+special_function = &"radar_range"
+special_value = 1.0

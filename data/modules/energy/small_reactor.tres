@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ShipModuleDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/module_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"energy_reactor"
+display_name = "小型反应堆"
+module_type = 0
+description = "基础能量模块，为飞船提供持续能量。"
+size = Vector2i(2, 2)
+mass = 24.0
+energy_cost = 0.0
+energy_output = 16.0
