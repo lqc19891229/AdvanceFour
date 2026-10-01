@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.28.1
+《前进四》项目目录规划 V0.28.2
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -118,4 +118,4 @@ res://
 43. 装甲是逐块独立失效，不要求全船装甲全部 destroyed；飞船结构仍允许分离、不相邻、不连通和任意空格。
 44. ProjectileRuntime 每物理帧使用 PhysicsRayQueryParameters2D / intersect_ray() 沿本帧整段路径做 swept hit，按弹道最近顺序处理碰撞；任意 ShipModuleRuntime 被本次伤害摧毁且仍有 overkill 时，都会继续查询同一路径后方模块。
 45. DamageReceiver.damaged(amount, current_hp) 的 amount 现在表示实际扣除 HP，不包含超过目标剩余 HP 的 overkill 部分。
-46. 当前 v0.28.1 已实现所有飞船模块的 HP-overkill 连续穿透，并让 Defense.protection 作为每次命中的百分比减伤值；Projectile swept ray 会预排除 source_owner 整棵节点树中的 CollisionObject2D，且命中导致目标 RuntimeShip removed_from_battle 后立即终止该发 Projectile；尚未实现有限半径 shape cast、独立穿甲系数 / 穿深 / 材质抗性、爆炸 / 溅射、正式伤害类型或玩家自定义供电优先级；ShipData 静态统计继续保持不变。
+46. 当前 v0.28.2 已实现所有飞船模块的 HP-overkill 连续穿透，并让 Defense.protection 作为每次命中的百分比减伤值；Projectile swept ray 会预排除 source_owner 整棵节点树中的 CollisionObject2D，命中导致目标 RuntimeShip removed_from_battle 后立即终止该发 Projectile，并使用 step_time = min(delta, lifetime_remaining) 限制最后一个物理帧的实际移动距离，避免超出 lifetime 对应射程；尚未实现有限半径 shape cast、独立穿甲系数 / 穿深 / 材质抗性、爆炸 / 溅射、正式伤害类型或玩家自定义供电优先级；ShipData 静态统计继续保持不变。
