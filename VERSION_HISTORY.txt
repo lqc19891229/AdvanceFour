@@ -18,6 +18,57 @@
 
 
 ========================================
+v0.20
+========================================
+
+新增：
+- 新增 game/ship/damage/ 目录。
+- 新增 DamageReceiver 通用 HP 组件。
+- DamageReceiver 提供 max_hp / current_hp / destroyed_state。
+- DamageReceiver 新增 damaged(amount, current_hp) 信号。
+- DamageReceiver 新增 destroyed 信号。
+- weapon_target_dummy 新增测试 HP，并组合 DamageReceiver。
+- ship_movement_test HUD 新增伤害事件、目标 HP、目标摧毁事件与最近伤害显示。
+
+伤害链：
+- ProjectileRuntime 继续只负责碰撞并发出 hit(target, firepower)。
+- RuntimeShip 继续把 hit 转发为 projectile_hit(target, firepower)。
+- 当前开发测试层收到 projectile_hit 后，如果目标提供 apply_damage()，就把 firepower 直接作为伤害值传入。
+- WeaponTargetDummy.apply_damage() 将伤害交给内部 DamageReceiver。
+- DamageReceiver 扣减 current_hp。
+- current_hp 首次降到 0 时发出 destroyed。
+- WeaponTargetDummy 收到 destroyed 后 queue_free()。
+
+DamageReceiver 规则：
+- setup(max_hp) 设置最大生命并重置当前生命。
+- reset() 把 current_hp 恢复到 max_hp。
+- 负数伤害按 0 处理。
+- current_hp 不低于 0。
+- destroyed 后继续 apply_damage() 不再重复生效。
+- 测试目标默认 max_hp = 20。
+
+结构原则：
+- ProjectileRuntime 不直接负责目标 HP。
+- RuntimeShip 不计算伤害。
+- DamageReceiver 不知道 Projectile、WeaponRuntime 或 ShipData。
+- 战斗层负责把“命中”转换为“对哪个 DamageReceiver 应用多少伤害”。
+- firepower 继续来自 WeaponModuleDefinition / Excel 数据链。
+- ShipData / WeaponModuleDefinition / Excel 数据结构保持不变。
+- 飞船模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+当前范围：
+- 已完成通用 HP。
+- 已完成伤害事件。
+- 已完成 destroyed 事件。
+- 已完成测试目标死亡 / 销毁。
+- 尚未加入正式 RuntimeShip HP。
+- 尚未加入模块独立 HP。
+- 尚未加入核心模块击毁沉没。
+- 尚未加入防护 / 护甲减伤公式。
+- 尚未加入伤害类型、暴击或状态效果。
+
+
+========================================
 v0.19
 ========================================
 
