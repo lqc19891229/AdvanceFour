@@ -68,7 +68,8 @@ func _save_ship() -> void:
 func _load_ship() -> void:
 	var result := ShipSerializer.load_from_file(SAVE_PATH, grid.module_database)
 	if result["ok"]:
-		grid.set_ship(result["ship"])
+		var loaded_ship := result["ship"] as ShipData
+		grid.set_ship(loaded_ship)
 		_show_status("飞船设计已加载：%s" % SAVE_PATH)
 	else:
 		_show_status("加载失败：%s" % result["error"])
