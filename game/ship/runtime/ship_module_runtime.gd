@@ -56,5 +56,5 @@ func _on_damage_receiver_damaged(amount: float, current_hp: float) -> void:
 
 func _on_damage_receiver_destroyed() -> void:
 	if collision_shape != null:
-		collision_shape.disabled = true
+		collision_shape.set_deferred("disabled", true)
 	destroyed.emit(module_instance)
