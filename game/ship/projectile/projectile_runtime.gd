@@ -71,7 +71,7 @@ func _sweep_move(travel_distance: float) -> void:
 			return
 
 		var candidate := result.get("collider") as Node2D
-		var hit_position := result.get("position", cursor) as Vector2
+		var hit_position: Vector2 = result.get("position", cursor)
 		global_position = hit_position
 
 		if candidate == null or not is_instance_valid(candidate):
@@ -110,7 +110,7 @@ func _sweep_move(travel_distance: float) -> void:
 			global_position = end
 			return
 
-	global_position = end
+	global_position = cursor
 
 func _finish() -> void:
 	if finished:
