@@ -22,46 +22,50 @@ v0.28
 ========================================
 
 调整：
-- DefenseModuleDefinition.protection 的战斗语义由“额外最大 HP”改为“固定减伤值”。
+- DefenseModuleDefinition.protection 的战斗语义由“额外最大 HP”改为“百分比减伤值”。
+- protection = 5 表示该块 Defense 模块每次被 Projectile 命中时减伤 5%。
 - RuntimeShip.get_module_max_hp() 不再给 Defense 模块叠加 protection；当前所有模块统一使用 prototype_module_hp 作为基础最大 HP。
-- ShipModuleRuntime.apply_projectile_damage() 在 Defense 模块上先应用 protection，再把剩余伤害交给 DamageReceiver。
-- protection 不会被消耗，也不是独立护盾条；只要该 Defense 模块仍存活，每次 Projectile 命中都会重新应用同一个固定减伤值。
+- ShipModuleRuntime.apply_projectile_damage() 在 Defense 模块上先应用 protection 百分比减伤，再把剩余伤害交给 DamageReceiver。
+- protection 不会被消耗，也不是独立护盾条；只要该 Defense 模块仍存活，每次 Projectile 命中都会重新应用同一个百分比。
 
-固定减伤公式：
+百分比减伤公式：
 - Defense：
-  damage_after_protection = max(incoming_damage - protection, 0)
+  protection_percent = clamp(protection, 0, 100)
+  damage_after_protection = incoming_damage * (1 - protection_percent / 100)
 - 非 Defense：
   protection = 0
   damage_after_protection = incoming_damage
+- protection < 0 按 0% 处理。
+- protection > 100 按 100% 处理。
 
 示例 1：
 - Defense protection = 5。
 - 模块 HP = 20。
-- Projectile incoming_damage = 12。
-- 先减伤 5，实际进入 HP 的伤害为 7。
-- 模块 HP 变为 13。
-- Projectile 结束。
+- Projectile incoming_damage = 100。
+- 减伤 5%，damage_after_protection = 95。
+- 模块吸收 20 并 destroyed。
+- leftover = 95 - 20 = 75。
+- Projectile 携带 75 继续沿原弹道穿透后方模块。
 
 示例 2：
-- Defense protection = 5。
-- 模块当前 HP = 3。
-- Projectile incoming_damage = 12。
-- 先减伤 5，damage_after_protection = 7。
-- 模块吸收 3 并 destroyed。
-- leftover = 7 - 3 = 4。
-- Projectile 携带 4 继续沿原弹道穿透后方模块。
+- Defense protection = 25。
+- 模块当前 HP = 20。
+- Projectile incoming_damage = 20。
+- 减伤 25%，damage_after_protection = 15。
+- 模块 HP 变为 5。
+- Projectile 结束。
 
 示例 3：
-- Defense protection = 10。
-- Projectile incoming_damage = 6。
+- Defense protection = 100。
+- Projectile incoming_damage = 50。
 - damage_after_protection = 0。
 - 模块 HP 不变。
 - Projectile 在该装甲处结束。
 
 与穿透系统关系：
 - 所有 ShipModuleRuntime 仍保留 v0.27.1 的 overkill 连续穿透。
-- Defense 模块只是多一个“先减 protection”的步骤。
-- 若 protection 完全抵消伤害，则没有 HP 伤害，也没有 leftover。
+- Defense 模块只是多一个“先按 protection 百分比减伤”的步骤。
+- 若 protection 将伤害降到 0，则没有 HP 伤害，也没有 leftover。
 - 若模块被摧毁，则 leftover 基于减伤后的伤害计算，而不是原始 incoming_damage。
 - 普通模块 protection = 0，因此继续使用原有 HP-overkill 规则。
 
@@ -72,7 +76,7 @@ v0.28
 - 模块仍允许分开放置、不相邻、不连通，并允许任意空格。
 
 当前限制：
-- protection 当前是固定数值减伤，没有百分比减伤、穿甲值、装甲材质、入射角或伤害类型。
+- protection 当前只表示百分比减伤，没有独立穿甲值、装甲材质、入射角或伤害类型。
 - Projectile swept collision 仍按中心线 ray 处理，不考虑 Projectile CircleShape 半径。
 
 
