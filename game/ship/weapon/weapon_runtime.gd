@@ -19,6 +19,7 @@ var module_instance: ShipModuleInstance
 var weapon_definition: WeaponModuleDefinition
 var target: Node2D
 var cooldown_remaining := 0.0
+var operational := true
 
 func setup(
 	ship: Node2D,
@@ -34,7 +35,18 @@ func setup(
 	rotation = deg_to_rad(float(module.rotation_quarters) * 90.0)
 	target = null
 	cooldown_remaining = 0.0
+	operational = true
+	visible = true
 	queue_redraw()
+
+func set_operational(value: bool) -> void:
+	operational = value
+	if not operational:
+		target = null
+		visible = false
+
+func is_operational() -> bool:
+	return operational
 
 func fire_once() -> void:
 	if not _can_fire():
@@ -49,6 +61,8 @@ func has_target() -> bool:
 	return _is_target_valid(target)
 
 func _physics_process(delta: float) -> void:
+	if not operational:
+		return
 	if owner_ship == null or not is_instance_valid(owner_ship):
 		return
 	if module_instance == null or weapon_definition == null:
@@ -80,7 +94,8 @@ func _find_nearest_target() -> Node2D:
 		if node == owner_ship or not is_instance_valid(node):
 			continue
 
-		var distance_squared := global_position.distance_squared_to(node.global_position)
+		var aim_point := _get_target_aim_point(node)
+		var distance_squared := global_position.distance_squared_to(aim_point)
 		if distance_squared > max_distance_squared:
 			continue
 		if distance_squared < best_distance_squared:
@@ -96,10 +111,15 @@ func _is_target_valid(candidate: Node2D) -> bool:
 		return false
 	if not candidate.is_in_group(target_group):
 		return false
-	return global_position.distance_squared_to(candidate.global_position) <= attack_range * attack_range
+	if candidate.has_method("has_operational_modules") and not candidate.has_operational_modules():
+		return false
+
+	var aim_point := _get_target_aim_point(candidate)
+	return global_position.distance_squared_to(aim_point) <= attack_range * attack_range
 
 func _aim_at_target(delta: float) -> void:
-	var to_target := target.global_position - global_position
+	var aim_point := _get_target_aim_point(target)
+	var to_target := aim_point - global_position
 	if to_target.is_zero_approx():
 		return
 
@@ -110,7 +130,9 @@ func _aim_at_target(delta: float) -> void:
 func _is_aimed_at_target() -> bool:
 	if target == null:
 		return false
-	var to_target := target.global_position - global_position
+
+	var aim_point := _get_target_aim_point(target)
+	var to_target := aim_point - global_position
 	if to_target.is_zero_approx():
 		return true
 
@@ -118,9 +140,15 @@ func _is_aimed_at_target() -> bool:
 	var difference := absf(wrapf(desired_global_rotation - global_rotation, -PI, PI))
 	return difference <= deg_to_rad(fire_angle_tolerance_degrees)
 
+func _get_target_aim_point(candidate: Node2D) -> Vector2:
+	if candidate != null and candidate.has_method("get_aim_point"):
+		return candidate.get_aim_point(global_position)
+	return candidate.global_position
+
 func _can_fire() -> bool:
 	return (
-		owner_ship != null
+		operational
+		and owner_ship != null
 		and is_instance_valid(owner_ship)
 		and module_instance != null
 		and weapon_definition != null
