@@ -6,7 +6,9 @@
 
 当前文件：
 - ship_runtime.tscn：运行时飞船场景。
-- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向、基于自身朝向的推进，以及创建和管理 WeaponRuntime，并把武器 fired 事件转换为 ProjectileRuntime。
+- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向、推进、创建 WeaponRuntime / ProjectileRuntime，并为每个模块创建 ShipModuleRuntime。
+- ship_module_runtime.gd：单个 ShipModuleInstance 的运行时受击对象，包含独立碰撞体和 DamageReceiver。
+- SHIP_MODULE_RUNTIME_README.txt：模块运行时受击结构说明。
 
 核心关系：
 ShipData = 飞船结构与静态属性数据。
@@ -22,7 +24,8 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 不读取 JSON，不负责存档。
 - RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进、核心中心原点，以及自动炮塔 WeaponRuntime、ProjectileRuntime 生成和命中事件转发；暂不包含伤害与模块失效。
+- 当前包含模块绘制、移动、自动炮塔、Projectile，以及每模块独立碰撞 / HP / damaged / destroyed 事件。
+- 当前模块 destroyed 只表示该模块运行时 HP 归零并禁用碰撞体；暂不影响推力、武器、供能或整船状态。
 
 飞船结构原则：
 - 模块允许分开放置。
@@ -63,4 +66,15 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
 - ProjectileRuntime 命中后会发出 hit(target, firepower)，RuntimeShip 再通过 projectile_hit(target, firepower) 向上转发。
 - RuntimeShip 创建 Projectile 时会把 self 作为 source_owner 传入，用于 Projectile 基础自伤过滤。
-- 当前 Projectile 已包含基础碰撞 / 命中事件，但不应用伤害。
+- Projectile 命中 ShipModuleRuntime 后，上层可以直接对该具体模块 apply_damage(firepower)。
+
+模块运行时：
+- setup(ship_data) 时，RuntimeShip 会为每个 ShipModuleInstance 创建一个 ShipModuleRuntime。
+- ShipModuleRuntime 的位置使用与模块绘制完全相同的核心原点坐标换算。
+- 碰撞矩形大小等于模块旋转后的网格尺寸 × cell_size。
+- 每个模块都有独立 DamageReceiver 和独立 HP。
+- 模块之间允许空格；空格不会生成碰撞体。
+- 模块 destroyed 后碰撞体会 deferred 禁用，RuntimeShip 将该模块绘制为深灰色。
+- RuntimeShip 通过 module_damaged / module_destroyed 向上转发模块受击状态。
+- 当前 prototype_module_hp = 20，尚未进入 Excel / ModuleDefinition。
+- 当前 destroyed 不删除 ShipData.modules，也不改变模块提供的推力、火力、供能或其他静态统计。
