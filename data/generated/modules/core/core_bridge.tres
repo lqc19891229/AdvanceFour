@@ -11,3 +11,4 @@ description = "飞船核心区域。核心模块被击毁时，飞船判定为�
 size = Vector2i(2, 2)
 mass = 40.0
 energy_cost = 20.0
+hp = 20.0
