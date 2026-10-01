@@ -48,7 +48,7 @@ RuntimeShip
 当前数据：
 - direction：世界空间飞行方向。
 - firepower：发射时的初始伤害。
-- remaining_damage：当前剩余伤害；命中 Defense 模块时先扣除该模块 protection 固定减伤，再按模块实际吸收的 HP 继续扣减。
+- remaining_damage：当前剩余伤害；命中 Defense 模块时先应用该模块 protection 百分比减伤，再按模块实际吸收的 HP 继续扣减。
 - lifetime_remaining：剩余生命周期。
 - source_owner：发射该 Projectile 的 RuntimeShip，用于基础自伤过滤。
 
@@ -56,7 +56,7 @@ RuntimeShip
 - setup() 时设置世界坐标、方向、firepower、source_owner 和剩余生命周期。
 - _physics_process() 中计算 direction * speed * delta 对应的本帧路径，并沿整段路径做连续射线查询。
 - 生命周期结束或 remaining_damage <= 0 后 queue_free()。
-- 命中 Defense 模块时，先应用固定 protection；剩余伤害再进入模块 HP。只要模块被本次伤害摧毁且仍有剩余伤害，就继续向内穿透；模块未被摧毁、protection 完全抵消伤害或刚好耗尽伤害时 Projectile 结束。
+- 命中 Defense 模块时，先应用 protection 百分比减伤；减伤后的伤害再进入模块 HP。只要模块被本次伤害摧毁且仍有剩余伤害，就继续向内穿透；模块未被摧毁、protection 完全抵消伤害或刚好耗尽伤害时 Projectile 结束。
 - 当前用简单白色图形显示弹丸，后续可替换正式视觉。
 
 当前范围：
@@ -74,5 +74,5 @@ RuntimeShip
 - 更精确的有限半径 shape cast；当前连续检测按弹丸中心线 ray 处理。
 - 弹丸继承飞船速度。
 - 跟踪弹。
-- 独立的穿甲系数 / 穿深 / 材质抗性；当前 protection 仅作为 Defense 模块固定减伤值，之后按模块剩余 HP 吸收伤害并让 overkill 继续传播。
+- 独立的穿甲系数 / 穿深 / 材质抗性；当前 protection 仅作为 Defense 模块百分比减伤值，之后按模块剩余 HP 吸收伤害并让 overkill 继续传播。
 - 爆炸。
