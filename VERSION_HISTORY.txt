@@ -18,6 +18,53 @@
 
 
 ========================================
+v0.23
+========================================
+
+新增：
+- RuntimeShip 新增 destroyed 信号。
+- RuntimeShip 新增 removed_from_battle 运行状态。
+- RuntimeShip 新增 is_removed_from_battle()。
+- ship_movement_test 新增目标整船移除事件计数与战斗状态显示。
+
+核心模块规则：
+- CoreModuleDefinition 对应模块 HP 归零后，仍先正常发出 module_destroyed(module_instance)。
+- 随后 RuntimeShip 进入 removed_from_battle 状态。
+- removed_from_battle 后清零 throttle_input / turn_input / velocity。
+- removed_from_battle 后停用当前全部 WeaponRuntime。
+- removed_from_battle 后 has_operational_modules() 固定返回 false，不再作为有效武器目标。
+- RuntimeShip 发出 destroyed 信号。
+- destroyed 发出后调用 queue_free()，整艘 RuntimeShip 从当前战斗场景移除。
+
+战斗语义：
+- 核心模块被摧毁 = 当前飞船战斗实例被摧毁 / 退出战斗。
+- 不要求其他模块先全部 destroyed。
+- 核心摧毁后不保留“失去核心但继续战斗”的状态。
+- 当前不生成残骸、爆炸动画或沉船过渡；直接从战斗场景移除。
+
+数据原则：
+- queue_free() 只移除 RuntimeShip 及其子运行时节点。
+- 不修改 ShipData。
+- 不删除 ShipData.modules。
+- 不修改飞船设计存档。
+- 核心中心作为 RuntimeShip 原点的既有规则不变。
+- 模块仍允许分开放置、不相邻、不连通，并允许空格。
+
+开发测试：
+- 目标 RuntimeShip destroyed 后，测试脚本会清空目标引用，避免访问已释放实例。
+- HUD 显示“战斗中 / 已移除”和整船移除事件数量。
+- 目标核心被摧毁后，右上方目标飞船应从场景消失。
+
+当前范围：
+- 已完成核心模块击毁后整船从战斗场景移除。
+- 已完成战斗实例 destroyed 信号。
+- 尚未加入核心爆炸 / 残骸 / 延迟沉没表现。
+- 尚未加入能源模块失效。
+- 尚未加入防护 / 护甲减伤。
+- 尚未加入正式模块耐久 Excel 数据。
+
+
+========================================
 v0.22.1
 ========================================
 
