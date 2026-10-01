@@ -10,6 +10,12 @@ signal weapon_fired(
 
 signal projectile_spawned(projectile: ProjectileRuntime)
 signal projectile_hit(target: Node2D, firepower: float)
+signal module_damaged(
+	module_instance: ShipModuleInstance,
+	amount: float,
+	current_hp: float
+)
+signal module_destroyed(module_instance: ShipModuleInstance)
 
 const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tscn")
 const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile_runtime.tscn")
@@ -20,6 +26,7 @@ const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile
 @export var turn_speed_degrees := 120.0
 @export var reverse_thrust_ratio := 0.5
 @export var weapon_target_group: StringName = &"enemy_targets"
+@export var prototype_module_hp := 20.0
 
 var ship_data: ShipData
 var velocity := Vector2.ZERO
@@ -28,15 +35,19 @@ var turn_input := 0.0
 var local_origin_offset := Vector2.ZERO
 var core_origin_valid := false
 var weapon_runtimes: Array[WeaponRuntime] = []
+var module_runtimes: Array[ShipModuleRuntime] = []
+var module_runtime_by_uid: Dictionary = {}
 
 func setup(data: ShipData) -> void:
 	_clear_weapon_runtimes()
+	_clear_module_runtimes()
 	ship_data = data
 	velocity = Vector2.ZERO
 	throttle_input = 0.0
 	turn_input = 0.0
 	rotation = 0.0
 	local_origin_offset = _calculate_core_origin_offset()
+	_build_module_runtimes()
 	_build_weapon_runtimes()
 	queue_redraw()
 
@@ -51,6 +62,14 @@ func request_fire() -> void:
 
 func get_weapon_count() -> int:
 	return weapon_runtimes.size()
+
+func get_module_runtime_count() -> int:
+	return module_runtimes.size()
+
+func get_module_runtime(module: ShipModuleInstance) -> ShipModuleRuntime:
+	if module == null:
+		return null
+	return module_runtime_by_uid.get(module.uid, null) as ShipModuleRuntime
 
 func get_speed() -> float:
 	return velocity.length()
@@ -90,8 +109,37 @@ func _draw() -> void:
 			Vector2(module.grid_position) * cell_size - local_origin_offset,
 			Vector2(size) * cell_size
 		)
-		draw_rect(rect.grow(-2.0), _get_module_color(module.definition.module_type))
+		var module_runtime := get_module_runtime(module)
+		var fill_color := _get_module_color(module.definition.module_type)
+		if module_runtime != null and module_runtime.is_destroyed():
+			fill_color = Color("#3a3a3a")
+		draw_rect(rect.grow(-2.0), fill_color)
 		draw_rect(rect.grow(-2.0), Color.WHITE, false, 1.0)
+
+func _build_module_runtimes() -> void:
+	if ship_data == null:
+		return
+
+	for module in ship_data.modules:
+		var module_runtime := ShipModuleRuntime.new()
+		add_child(module_runtime)
+		module_runtime.setup(
+			module,
+			_get_module_local_center(module),
+			Vector2(module.get_rotated_size()) * cell_size,
+			prototype_module_hp
+		)
+		module_runtime.damaged.connect(_on_module_runtime_damaged)
+		module_runtime.destroyed.connect(_on_module_runtime_destroyed)
+		module_runtimes.append(module_runtime)
+		module_runtime_by_uid[module.uid] = module_runtime
+
+func _clear_module_runtimes() -> void:
+	for module_runtime in module_runtimes:
+		if is_instance_valid(module_runtime):
+			module_runtime.queue_free()
+	module_runtimes.clear()
+	module_runtime_by_uid.clear()
 
 func _build_weapon_runtimes() -> void:
 	if ship_data == null:
@@ -119,6 +167,17 @@ func _get_module_local_center(module: ShipModuleInstance) -> Vector2:
 		Vector2(module.grid_position)
 		+ Vector2(size) * 0.5
 	) * cell_size - local_origin_offset
+
+func _on_module_runtime_damaged(
+	module_instance: ShipModuleInstance,
+	amount: float,
+	current_hp: float
+) -> void:
+	module_damaged.emit(module_instance, amount, current_hp)
+
+func _on_module_runtime_destroyed(module_instance: ShipModuleInstance) -> void:
+	module_destroyed.emit(module_instance)
+	queue_redraw()
 
 func _on_weapon_runtime_fired(
 	module_instance: ShipModuleInstance,
