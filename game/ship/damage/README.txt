@@ -3,7 +3,7 @@
 用途：
 - 存放飞船战斗链中通用的受击 / 生命值运行时组件。
 - 当前 DamageReceiver 只负责 HP、受伤事件和 destroyed 事件。
-- 当前不负责全局减伤、模块 HP 构造、核心模块沉没判定或受击特效；Defense.protection 的百分比减伤在 ShipModuleRuntime.apply_projectile_damage() 中处理。
+- 当前不负责全局减伤、模块最大 HP 数据来源、核心模块沉没判定或受击特效；模块最大 HP 来自 ShipModuleDefinition.hp，Defense.protection 的百分比减伤在 ShipModuleRuntime.apply_projectile_damage() 中处理。
 
 当前文件：
 - damage_receiver.gd：通用 HP 组件。
