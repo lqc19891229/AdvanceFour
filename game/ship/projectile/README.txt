@@ -2,8 +2,9 @@
 
 用途：
 - 存放飞船武器发射后进入世界空间独立飞行的 Projectile 运行时逻辑。
-- ProjectileRuntime 当前负责生成后的世界空间飞行、生命周期、基础碰撞、命中事件，以及把 firepower 直接交给支持 apply_damage() 的命中对象。
-- 当前不处理护甲公式、穿透、爆炸或模块功能失效。
+- ProjectileRuntime 当前负责生成后的世界空间飞行、生命周期、连续射线式命中检测、命中事件，以及把伤害交给命中对象。
+- 对 ShipModuleRuntime，Projectile 会优先调用 apply_projectile_damage()，用于处理装甲击穿后的剩余伤害；其他支持 apply_damage() 的对象仍按单次命中处理。
+- 当前不处理正式伤害类型、爆炸或模块功能失效。
 
 当前文件：
 - projectile_runtime.gd：基础弹丸运行时节点。
@@ -21,14 +22,15 @@ RuntimeShip
 作为 RuntimeShip 的同级节点加入世界
 
 碰撞 / 命中：
-- ProjectileRuntime 使用 Area2D。
-- Projectile collision_layer = 2，collision_mask = 1。
-- 当前测试目标位于 collision_layer = 1。
-- Projectile 同时监听 area_entered 与 body_entered。
-- 首次有效碰撞时，如果目标提供 apply_damage()，ProjectileRuntime 先调用 apply_damage(firepower)。
-- 随后发出：
+- ProjectileRuntime 仍是 Area2D 世界节点，但运行时不再依赖 area_entered / body_entered 的离散触发顺序。
+- 每个物理帧从当前位置到本帧终点执行 PhysicsRayQueryParameters2D / intersect_ray()，按弹道最近顺序处理碰撞，减少高速弹丸跨越装甲的 tunneling 风险。
+- Projectile collision_mask = 1；当前 ShipModuleRuntime 位于 collision_layer = 1。
+- 命中 ShipModuleRuntime 时调用 apply_projectile_damage(remaining_damage)。
+- 如果目标不是可穿透装甲或没有剩余伤害，则 Projectile 结束。
+- 如果该次命中摧毁了装甲且返回 leftover > 0，则 Projectile 在同一弹道上继续向前查询，携带 leftover 继续命中后方模块。
+- 每次实际命中都会发出：
   hit(target: Node2D, firepower: float)
-- 命中后立即 queue_free()，当前不穿透。
+  其中 firepower 表示该次碰撞前 Projectile 当前携带的伤害。
 - RuntimeShip 仍会把 ProjectileRuntime.hit 转发为 projectile_hit 信号，但该转发现在只用于观察 / 调试，不再是伤害生效的必要链路。
 - Projectile 保存 source_owner，并忽略 source_owner 自身及其子节点，避免基础自伤碰撞。
 
@@ -45,22 +47,23 @@ RuntimeShip
 
 当前数据：
 - direction：世界空间飞行方向。
-- firepower：从 WeaponRuntime fired 事件带入；命中支持 apply_damage() 的对象时，ProjectileRuntime 直接以该数值作为当前 Prototype 伤害，同时仍随 hit 信号继续传递。
+- firepower：发射时的初始伤害。
+- remaining_damage：当前剩余伤害；击穿装甲后按被装甲实际吸收的 HP 扣减。
 - lifetime_remaining：剩余生命周期。
 - source_owner：发射该 Projectile 的 RuntimeShip，用于基础自伤过滤。
 
 当前行为：
 - setup() 时设置世界坐标、方向、firepower、source_owner 和剩余生命周期。
-- _physics_process() 中按 direction * speed * delta 移动。
-- 生命周期结束后 queue_free()。
-- 命中有效碰撞目标后，先尝试 apply_damage(firepower)，再发出 hit 并 queue_free()。
+- _physics_process() 中计算 direction * speed * delta 对应的本帧路径，并沿整段路径做连续射线查询。
+- 生命周期结束或 remaining_damage <= 0 后 queue_free()。
+- 普通命中会结束 Projectile；只有“Defense 装甲被本次伤害摧毁且仍有剩余伤害”时会继续向内穿透。
 - 当前用简单白色图形显示弹丸，后续可替换正式视觉。
 
 当前范围：
 - 生成。
 - 世界空间直线飞行。
 - 生命周期自动销毁。
-- Area2D 基础碰撞。
+- 基于物理空间 ray query 的连续弹道命中。
 - hit 事件。
 - 基础发射者过滤。
 
@@ -68,8 +71,8 @@ RuntimeShip
 - 正式伤害解析层、护甲 / 伤害类型公式。
 - 更复杂的模块失效联动。
 - 正式阵营过滤。
-- 连续碰撞 / swept collision。
+- 更精确的有限半径 shape cast；当前连续检测按弹丸中心线 ray 处理。
 - 弹丸继承飞船速度。
 - 跟踪弹。
-- 穿透。
+- 通用穿甲 / 任意模块连续穿透；当前只支持装甲 destroyed 后把剩余伤害继续向内传递。
 - 爆炸。
