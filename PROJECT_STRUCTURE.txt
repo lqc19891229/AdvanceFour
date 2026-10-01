@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.21
+《前进四》项目目录规划 V0.22
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -99,4 +99,7 @@ res://
 24. RuntimeShip 会为每个 ShipModuleInstance 创建独立 ShipModuleRuntime；其碰撞体严格按该模块实际网格位置与旋转后尺寸生成，因此分离模块之间的空格保持不可碰撞。
 25. ShipModuleRuntime 组合 DamageReceiver，并把 Projectile 命中直接映射到具体 ShipModuleInstance；RuntimeShip 通过 module_damaged / module_destroyed 向上转发。
 26. 当前 v0.21 每个模块统一使用 prototype_module_hp = 20；该数值尚未进入 Excel / ModuleDefinition。
-27. 当前模块 destroyed 只禁用该模块碰撞体并改变运行时显示，不删除 ShipData，也暂不影响推力、火力、供能、核心沉没或其他模块功能。
+27. WeaponRuntime 对支持 get_aim_point() 的目标使用运行时瞄准点；RuntimeShip 返回距离炮塔最近的未 destroyed 模块中心，已摧毁模块不再作为瞄准点。
+28. 武器模块 destroyed 后，RuntimeShip 通过 module uid 找到对应 WeaponRuntime 并 set_operational(false)，停止搜索、瞄准与开火。
+29. RuntimeShip.get_effective_thrust() 只统计未 destroyed 的动力模块；get_effective_acceleration_score() 使用 effective_thrust / 总质量，因此动力模块摧毁会降低实际推进能力。
+30. 当前 v0.22 尚未实现能源模块失效、核心击毁沉没、防护减伤或其他模块功能联动；ShipData 静态统计继续保持不变。
