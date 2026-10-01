@@ -23,6 +23,8 @@ var last_firepower := 0.0
 var last_fire_direction := Vector2.ZERO
 var last_damaged_module: ShipModuleInstance
 var last_module_hp := 0.0
+var last_module_max_hp := 0.0
+var last_module_protection := 0.0
 
 func _ready() -> void:
 	var result := ShipSerializer.load_from_file(SAVE_PATH, module_database)
@@ -89,11 +91,13 @@ func _on_target_module_damaged(
 	last_damage_amount = amount
 	last_damaged_module = module_instance
 	last_module_hp = current_hp
+	_update_last_module_defense_info(module_instance)
 
 func _on_target_module_destroyed(module_instance: ShipModuleInstance) -> void:
 	module_destroyed_events += 1
 	last_damaged_module = module_instance
 	last_module_hp = 0.0
+	_update_last_module_defense_info(module_instance)
 
 func _on_target_ship_destroyed() -> void:
 	target_ship_destroyed_events += 1
@@ -138,12 +142,16 @@ D / →：右转
 模块受伤事件：%d
 模块摧毁事件：%d
 最近受伤模块：%s
-最近模块 HP：%.1f
+最近模块 HP：%.1f / %.1f
+最近模块 protection：%.1f
 最近伤害：%.1f
 最近命中火力：%.1f
 最近发射方向：(%.2f, %.2f)
 
-当前阶段：Projectile 直接碰撞目标飞船的 ShipModuleRuntime，并自行调用 apply_damage(firepower)。
+当前阶段：Projectile 只命中弹道上首先接触到的 ShipModuleRuntime，并自行调用 apply_damage(firepower) 后销毁。
+防护模块作为实体装甲/掩体使用：protection 增加该块装甲自身最大 HP；装甲存活时挡住该方向的弹丸。
+装甲被摧毁后其碰撞体禁用，后续从相同方向射来的弹丸可穿过这块缺口，继续命中后方模块。
+一次弹丸不会在摧毁装甲后继续穿透到内部；必须是后续弹丸通过已被打穿的装甲位置。
 命中伤害不再依赖发射者 RuntimeShip 的 projectile_hit 转发，因此发射者先被摧毁时，已发射弹丸仍可造成伤害。
 武器模块摧毁后对应 WeaponRuntime 停止；动力模块摧毁后有效推力下降。
 能源模块摧毁后有效供能下降；供能不足时按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 优先级逐个供电。
@@ -182,6 +190,8 @@ D / →：右转
 		module_destroyed_events,
 		_get_last_module_name(),
 		last_module_hp,
+		last_module_max_hp,
+		last_module_protection,
 		last_damage_amount,
 		last_hit_firepower,
 		last_fire_direction.x,
@@ -233,3 +243,17 @@ func _get_target_powered_energy_cost() -> float:
 
 func _get_target_powered_module_count() -> int:
 	return target_runtime_ship.get_powered_module_count() if _has_target_runtime_ship() else 0
+
+
+func _update_last_module_defense_info(module_instance: ShipModuleInstance) -> void:
+	last_module_max_hp = 0.0
+	last_module_protection = 0.0
+	if not _has_target_runtime_ship() or module_instance == null:
+		return
+
+	var module_runtime := target_runtime_ship.get_module_runtime(module_instance)
+	if module_runtime == null or not is_instance_valid(module_runtime):
+		return
+
+	last_module_max_hp = module_runtime.get_max_hp()
+	last_module_protection = module_runtime.get_protection()

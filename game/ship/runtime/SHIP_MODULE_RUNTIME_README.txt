@@ -21,16 +21,19 @@ DamageReceiver
 module_damaged / module_destroyed
 
 当前 Prototype HP：
-- 每个模块暂时使用 RuntimeShip.prototype_module_hp。
-- 当前默认值为 20。
-- 该数值尚未进入 ModuleDefinition / Excel 数据真源。
-- 后续正式模块耐久字段确定后，再把 HP 从 Prototype 参数迁移到静态模块数据。
+- 非防护模块暂时使用 RuntimeShip.prototype_module_hp，当前默认值为 20。
+- 防护模块最大 HP = prototype_module_hp + max(protection, 0)。
+- protection 因此表示该块装甲额外可承受的结构伤害，不是全船减伤百分比。
+- prototype_module_hp 尚未进入 ModuleDefinition / Excel 数据真源；DefenseModuleDefinition.protection 已来自现有静态数据链。
 
 当前范围：
 - 每模块独立碰撞体。
 - 每模块独立 HP。
 - Projectile 命中时可直接知道具体 ShipModuleInstance。
 - 模块 HP 归零后禁用该模块碰撞体，并发出 destroyed。
+- 防护模块的保护是空间性的：只保护实际位于其后方、且弹道会先穿过该装甲位置的模块。
+- 某块装甲 destroyed 后，只开放该块碰撞区域对应的局部缺口；其他装甲继续保持独立碰撞与独立 HP。
+- 当前 Projectile 命中第一个有效模块后立即销毁，所以摧毁装甲的这一发不会继续伤害后方模块；后续弹丸才会穿过已失效装甲位置。
 - RuntimeShip 会转发 module_damaged / module_destroyed。
 
 暂不包含：
@@ -38,6 +41,5 @@ module_damaged / module_destroyed
 - 动力模块失效后降低推力。
 - 武器模块失效后停止射击。
 - 能量模块失效后的供能变化。
-- 防护模块失效。
 - 核心模块击毁后整船沉没。
 - 模块爆炸、残骸或视觉破坏效果。

@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.25.1
+《前进四》项目目录规划 V0.26
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -98,7 +98,7 @@ res://
 23. 当前 v0.20 由战斗层 / 测试层决定如何把 projectile_hit.firepower 交给 DamageReceiver；开发测试暂时直接使用 firepower 作为伤害值。
 24. RuntimeShip 会为每个 ShipModuleInstance 创建独立 ShipModuleRuntime；其碰撞体严格按该模块实际网格位置与旋转后尺寸生成，因此分离模块之间的空格保持不可碰撞。
 25. ShipModuleRuntime 组合 DamageReceiver，并把 Projectile 命中直接映射到具体 ShipModuleInstance；RuntimeShip 通过 module_damaged / module_destroyed 向上转发。
-26. 当前 v0.21 每个模块统一使用 prototype_module_hp = 20；该数值尚未进入 Excel / ModuleDefinition。
+26. 非防护模块当前仍使用 prototype_module_hp = 20；防护模块在该基础上额外加 DefenseModuleDefinition.protection 作为装甲耐久。prototype_module_hp 尚未进入 Excel / ModuleDefinition。
 27. WeaponRuntime 对支持 get_aim_point() 的目标使用运行时瞄准点；RuntimeShip 返回距离炮塔最近的未 destroyed 模块中心，已摧毁模块不再作为瞄准点。
 28. 武器模块 destroyed 后，RuntimeShip 通过 module uid 找到对应 WeaponRuntime 并 set_operational(false)，停止搜索、瞄准与开火。
 29. RuntimeShip.get_effective_thrust() 只统计未 destroyed 的动力模块；get_effective_acceleration_score() 使用 effective_thrust / 总质量，因此动力模块摧毁会降低实际推进能力。
@@ -107,10 +107,13 @@ res://
 32. ProjectileRuntime 首次有效命中支持 apply_damage() 的对象时，会直接调用 apply_damage(firepower)；RuntimeShip.projectile_hit 只保留为观察 / 调试事件。
 33. Projectile 作为 RuntimeShip 同级独立节点，其伤害逻辑不依赖 source_owner 存活，因此发射者核心摧毁并 queue_free() 后，已发射弹丸仍可继续命中和造成伤害。
 34. RuntimeShip.get_effective_energy_output() 只统计未 destroyed 的能源模块；get_effective_energy_cost() 只统计未 destroyed 模块的 energy_cost。
-35. 当有效供能低于有效耗能时，RuntimeShip 进入能源不足状态：所有 WeaponRuntime powered=false，推进有效推力归零；飞船不会因此直接退出战斗。
+35. 当有效供能低于有效耗能时，RuntimeShip 进入能源不足状态并执行模块级部分负载切除；不再统一关闭全部武器或全部动力，飞船也不会因此直接退出战斗。
 36. WeaponRuntime 将 operational（结构是否存活）与 powered（是否有能源）分离，能源恢复不会复活已经 destroyed 的武器。
 37. RuntimeShip 使用 module_powered_by_uid 记录每个存活模块的运行时供电状态；供能不足时按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 固定优先级逐个分配能源，同类型按 module.uid 升序稳定分配。
 38. is_energy_sufficient() 只表示是否足以覆盖全部存活模块需求；即使为 false，仍可能有部分模块保持 powered=true。
 39. get_powered_energy_cost() 返回当前实际已供电负载；动力只统计 powered 的存活动力模块，WeaponRuntime.powered 也按对应武器模块单独设置。
 40. RuntimeShip 的武器计数语义明确拆分：get_weapon_count() = 总 WeaponRuntime；get_operational_weapon_count() = 未 destroyed 的武器；get_active_weapon_count() = 未 destroyed 且当前 powered 的可工作武器。
-41. 当前 v0.25.1 尚未实现玩家自定义供电优先级、手动开关模块、防护减伤或正式伤害类型；ShipData 静态统计继续保持不变。
+41. DefenseModuleDefinition.protection 的正式战斗语义为“该块装甲的额外耐久”，不是全船减伤；RuntimeShip.get_module_max_hp() 对防护模块使用 prototype_module_hp + protection。
+42. 防护采用空间掩体规则：Projectile 只伤害首先碰撞到的模块并销毁；装甲存活时可挡住其后方模块，装甲 destroyed 后其碰撞体禁用，后续弹丸可通过该局部缺口继续命中后方模块。
+43. 装甲是逐块独立失效，不要求全船装甲全部 destroyed；飞船结构仍允许分离、不相邻、不连通和任意空格。
+44. 当前 v0.26 尚未实现同一发弹丸穿透、多段伤害、扫掠碰撞、正式伤害类型或玩家自定义供电优先级；ShipData 静态统计继续保持不变。

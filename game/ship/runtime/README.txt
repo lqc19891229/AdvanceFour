@@ -76,8 +76,12 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - ShipModuleRuntime 的位置使用与模块绘制完全相同的核心原点坐标换算。
 - 碰撞矩形大小等于模块旋转后的网格尺寸 × cell_size。
 - 每个模块都有独立 DamageReceiver 和独立 HP。
+- RuntimeShip.get_module_max_hp(module) 当前以 prototype_module_hp 为基础；DefenseModuleDefinition 额外把 protection 作为该块装甲自身的耐久加成，因此 armor max_hp = prototype_module_hp + protection。
 - 模块之间允许空格；空格不会生成碰撞体。
 - 模块 destroyed 后碰撞体会 deferred 禁用，RuntimeShip 将该模块绘制为深灰色。
+- 防护模块采用“实体掩体”语义：Projectile 先撞到哪块模块，就只伤害哪块模块并销毁；装甲位于内部模块弹道前方时会实际挡弹。
+- 某一块装甲 destroyed 后，它自己的碰撞体失效，后续从同一路径射来的 Projectile 可以穿过该缺口继续命中后方模块；不要求其他装甲同时 destroyed。
+- 当前单发 Projectile 不做穿透：即使这一发正好摧毁装甲，也不会把剩余伤害继续传给后方模块。
 - RuntimeShip 通过 module_damaged / module_destroyed 向上转发模块受击状态。
 - 当前 prototype_module_hp = 20，尚未进入 Excel / ModuleDefinition。
 - destroyed 不删除 ShipData.modules；运行时通过模块存活状态计算有效推力，并通过 UID 映射停用对应 WeaponRuntime。
