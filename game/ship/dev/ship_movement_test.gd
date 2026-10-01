@@ -3,12 +3,14 @@ extends Node2D
 const SAVE_PATH := "user://ships/test_ship.json"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const PLAYER_CONTROLLER_SCENE := preload("res://game/ship/controller/player_ship_controller.tscn")
+const TARGET_DUMMY_SCRIPT := preload("res://game/ship/dev/weapon_target_dummy.gd")
 
 @export var module_database: ModuleDatabase
 
 var ship: ShipData
 var runtime_ship: ShipRuntime
 var player_controller: PlayerShipController
+var target_dummy: WeaponTargetDummy
 var weapon_fire_events := 0
 var last_firepower := 0.0
 var last_fire_direction := Vector2.ZERO
@@ -32,6 +34,10 @@ func _ready() -> void:
 	add_child(player_controller)
 	player_controller.setup(runtime_ship)
 
+	target_dummy = TARGET_DUMMY_SCRIPT.new() as WeaponTargetDummy
+	add_child(target_dummy)
+	target_dummy.position = runtime_ship.position + Vector2(260.0, -120.0)
+
 	$CanvasLayer/Info.text = _build_info_text()
 
 func _process(_delta: float) -> void:
@@ -51,14 +57,16 @@ func _on_weapon_fired(
 	last_fire_direction = world_direction
 
 func _build_info_text() -> String:
-	return """RuntimeShip / PlayerShipController / WeaponRuntime 测试
+	return """RuntimeShip / WeaponRuntime 自动炮塔测试
 W / ↑：沿舰首前进
 S / ↓：沿舰尾倒车
 A / ←：左转
 D / →：右转
-Space：触发一次全部武器齐射
 
-控制器：PlayerShipController
+白色十字圆：自动瞄准测试目标
+武器会自动搜索 weapon_targets 组内、攻击范围内最近的目标。
+
+控制器：PlayerShipController（只负责移动）
 模块：%d
 武器：%d
 质量：%.1f
@@ -72,7 +80,7 @@ Space：触发一次全部武器齐射
 最近武器火力：%.1f
 最近发射方向：(%.2f, %.2f)
 
-当前武器阶段只产生 fired 事件，不生成弹丸。
+当前阶段：炮塔自动选目标、转向并触发 fired；尚未生成弹丸。
 结构规则：模块可分开放置，不要求相邻、连通或填满格子。""" % [
 		ship.modules.size(),
 		runtime_ship.get_weapon_count(),
