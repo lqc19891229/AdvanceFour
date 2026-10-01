@@ -4,6 +4,8 @@ extends Node
 var runtime_ship: ShipRuntime
 
 func setup(target: ShipRuntime) -> void:
+	if runtime_ship != null and is_instance_valid(runtime_ship) and runtime_ship != target:
+		runtime_ship.set_control_input(0.0, 0.0)
 	runtime_ship = target
 
 func clear_target() -> void:
