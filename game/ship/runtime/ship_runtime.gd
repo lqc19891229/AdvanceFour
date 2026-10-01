@@ -16,6 +16,11 @@ signal module_damaged(
 	current_hp: float
 )
 signal module_destroyed(module_instance: ShipModuleInstance)
+signal energy_state_changed(
+	energy_output: float,
+	energy_cost: float,
+	sufficient: bool
+)
 signal destroyed
 
 const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tscn")
@@ -39,6 +44,7 @@ var weapon_runtimes: Array[WeaponRuntime] = []
 var weapon_runtime_by_uid: Dictionary = {}
 var module_runtimes: Array[ShipModuleRuntime] = []
 var module_runtime_by_uid: Dictionary = {}
+var energy_sufficient := true
 var removed_from_battle := false
 
 func setup(data: ShipData) -> void:
@@ -53,6 +59,7 @@ func setup(data: ShipData) -> void:
 	local_origin_offset = _calculate_core_origin_offset()
 	_build_module_runtimes()
 	_build_weapon_runtimes()
+	_refresh_energy_state()
 	queue_redraw()
 
 func set_control_input(throttle: float, turn: float) -> void:
@@ -74,7 +81,7 @@ func get_weapon_count() -> int:
 func get_operational_weapon_count() -> int:
 	var count := 0
 	for weapon_runtime in weapon_runtimes:
-		if is_instance_valid(weapon_runtime) and weapon_runtime.is_operational():
+		if is_instance_valid(weapon_runtime) and weapon_runtime.is_active():
 			count += 1
 	return count
 
@@ -109,8 +116,35 @@ func get_aim_point(from_world_position: Vector2) -> Vector2:
 
 	return best_point
 
-func get_effective_thrust() -> float:
+func get_effective_energy_output() -> float:
 	if ship_data == null:
+		return 0.0
+
+	var total := 0.0
+	for module in ship_data.modules:
+		if not (module.definition is EnergyModuleDefinition):
+			continue
+		if not _is_module_operational(module):
+			continue
+		total += (module.definition as EnergyModuleDefinition).energy_output
+	return total
+
+func get_effective_energy_cost() -> float:
+	if ship_data == null:
+		return 0.0
+
+	var total := 0.0
+	for module in ship_data.modules:
+		if not _is_module_operational(module):
+			continue
+		total += module.definition.energy_cost
+	return total
+
+func is_energy_sufficient() -> bool:
+	return energy_sufficient
+
+func get_effective_thrust() -> float:
+	if ship_data == null or not energy_sufficient:
 		return 0.0
 
 	var total := 0.0
@@ -246,6 +280,7 @@ func _on_module_runtime_destroyed(module_instance: ShipModuleInstance) -> void:
 		if weapon_runtime != null and is_instance_valid(weapon_runtime):
 			weapon_runtime.set_operational(false)
 
+	_refresh_energy_state()
 	module_destroyed.emit(module_instance)
 
 	if module_instance.definition is CoreModuleDefinition:
@@ -253,6 +288,22 @@ func _on_module_runtime_destroyed(module_instance: ShipModuleInstance) -> void:
 		return
 
 	queue_redraw()
+
+func _refresh_energy_state() -> void:
+	var new_sufficient := get_effective_energy_output() >= get_effective_energy_cost()
+	var changed := new_sufficient != energy_sufficient
+	energy_sufficient = new_sufficient
+
+	for weapon_runtime in weapon_runtimes:
+		if is_instance_valid(weapon_runtime):
+			weapon_runtime.set_powered(energy_sufficient)
+
+	if changed:
+		energy_state_changed.emit(
+			get_effective_energy_output(),
+			get_effective_energy_cost(),
+			energy_sufficient
+		)
 
 func _remove_from_battle() -> void:
 	if removed_from_battle:
