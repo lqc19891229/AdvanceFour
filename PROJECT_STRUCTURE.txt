@@ -8,12 +8,11 @@ res://
 │  └─ ship/
 │     ├─ definitions/           # 六类模块 Resource 定义
 │     ├─ data/                  # ShipData / ModuleInstance / Database / Serializer
-│     └─ editor/                # 飞船编辑器场景与逻辑
-│
-├─ dev/                          # 独立开发测试场景
-│  ├─ README.txt
-│  ├─ ship_movement_test.gd
-│  └─ ship_movement_test.tscn
+│     ├─ editor/                # 飞船编辑器场景与逻辑
+│     └─ dev/                   # 飞船系统独立开发测试
+│        ├─ README.txt
+│        ├─ ship_movement_test.gd
+│        └─ ship_movement_test.tscn
 │
 ├─ addons/
 │  └─ advance_four_data_importer/
@@ -60,3 +59,4 @@ res://
 7. 游戏系统通过 ModuleDatabase / DataManager 访问模块数据。
 8. 飞船设计存档只记录稳定 module_id、位置和旋转；运行时通过 ModuleDatabase 恢复定义。
 9. 飞船模块允许分开放置，不要求相邻、连通或填满所有格子；只禁止占用格重叠。
+10. 开发测试按功能归属放置；飞船相关测试统一放在 game/ship/dev/。
