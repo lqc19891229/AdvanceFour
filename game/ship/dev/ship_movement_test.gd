@@ -2,11 +2,13 @@ extends Node2D
 
 const SAVE_PATH := "user://ships/test_ship.json"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
+const PLAYER_CONTROLLER_SCENE := preload("res://game/ship/controller/player_ship_controller.tscn")
 
 @export var module_database: ModuleDatabase
 
 var ship: ShipData
 var runtime_ship: ShipRuntime
+var player_controller: PlayerShipController
 
 func _ready() -> void:
 	var result := ShipSerializer.load_from_file(SAVE_PATH, module_database)
@@ -16,38 +18,32 @@ func _ready() -> void:
 		return
 
 	ship = result["ship"] as ShipData
+
 	runtime_ship = RUNTIME_SCENE.instantiate() as ShipRuntime
 	add_child(runtime_ship)
 	runtime_ship.position = get_viewport_rect().size * 0.5
 	runtime_ship.setup(ship)
+
+	player_controller = PLAYER_CONTROLLER_SCENE.instantiate() as PlayerShipController
+	add_child(player_controller)
+	player_controller.setup(runtime_ship)
+
 	$CanvasLayer/Info.text = _build_info_text()
 
 func _process(_delta: float) -> void:
 	if runtime_ship == null or ship == null:
 		return
 
-	var throttle := 0.0
-	var turn := 0.0
-
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
-		throttle += 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
-		throttle -= 1.0
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
-		turn -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
-		turn += 1.0
-
-	runtime_ship.set_control_input(throttle, turn)
 	$CanvasLayer/Info.text = _build_info_text()
 
 func _build_info_text() -> String:
-	return """RuntimeShip 朝向 / 推进测试
+	return """RuntimeShip / PlayerShipController 测试
 W / ↑：沿舰首前进
 S / ↓：沿舰尾倒车
 A / ←：左转
 D / →：右转
 
+控制器：PlayerShipController
 模块：%d
 质量：%.1f
 推力：%.1f

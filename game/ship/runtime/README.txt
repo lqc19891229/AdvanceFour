@@ -16,11 +16,11 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 1. 从存档、预设或其他来源得到 ShipData。
 2. 实例化 ship_runtime.tscn。
 3. 调用 setup(ship_data)。
-4. 控制器通过 set_control_input(throttle, turn) 提供推进与转向输入。
+4. 控制器通过 set_control_input(throttle, turn) 提供推进与转向输入；玩家控制可使用 game/ship/controller/player_ship_controller.tscn。
 
 职责边界：
 - RuntimeShip 不读取 JSON，不负责存档。
-- RuntimeShip 不硬编码玩家按键，因此以后玩家控制器和 AI 都可以驱动同一个 RuntimeShip。
+- RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
 - 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进，以及以核心模块中心为局部原点/旋转中心；暂不包含武器、伤害与模块失效。
 
