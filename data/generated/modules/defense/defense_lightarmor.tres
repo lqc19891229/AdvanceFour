@@ -10,3 +10,4 @@ display_name = "轻型装甲"
 module_type = 3
 description = "基础防护模块，为飞船提供结构防护。"
 mass = 5.0
+hp = 20.0
