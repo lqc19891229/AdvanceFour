@@ -18,6 +18,64 @@
 
 
 ========================================
+v0.25
+========================================
+
+新增：
+- RuntimeShip 新增 module_powered_by_uid，用于记录每个 ShipModuleInstance 当前是否获得运行时供电。
+- RuntimeShip 新增 is_module_powered(module)。
+- RuntimeShip 新增 get_powered_energy_cost()。
+- RuntimeShip 新增 get_powered_module_count()。
+- ship_movement_test HUD 新增实际已供电耗能与已供电模块数量显示。
+
+供电优先级：
+- v0.25 不再采用“供能不足时整船武器全部断电、推进全部失效”的二元模型。
+- 当前 Prototype 固定优先级为：
+  1. 核心模块
+  2. 能源模块
+  3. 动力模块
+  4. 防护模块
+  5. 功能模块
+  6. 武器模块
+- 同类型模块按 module.uid 升序稳定分配。
+- RuntimeShip 根据当前 effective_energy_output，从高优先级到低优先级逐个尝试支付模块 energy_cost。
+- 如果剩余能源足以覆盖当前模块 energy_cost，则该模块 powered=true 并扣除对应可用能源。
+- 如果不足，则该模块 powered=false；分配过程仍继续检查后续模块，因此较低优先级但耗能更小的模块仍可能获得供电。
+- energy_cost <= 0 的存活模块不会消耗能源，并正常获得供电。
+
+能源状态语义：
+- get_effective_energy_output() 仍只统计未 destroyed 的能源模块输出。
+- get_effective_energy_cost() 仍表示所有未 destroyed 模块的总需求。
+- get_powered_energy_cost() 表示当前实际已分配给 powered 模块的负载。
+- is_energy_sufficient() 只表示“供能是否足以覆盖全部存活模块需求”。
+- is_energy_sufficient() == false 时，不代表全部模块断电。
+
+动力：
+- get_effective_thrust() 现在只统计：
+  - 未 destroyed
+  - 且 is_module_powered() == true
+  的动力模块。
+- 因此能源不足时可能只保留部分动力，而不是全部推进归零。
+- 已有速度和 drag 规则保持不变。
+
+武器：
+- 每个 WeaponRuntime 的 powered 状态由其对应 ShipModuleInstance 的 is_module_powered() 独立决定。
+- 能源不足时只有未获供电的武器停止搜索、瞄准和开火。
+- 已 destroyed 的武器 operational=false，即使之后重新获得供电也不会复活。
+- 仍存活且重新获得供电的武器可恢复工作。
+
+当前限制：
+- 当前供电优先级是代码中的 Prototype 固定规则，不是玩家配置。
+- 尚未加入玩家自定义模块优先级。
+- 尚未加入战斗中手动关闭 / 开启模块。
+- 防护模块虽然参与供电分配，但 protection 尚未进入正式战斗减伤逻辑。
+- 功能模块虽然参与供电分配，但当前暂无正式运行时功能。
+- 能源模块输出当前只取决于 destroyed 状态，不要求该能源模块自身先获得供电，避免产生循环供电依赖。
+- 不修改 ShipData、Excel、JSON cache 或 .tres 数据真源。
+- 模块仍允许分开放置、不相邻、不连通，并允许空格。
+
+
+========================================
 v0.24
 ========================================
 

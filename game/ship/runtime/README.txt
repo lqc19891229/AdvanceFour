@@ -81,10 +81,13 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - destroyed 不删除 ShipData.modules；运行时通过模块存活状态计算有效推力，并通过 UID 映射停用对应 WeaponRuntime。
 - get_effective_energy_output() 只统计未 destroyed 的 EnergyModuleDefinition.energy_output。
 - get_effective_energy_cost() 只统计未 destroyed 模块的 energy_cost。
-- is_energy_sufficient() 表示当前有效供能是否覆盖当前存活模块耗能。
-- 当有效供能 < 有效耗能时进入能源不足：所有 WeaponRuntime powered=false，get_effective_thrust() 返回 0。
-- 能源恢复充足时，仍存活的武器重新 powered=true；已经 destroyed 的武器不会复活。
-- get_effective_thrust() 在能源充足时只统计未 destroyed 的动力模块；get_effective_acceleration_score() = effective_thrust / 总质量。
+- is_energy_sufficient() 表示当前有效供能是否足以覆盖全部存活模块耗能；供能不足并不再代表整船全部断电。
+- module_powered_by_uid 保存每个存活模块当前是否获得供电。
+- 当前 Prototype 固定供电优先级：核心 > 能源 > 动力 > 防护 > 功能 > 武器；同类型按 module.uid 升序稳定分配。
+- RuntimeShip 会按优先级逐个尝试支付 module.definition.energy_cost；剩余能源不足以支付某个模块时，该模块 powered=false，但后续更低优先级、耗能更小的模块仍可能获得供电。
+- get_powered_energy_cost() 返回当前实际已分配给 powered 模块的耗能；get_powered_module_count() 返回当前已供电模块数量。
+- WeaponRuntime powered 状态来自其对应模块的 is_module_powered()，因此能源不足时只关闭未获供电的武器，而不是全部武器统一断电。
+- get_effective_thrust() 只统计“未 destroyed 且已供电”的动力模块；get_effective_acceleration_score() = effective_thrust / 总质量。
 - get_aim_point(from_world_position) 会从未 destroyed 的 ShipModuleRuntime 中选择距离炮塔最近的模块中心作为瞄准点。
 - has_operational_modules() 用于让 WeaponRuntime 判断目标飞船是否还有可攻击模块。
 - 核心模块 destroyed 时，RuntimeShip 会先发出 module_destroyed，再进入 removed_from_battle 状态。
