@@ -18,6 +18,40 @@
 
 
 ========================================
+v0.28.2
+========================================
+
+修复：
+- ProjectileRuntime 的物理帧移动时间不再始终使用完整 delta。
+- 每帧先计算 step_time = min(delta, lifetime_remaining)。
+- travel_distance 改为 speed * step_time。
+- lifetime_remaining 也只扣除实际使用的 step_time。
+- 因此当 Projectile 剩余生命周期小于当前 physics delta 时，只移动剩余生命周期对应的最后一小段距离，然后结束。
+
+示例：
+- speed = 700。
+- lifetime_remaining = 0.001 秒。
+- 当前 physics delta = 0.016 秒。
+- 旧逻辑会先按 0.016 秒移动 11.2 像素，再结束。
+- 新逻辑只按 0.001 秒移动 0.7 像素，然后结束。
+
+结果：
+- Projectile 不再因为最后一个物理帧而超过 lifetime 对应的理论射程。
+- swept ray 仍覆盖该最后一小段有效路径，因此生命周期边界内的碰撞仍可正常命中。
+
+保持不变：
+- Defense.protection 仍是百分比减伤值。
+- 所有模块仍保留 HP-overkill 连续穿透。
+- source_owner 整船预排除规则保持不变。
+- 核心摧毁后 Projectile 立即终止规则保持不变。
+- ShipData、Excel、JSON cache、.tres 与存档格式不修改。
+- 模块仍允许分开放置、不相邻、不连通，并允许任意空格。
+
+当前限制：
+- Projectile swept collision 仍按中心线 ray 处理，不考虑 Projectile CircleShape 半径。
+
+
+========================================
 v0.28.1
 ========================================
 
