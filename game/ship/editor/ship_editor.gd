@@ -1,10 +1,12 @@
 extends Control
 
 const SAVE_PATH := "user://ships/test_ship.json"
+const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 
 @onready var grid: ShipGridView = $MainLayout/Center/Grid
 @onready var module_buttons: VBoxContainer = $MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons
 @onready var stats_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll/StatsLabel
+@onready var speed_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/SpeedLabel
 @onready var status_label: Label = $BottomBar/BottomMargin/StatusLabel
 @onready var selected_label: Label = $MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
 
@@ -110,6 +112,15 @@ func _refresh_selected_label() -> void:
 func _refresh_stats() -> void:
 	var s := grid.ship
 	var design_status := "可出航" if s.is_design_valid() else "不可出航：%s" % s.get_design_invalid_reason()
+	var speed_text := "—（供能不足）"
+	if s.is_energy_valid():
+		# Read the runtime scene's actual tuning instead of maintaining editor copies.
+		var runtime := RUNTIME_SCENE.instantiate() as ShipRuntime
+		var speed := runtime.estimate_design_top_speed(s)
+		runtime.free()
+		speed_text = "无上限（无阻力）" if is_inf(speed) else "%.1f px/s" % speed
+	speed_label.text = "预计最高速度：%s" % speed_text
+	speed_label.tooltip_text = "完整耐久、供能充足、持续直线全速推进时的稳定航速。\n战损、转向和倒车会影响实际速度。"
 
 	stats_label.text = """模块数量：%d
 
