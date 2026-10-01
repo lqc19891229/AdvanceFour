@@ -18,6 +18,7 @@ enum ModuleType {
 @export var size: Vector2i = Vector2i.ONE
 @export var mass: float = 0.0
 @export var energy_cost: float = 0.0
+@export var hp: float = 20.0
 
 func get_type_name() -> String:
 	match module_type:
