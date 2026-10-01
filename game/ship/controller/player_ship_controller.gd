@@ -11,7 +11,7 @@ func clear_target() -> void:
 		runtime_ship.set_control_input(0.0, 0.0)
 	runtime_ship = null
 
-func _process(_delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if runtime_ship == null or not is_instance_valid(runtime_ship):
 		return
 
