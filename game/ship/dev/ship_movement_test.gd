@@ -143,14 +143,14 @@ D / →：右转
 模块摧毁事件：%d
 最近受伤模块：%s
 最近模块 HP：%.1f / %.1f
-最近模块固定减伤 protection：%.1f
+最近模块减伤 protection：%.1f%%
 最近伤害：%.1f
 最近命中火力：%.1f
 最近发射方向：(%.2f, %.2f)
 
 当前阶段：Projectile 每个物理帧沿本帧整段弹道做 swept ray，优先处理距离最近的碰撞模块。
-防护模块作为实体装甲/掩体使用：protection 是每次命中该防护模块时生效的固定减伤值，不增加 max HP，也不会被消耗。
-Defense 命中先计算 damage_after_protection = max(incoming_damage - protection, 0)，然后才扣模块 HP；非 Defense 模块 protection = 0。
+防护模块作为实体装甲/掩体使用：protection 是每次命中该防护模块时生效的百分比减伤值，例如 protection = 5 表示减伤 5%；不增加 max HP，也不会被消耗。
+Defense 命中先计算 damage_after_protection = incoming_damage * (1 - clamp(protection, 0, 100) / 100)，然后才扣模块 HP；非 Defense 模块 protection = 0。
 如果模块被本次伤害摧毁，则把 leftover = damage_after_protection - hp_before 交回 Projectile。
 Projectile 会携带 leftover 在同一弹道继续向内查询，因此同一发高伤害弹丸仍可连续击穿低血量模块。
 如果 protection 完全抵消伤害、当前模块没有被摧毁，或伤害刚好全部被该模块吸收，则该发 Projectile 在这里结束。
