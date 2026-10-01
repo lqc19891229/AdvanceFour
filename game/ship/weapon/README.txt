@@ -3,7 +3,7 @@
 用途：
 - 存放飞船武器进入实际游戏世界后的运行时逻辑。
 - WeaponRuntime 是 ShipData 中武器模块的运行时执行对象。
-- 当前版本实现可旋转炮塔、自动选敌、自动瞄准和自动触发 fired；尚不生成 Projectile，也不处理命中与伤害。
+- 当前版本实现可旋转炮塔、自动选敌、自动瞄准和自动触发 fired；Projectile 由 RuntimeShip 根据 fired 事件生成。
 
 当前文件：
 - weapon_runtime.gd：单个武器模块的运行时炮塔节点。
@@ -63,7 +63,7 @@ fired 信号
 职责边界：
 - WeaponRuntime 不读取玩家输入。
 - WeaponRuntime 不负责玩家移动。
-- WeaponRuntime 不创建 Projectile。
+- WeaponRuntime 本身不直接创建 Projectile；它只发出 fired，RuntimeShip 负责生成 ProjectileRuntime。
 - WeaponRuntime 不计算命中、伤害或模块失效。
 - firepower 继续来自 WeaponModuleDefinition，不复制另一套武器静态数据。
 - ShipData.grid_position / rotation_quarters 不因炮塔运行时旋转而改变。

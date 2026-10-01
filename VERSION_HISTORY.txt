@@ -18,6 +18,52 @@
 
 
 ========================================
+v0.18
+========================================
+
+新增：
+- 新增 game/ship/projectile/ 目录。
+- 新增 ProjectileRuntime。
+- 新增 projectile_runtime.tscn。
+- 新增 projectile/README.txt。
+- RuntimeShip 新增 PROJECTILE_RUNTIME_SCENE。
+- RuntimeShip 新增 projectile_spawned 信号。
+- WeaponRuntime fired 后，RuntimeShip 现在会自动创建 ProjectileRuntime。
+- ship_movement_test HUD 新增弹丸生成事件计数。
+
+Projectile 行为：
+- ProjectileRuntime.setup() 接收世界坐标发射点、世界坐标发射方向和 firepower。
+- Projectile 使用 fired 时的 world_direction 作为固定飞行方向。
+- Projectile 在 _physics_process() 中按 direction * speed * delta 进行世界空间直线飞行。
+- Projectile 生命周期结束后自动 queue_free()。
+- Projectile 保存 firepower，但当前不应用伤害。
+- Projectile 视觉暂时使用简单白色图形。
+
+当前 Prototype 参数：
+- projectile speed = 700。
+- projectile lifetime = 2.0 秒。
+
+结构原则：
+- WeaponRuntime 继续只负责选敌、瞄准和产生 fired 事件。
+- RuntimeShip 负责把 fired 转换为 ProjectileRuntime 生成。
+- ProjectileRuntime 作为 RuntimeShip 的同级节点加入世界，而不是作为飞船子节点，因此发射后不会继续跟随飞船自身的平移或旋转。
+- 已发射 Projectile 拥有独立生命周期。
+- Projectile 不修改 ShipData。
+- firepower 继续来自 WeaponModuleDefinition / Excel 数据链。
+- speed / lifetime 当前仍属于 ProjectileRuntime Prototype 参数，尚未写入 Excel 数据真源。
+- 飞船模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+当前范围：
+- 已完成 Projectile 生成。
+- 已完成直线飞行。
+- 已完成生命周期自动销毁。
+- 尚未加入碰撞。
+- 尚未加入命中检测。
+- 尚未加入伤害。
+- 尚未加入阵营过滤、穿透、爆炸、跟踪或弹丸继承飞船速度。
+
+
+========================================
 v0.17
 ========================================
 

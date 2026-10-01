@@ -8,7 +8,10 @@ signal weapon_fired(
 	world_direction: Vector2
 )
 
+signal projectile_spawned(projectile: ProjectileRuntime)
+
 const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tscn")
+const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile_runtime.tscn")
 
 @export var cell_size := 36.0
 @export var acceleration_scale := 180.0
@@ -128,6 +131,21 @@ func _on_weapon_runtime_fired(
 		world_position,
 		world_direction
 	)
+	_spawn_projectile(world_position, world_direction, firepower)
+
+func _spawn_projectile(
+	world_position: Vector2,
+	world_direction: Vector2,
+	firepower: float
+) -> void:
+	var projectile_parent := get_parent()
+	if projectile_parent == null:
+		return
+
+	var projectile := PROJECTILE_RUNTIME_SCENE.instantiate() as ProjectileRuntime
+	projectile_parent.add_child(projectile)
+	projectile.setup(world_position, world_direction, firepower)
+	projectile_spawned.emit(projectile)
 
 func _calculate_core_origin_offset() -> Vector2:
 	core_origin_valid = false

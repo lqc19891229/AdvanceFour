@@ -6,7 +6,7 @@
 
 当前文件：
 - ship_runtime.tscn：运行时飞船场景。
-- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向、基于自身朝向的推进，以及创建和管理 WeaponRuntime。
+- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向、基于自身朝向的推进，以及创建和管理 WeaponRuntime，并把武器 fired 事件转换为 ProjectileRuntime。
 
 核心关系：
 ShipData = 飞船结构与静态属性数据。
@@ -22,7 +22,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 不读取 JSON，不负责存档。
 - RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进、核心中心原点，以及自动炮塔 WeaponRuntime；暂不包含 Projectile、命中、伤害与模块失效。
+- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进、核心中心原点，以及自动炮塔 WeaponRuntime 和 ProjectileRuntime 生成；暂不包含碰撞、命中、伤害与模块失效。
 
 飞船结构原则：
 - 模块允许分开放置。
@@ -58,4 +58,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - request_fire() 继续保留为调试接口，可让当前所有 WeaponRuntime 各执行一次 fire_once()。
 - ShipRuntime 通过 weapon_fired 信号向上转发单个武器的发射事件。
 - get_weapon_count() 返回当前创建的 WeaponRuntime 数量。
-- 当前阶段只建立武器运行时与发射事件，不生成弹丸。
+- WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime。
+- ProjectileRuntime 会加入 RuntimeShip 的父节点，而不是成为 RuntimeShip 子节点，因此发射后不会继续跟随飞船自身平移或旋转。
+- RuntimeShip 新增 projectile_spawned 信号，用于调试或后续战斗层观察弹丸生成。
+- 当前 Projectile 只负责世界空间直线飞行与生命周期自动销毁，不包含碰撞和伤害。

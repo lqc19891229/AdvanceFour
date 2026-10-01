@@ -12,6 +12,7 @@ var runtime_ship: ShipRuntime
 var player_controller: PlayerShipController
 var target_dummy: WeaponTargetDummy
 var weapon_fire_events := 0
+var projectile_spawn_events := 0
 var last_firepower := 0.0
 var last_fire_direction := Vector2.ZERO
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 	runtime_ship.position = get_viewport_rect().size * 0.5
 	runtime_ship.setup(ship)
 	runtime_ship.weapon_fired.connect(_on_weapon_fired)
+	runtime_ship.projectile_spawned.connect(_on_projectile_spawned)
 
 	player_controller = PLAYER_CONTROLLER_SCENE.instantiate() as PlayerShipController
 	add_child(player_controller)
@@ -56,6 +58,9 @@ func _on_weapon_fired(
 	last_firepower = firepower
 	last_fire_direction = world_direction
 
+func _on_projectile_spawned(_projectile: ProjectileRuntime) -> void:
+	projectile_spawn_events += 1
+
 func _build_info_text() -> String:
 	return """RuntimeShip / WeaponRuntime 自动炮塔测试
 W / ↑：沿舰首前进
@@ -77,10 +82,11 @@ D / →：右转
 朝向：%.1f°
 旋转中心：%s
 武器触发事件：%d
+弹丸生成事件：%d
 最近武器火力：%.1f
 最近发射方向：(%.2f, %.2f)
 
-当前阶段：炮塔自动选目标、转向并触发 fired；尚未生成弹丸。
+当前阶段：炮塔自动选目标、转向并生成 Projectile；Projectile 直线飞行并在生命周期结束后自动销毁。
 结构规则：模块可分开放置，不要求相邻、连通或填满格子。""" % [
 		ship.modules.size(),
 		runtime_ship.get_weapon_count(),
@@ -92,6 +98,7 @@ D / →：右转
 		runtime_ship.get_heading_degrees(),
 		"舰桥核心" if runtime_ship.has_core_origin() else "未找到核心（回退到网格原点）",
 		weapon_fire_events,
+		projectile_spawn_events,
 		last_firepower,
 		last_fire_direction.x,
 		last_fire_direction.y
