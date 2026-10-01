@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.22
+《前进四》项目目录规划 V0.23
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -102,4 +102,6 @@ res://
 27. WeaponRuntime 对支持 get_aim_point() 的目标使用运行时瞄准点；RuntimeShip 返回距离炮塔最近的未 destroyed 模块中心，已摧毁模块不再作为瞄准点。
 28. 武器模块 destroyed 后，RuntimeShip 通过 module uid 找到对应 WeaponRuntime 并 set_operational(false)，停止搜索、瞄准与开火。
 29. RuntimeShip.get_effective_thrust() 只统计未 destroyed 的动力模块；get_effective_acceleration_score() 使用 effective_thrust / 总质量，因此动力模块摧毁会降低实际推进能力。
-30. 当前 v0.22 尚未实现能源模块失效、核心击毁沉没、防护减伤或其他模块功能联动；ShipData 静态统计继续保持不变。
+30. RuntimeShip 核心模块 destroyed 后视作整船战斗失败：进入 removed_from_battle，停止移动与全部武器，发出 destroyed，并 queue_free() 从战斗场景移除。
+31. 核心击毁只结束当前 RuntimeShip 战斗实例，不改写 ShipData 或飞船设计存档；分离模块、空格与不连通结构规则保持不变。
+32. 当前 v0.23 尚未实现能源模块失效、防护减伤或其他模块功能联动；ShipData 静态统计继续保持不变。
