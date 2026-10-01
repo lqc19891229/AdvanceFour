@@ -2,18 +2,17 @@ class_name WeaponRuntime
 extends Node2D
 
 signal fired(
-	weapon_runtime: WeaponRuntime,
 	module_instance: ShipModuleInstance,
 	firepower: float,
 	world_position: Vector2,
 	world_direction: Vector2
 )
 
-var owner_ship: ShipRuntime
+var owner_ship: Node2D
 var module_instance: ShipModuleInstance
 var weapon_definition: WeaponModuleDefinition
 
-func setup(ship: ShipRuntime, module: ShipModuleInstance, local_position: Vector2) -> void:
+func setup(ship: Node2D, module: ShipModuleInstance, local_position: Vector2) -> void:
 	owner_ship = ship
 	module_instance = module
 	weapon_definition = module.definition as WeaponModuleDefinition
@@ -28,7 +27,6 @@ func fire_once() -> void:
 
 	var direction := Vector2.UP.rotated(global_rotation).normalized()
 	fired.emit(
-		self,
 		module_instance,
 		weapon_definition.firepower,
 		global_position,
