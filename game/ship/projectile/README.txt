@@ -32,7 +32,7 @@ RuntimeShip
   hit(target: Node2D, firepower: float)
   其中 firepower 表示该次碰撞前 Projectile 当前携带的伤害。
 - RuntimeShip 仍会把 ProjectileRuntime.hit 转发为 projectile_hit 信号，但该转发现在只用于观察 / 调试，不再是伤害生效的必要链路。
-- Projectile 保存 source_owner，并忽略 source_owner 自身及其子节点，避免基础自伤碰撞。
+- Projectile 保存 source_owner；每次 swept ray 开始前会递归收集 source_owner 及其子节点中的 CollisionObject2D RID，并直接加入 ray exclude，避免大型飞船的自身模块逐个占用 max_impacts_per_step。_belongs_to_source() 仍作为额外兜底过滤。
 
 为什么不作为 RuntimeShip 子节点：
 - Projectile 发射后应继续独立存在。
@@ -57,6 +57,7 @@ RuntimeShip
 - _physics_process() 中计算 direction * speed * delta 对应的本帧路径，并沿整段路径做连续射线查询。
 - 生命周期结束或 remaining_damage <= 0 后 queue_free()。
 - 命中 Defense 模块时，先应用 protection 百分比减伤；减伤后的伤害再进入模块 HP。只要模块被本次伤害摧毁且仍有剩余伤害，就继续向内穿透；模块未被摧毁、protection 完全抵消伤害或刚好耗尽伤害时 Projectile 结束。
+- 如果某次命中使目标 RuntimeShip 进入 removed_from_battle（当前即核心模块被摧毁），该 Projectile 会立即结束，不会在同一物理帧继续伤害这艘已退出战斗的飞船其他模块。
 - 当前用简单白色图形显示弹丸，后续可替换正式视觉。
 
 当前范围：

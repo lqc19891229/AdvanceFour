@@ -68,7 +68,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
 - ProjectileRuntime 使用本帧 swept ray 选择弹道上最近碰撞；命中 ShipModuleRuntime 时调用 apply_projectile_damage()。任意模块被本次伤害摧毁且有 leftover 时，Projectile 会继续沿原弹道向后传播。
 - RuntimeShip 仍通过 projectile_hit(target, firepower) 向上转发命中事件，但该转发只用于观察 / 调试，不再负责实际扣血。
-- RuntimeShip 创建 Projectile 时会把 self 作为 source_owner 传入，用于 Projectile 基础自伤过滤。
+- RuntimeShip 创建 Projectile 时会把 self 作为 source_owner 传入；Projectile swept ray 会预先排除 source_owner 整棵节点树中的 CollisionObject2D，避免大型飞船自身模块消耗穿透查询次数。
 - 因为伤害由 ProjectileRuntime 自身处理，发射者 RuntimeShip 即使已因核心摧毁而 queue_free()，已经发射出去的 Projectile 仍可正常命中并造成伤害。
 
 模块运行时：
@@ -99,6 +99,6 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - get_effective_thrust() 只统计“未 destroyed 且已供电”的动力模块；get_effective_acceleration_score() = effective_thrust / 总质量。
 - get_aim_point(from_world_position) 会从未 destroyed 的 ShipModuleRuntime 中选择距离炮塔最近的模块中心作为瞄准点。
 - has_operational_modules() 用于让 WeaponRuntime 判断目标飞船是否还有可攻击模块。
-- 核心模块 destroyed 时，RuntimeShip 会先发出 module_destroyed，再进入 removed_from_battle 状态。
+- 核心模块 destroyed 时，RuntimeShip 会先发出 module_destroyed，再进入 removed_from_battle 状态；造成该次核心摧毁的 Projectile 检测到 removed_from_battle 后立即结束，不再继续穿透该船其他模块。
 - removed_from_battle 后会清零控制输入和速度、停用全部 WeaponRuntime、发出 destroyed 信号，并 queue_free() 从战斗场景移除。
 - is_removed_from_battle() 可读取该状态；进入该状态后 has_operational_modules() 固定返回 false。

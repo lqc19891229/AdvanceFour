@@ -53,6 +53,7 @@ func _sweep_move(travel_distance: float) -> void:
 	var end := start + direction * travel_distance
 	var cursor := start
 	var excluded_rids: Array[RID] = [get_rid()]
+	_append_source_exclusions(excluded_rids)
 	var impacts := 0
 
 	while not finished and remaining_damage > 0.0 and impacts < max_impacts_per_step:
@@ -83,7 +84,6 @@ func _sweep_move(travel_distance: float) -> void:
 
 		if _belongs_to_source(candidate):
 			cursor = hit_position + direction * 0.01
-			impacts += 1
 			continue
 
 		var incoming_damage := remaining_damage
@@ -99,6 +99,10 @@ func _sweep_move(travel_distance: float) -> void:
 
 		hit.emit(candidate, incoming_damage)
 		impacts += 1
+
+		if _is_target_ship_removed(candidate):
+			_finish()
+			return
 
 		if leftover <= 0.0:
 			_finish()
@@ -118,6 +122,20 @@ func _finish() -> void:
 	finished = true
 	queue_free()
 
+func _append_source_exclusions(excluded_rids: Array[RID]) -> void:
+	if source_owner == null or not is_instance_valid(source_owner):
+		return
+
+	var stack: Array[Node] = []
+	stack.append(source_owner)
+
+	while not stack.is_empty():
+		var node := stack.pop_back() as Node
+		if node is CollisionObject2D:
+			excluded_rids.append((node as CollisionObject2D).get_rid())
+		for child in node.get_children():
+			stack.append(child)
+
 func _belongs_to_source(candidate: Node) -> bool:
 	if source_owner == null or not is_instance_valid(source_owner):
 		return false
@@ -126,6 +144,14 @@ func _belongs_to_source(candidate: Node) -> bool:
 		or source_owner.is_ancestor_of(candidate)
 		or candidate.is_ancestor_of(source_owner)
 	)
+
+func _is_target_ship_removed(candidate: Node) -> bool:
+	var node: Node = candidate
+	while node != null:
+		if node is ShipRuntime:
+			return (node as ShipRuntime).is_removed_from_battle()
+		node = node.get_parent()
+	return false
 
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, 3.0, Color.WHITE)
