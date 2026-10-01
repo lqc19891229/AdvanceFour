@@ -33,9 +33,9 @@ module_damaged / module_destroyed
 - 模块 HP 归零后禁用该模块碰撞体，并发出 destroyed。
 - 防护模块的保护是空间性的：只保护实际位于其后方、且弹道会先穿过该装甲位置的模块。
 - 某块装甲 destroyed 后，只开放该块碰撞区域对应的局部缺口；其他装甲继续保持独立碰撞与独立 HP。
-- ShipModuleRuntime.apply_projectile_damage(amount) 会在装甲被本次伤害摧毁时返回未被装甲 HP 吸收的剩余伤害。
-- ProjectileRuntime 收到 remaining_damage > 0 后会继续沿同一弹道向内查询，因此高伤害弹丸不会被低剩余 HP 装甲无条件完全吃掉。
-- 非防护模块当前不返回剩余伤害；即使被 overkill，也会终止该发 Projectile。
+- ShipModuleRuntime.apply_projectile_damage(amount) 对所有模块采用同一 overkill 规则：模块先吸收最多等于当前 HP 的伤害；如果本次伤害将模块摧毁，则返回 incoming_damage - hp_before。
+- ProjectileRuntime 收到 remaining_damage > 0 后会继续沿同一弹道向内查询，因此高伤害弹丸既可击穿低血量装甲，也可继续击穿低血量武器、动力、能源、功能或核心模块。
+- 如果模块没有被摧毁，或 incoming_damage == hp_before 刚好耗尽，则返回 0，Projectile 在该模块处结束。
 - RuntimeShip 会转发 module_damaged / module_destroyed。
 
 暂不包含：
