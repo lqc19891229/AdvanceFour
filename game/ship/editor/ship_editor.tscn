@@ -71,7 +71,7 @@ script = ExtResource("2")
 module_database = ExtResource("3_db")
 
 [node name="RightPanel" type="PanelContainer" parent="MainLayout"]
-custom_minimum_size = Vector2(270, 0)
+custom_minimum_size = Vector2(290, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
 
@@ -96,6 +96,16 @@ layout_mode = 2
 size_flags_vertical = 3
 text = "..."
 autowrap_mode = 2
+
+[node name="SaveButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "保存设计"
+
+[node name="LoadButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "加载设计"
 
 [node name="RotateButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 42)
