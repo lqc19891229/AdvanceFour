@@ -18,6 +18,38 @@
 
 
 ========================================
+v0.25.1
+========================================
+
+重构：
+- 修正 RuntimeShip.get_operational_weapon_count() 的语义。
+- get_operational_weapon_count() 现在只统计 WeaponRuntime.is_operational() == true 的武器，也就是“武器模块本身尚未 destroyed”的数量。
+- 新增 get_active_weapon_count()，统计 WeaponRuntime.is_active() == true 的武器，也就是 operational && powered、当前真正可工作的武器数量。
+- get_weapon_count() 继续表示 RuntimeShip 创建的 WeaponRuntime 总数量。
+
+语义约定：
+- total weapon = 已创建武器总数，不关心 destroyed / powered。
+- operational weapon = 结构上仍存活的武器，不关心当前供电。
+- active weapon = 结构存活且当前已供电，可以搜索、瞄准和开火的武器。
+- 因此能源不足时可能出现：
+  - total = 4
+  - operational = 3
+  - active = 1
+- 能源恢复后 active 可以回升，但 operational 不会因供电变化而改变。
+- destroyed 武器会让 operational 与 active 都减少。
+
+开发测试：
+- ship_movement_test HUD 将“目标可用武器”和“目标存活武器 / 总武器”分开显示。
+- 目标可用武器使用 get_active_weapon_count()。
+- 目标存活武器使用 get_operational_weapon_count()。
+
+兼容性：
+- 不修改 WeaponRuntime operational / powered / is_active() 的既有定义。
+- 不修改 v0.25 模块供电优先级与部分负载切除逻辑。
+- 不修改 ShipData、Excel、JSON cache 或 .tres 数据结构。
+
+
+========================================
 v0.25
 ========================================
 
