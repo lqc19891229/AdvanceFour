@@ -50,7 +50,8 @@ func apply_projectile_damage(amount: float) -> float:
 	if is_destroyed():
 		return incoming
 
-	var damage_after_protection := maxf(incoming - get_protection(), 0.0)
+	var protection_percent := clampf(get_protection(), 0.0, 100.0)
+	var damage_after_protection := incoming * (1.0 - protection_percent / 100.0)
 	if damage_after_protection <= 0.0:
 		return 0.0
 
