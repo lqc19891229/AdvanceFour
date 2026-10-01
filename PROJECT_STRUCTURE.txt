@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.16
+《前进四》项目目录规划 V0.17
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -24,7 +24,8 @@ res://
 │     └─ dev/                   # 飞船系统独立开发测试
 │        ├─ README.txt
 │        ├─ ship_movement_test.gd
-│        └─ ship_movement_test.tscn
+│        ├─ ship_movement_test.tscn
+│        └─ weapon_target_dummy.gd
 │
 ├─ addons/
 │  └─ advance_four_data_importer/
@@ -78,4 +79,6 @@ res://
 
 14. 飞船控制来源与运行实体分离：PlayerShipController 只提供控制输入，RuntimeShip 负责执行运动；两者统一在物理帧更新，后续 AIController 可复用同一控制接口。
 15. 武器静态数据继续由 ShipData / WeaponModuleDefinition 提供；RuntimeShip 为每个武器模块创建 WeaponRuntime，WeaponRuntime 只负责运行时发射事件，不复制静态模块数据。
-16. 当前 v0.16 武器阶段只建立 request_fire() → WeaponRuntime.fire_once() → weapon_fired 信号链，不包含 Projectile、命中、伤害或模块失效。
+16. 武器运行时采用可旋转炮塔：rotation_quarters 只定义初始朝向，战斗中 WeaponRuntime 可独立转向目标。
+17. WeaponRuntime 默认在 RuntimeShip.weapon_target_group 指定的组中搜索攻击范围内最近目标，并在瞄准完成、冷却结束后自动开火；玩家控制器不负责武器瞄准或开火。
+18. 当前 v0.17 的 attack_range / fire_interval / turn_speed_degrees / fire_angle_tolerance_degrees 仍是 WeaponRuntime Prototype 参数，尚未纳入 Excel 数据真源；当前阶段仍不包含 Projectile、命中、伤害或模块失效。
