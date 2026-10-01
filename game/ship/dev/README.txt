@@ -23,11 +23,12 @@
 3. 测试场景会实例化 PlayerShipController 并绑定 RuntimeShip。
 4. 使用 W / ↑ 前进，S / ↓ 倒车，A / ← 左转，D / → 右转。
 5. 场景会在玩家右上方创建第二艘 RuntimeShip，并将其加入 enemy_targets。
-6. 玩家炮塔会自动瞄准目标飞船核心方向并发射 Projectile。
+6. 玩家炮塔会自动选择目标飞船距离自身最近的存活模块中心进行瞄准并发射 Projectile。
 7. 目标飞船每个模块都拥有独立 ShipModuleRuntime 碰撞体与独立 HP。
 8. Projectile 命中哪个模块，就对哪个 ShipModuleRuntime 调用 apply_damage(firepower)。
-9. 模块 HP 归零后会发出 module_destroyed、禁用该模块碰撞体，并在飞船绘制中显示为深灰色。
-10. HUD 会显示模块受伤事件、模块摧毁事件、最近受伤模块名称、剩余 HP 和最近伤害值。
+9. 武器模块 HP 归零后，对应 WeaponRuntime 停止工作；动力模块 HP 归零后，目标飞船 effective_thrust 下降。
+10. 已摧毁模块不再作为瞄准点，炮塔会继续转向其他存活模块。
+11. HUD 会显示目标可用武器数量、有效推力、模块受伤 / 摧毁事件、最近模块 HP 和伤害值。
 
 飞船结构原则：
 - 模块可以分开放置。
