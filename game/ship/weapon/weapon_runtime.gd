@@ -93,6 +93,8 @@ func _find_nearest_target() -> Node2D:
 		var node := candidate as Node2D
 		if node == owner_ship or not is_instance_valid(node):
 			continue
+		if node.has_method("has_operational_modules") and not node.has_operational_modules():
+			continue
 
 		var aim_point := _get_target_aim_point(node)
 		var distance_squared := global_position.distance_squared_to(aim_point)
