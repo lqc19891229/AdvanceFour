@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://game/combat/battle.gd" id="1"]
+[ext_resource type="Script" path="res://game/combat/battle_backdrop.gd" id="2"]
 
 [sub_resource type="StyleBoxFlat" id="HUDStyle"]
 bg_color = Color(0.055, 0.075, 0.105, 0.92)
@@ -37,6 +38,10 @@ mouse_filter = 2
 color = Color(0.03, 0.045, 0.065, 1)
 
 [node name="World" type="Node2D" parent="."]
+
+[node name="Backdrop" type="Node2D" parent="World"]
+z_index = -10
+script = ExtResource("2")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 

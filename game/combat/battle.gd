@@ -204,6 +204,8 @@ func _update_hud() -> void:
 	var energy_output := 0.0
 	var energy_cost := 0.0
 	var thrust := 0.0
+	var speed := 0.0
+	var location := camera.global_position
 	if _player_alive():
 		for module in player.module_runtimes:
 			if not module.is_destroyed():
@@ -215,6 +217,8 @@ func _update_hud() -> void:
 		energy_output = player.get_effective_energy_output()
 		energy_cost = player.get_effective_energy_cost()
 		thrust = player.get_effective_thrust()
+		speed = player.get_speed()
+		location = player.global_position
 	var status := "交战中"
 	match phase:
 		Phase.PREPARING:
@@ -235,10 +239,12 @@ func _update_hud() -> void:
 场上敌舰：%d  本波待生成：%d  击毁：%d
 舰桥 HP：%.0f / %.0f  存活模块：%d
 可用武器：%d  供能 / 需求：%.0f / %.0f  有效推力：%.0f
-WASD / 方向键驾驶｜R 重开｜Esc 返回改船""" % [
+速度：%.1f px/s  坐标：(%.1f, %.1f)
+W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % [
 		design_source, status, maxi(wave_index + 1, 0), wave_enemy_counts.size(),
 		enemies.size(), remaining, defeated_enemies,
-		core_hp, core_max_hp, active_modules, weapons, energy_output, energy_cost, thrust
+		core_hp, core_max_hp, active_modules, weapons, energy_output, energy_cost, thrust,
+		speed, location.x, location.y
 	]
 
 func retry() -> void:
