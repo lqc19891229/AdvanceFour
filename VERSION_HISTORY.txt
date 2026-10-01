@@ -18,6 +18,59 @@
 
 
 ========================================
+v0.26
+========================================
+
+新增：
+- RuntimeShip 新增 get_module_max_hp(module)。
+- ShipModuleRuntime 新增 is_armor()。
+- ShipModuleRuntime 新增 get_protection()。
+- ship_movement_test HUD 新增最近模块 max HP 与 protection 显示。
+
+防护模块 / protection 正式语义：
+- DefenseModuleDefinition.protection 不再作为“全船防御总值”参与统一减伤。
+- protection 表示该块装甲模块自身额外耐久。
+- 当前公式：
+  armor_max_hp = prototype_module_hp + max(protection, 0)
+- 非防护模块继续使用 prototype_module_hp。
+- 当前轻型装甲 protection = 10，因此在 prototype_module_hp = 20 时，该块装甲运行时 max HP = 30。
+
+装甲掩体规则：
+- 防护模块是实体模块，不是全船抽象护甲条。
+- Projectile 与飞船模块的空间位置决定实际保护关系。
+- 弹丸命中弹道上首先接触到的 ShipModuleRuntime 后，对该模块 apply_damage(firepower)，随后 Projectile 销毁。
+- 如果前方是存活装甲，则伤害落在这块装甲上，后方模块本次不受伤。
+- 某一块装甲 HP 归零后，该 ShipModuleRuntime 的 CollisionShape2D 按既有规则 deferred disabled。
+- 后续从相同路径射来的 Projectile 可以穿过这块已经失效的装甲位置，继续命中其后方模块。
+- 只需要被射穿的那一块装甲 destroyed；其他位置的装甲继续正常挡弹。
+- 装甲不要求与被保护模块相邻，也不依赖全船连通性；是否形成保护只看实际弹道是否先撞到它。
+
+单发穿透规则：
+- 当前 Projectile 命中第一个有效模块后立即 queue_free()。
+- 因此“摧毁装甲的这一发”不会把溢出伤害继续传给后方模块。
+- 必须由后续 Projectile 穿过已经打开的装甲缺口攻击内部模块。
+- 当前尚未实现穿甲弹、残余伤害、连续穿透或爆炸范围伤害。
+
+能源关系：
+- 防护模块当前属于被动实体装甲。
+- 是否 powered 不影响其物理碰撞、HP 或 protection 耐久。
+- v0.25 的模块供电分配仍保留 Defense 优先级，但当前防护战斗效果不依赖供电；后续如果加入主动护盾等系统再区分。
+
+数据原则：
+- 不新增 Excel 字段。
+- 继续使用现有 Defense.protection。
+- 不修改 ShipData 存档格式。
+- ShipData.get_protection() 继续作为设计阶段静态总和；战斗中不把这个总和作为全船统一减伤。
+- 不修改模块可分离、不相邻、不连通、允许空格的结构规则。
+
+当前限制：
+- Projectile 仍使用 Area2D 离散移动 / 碰撞，尚未实现 swept collision，高速弹丸仍存在 tunneling 风险。
+- 当前模块碰撞仍按旋转后矩形 footprint 生成。
+- 尚未加入正式模块耐久 Excel 字段；prototype_module_hp 仍是非防护模块基础 HP。
+- 尚未加入伤害类型、穿甲、爆炸、溅射或残骸。
+
+
+========================================
 v0.25.1
 ========================================
 
