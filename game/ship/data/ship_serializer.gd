@@ -36,20 +36,23 @@ static func from_dictionary(data: Dictionary, module_database: ModuleDatabase) -
 		if typeof(row) != TYPE_DICTIONARY:
 			return _failure("第 %d 个模块数据格式无效" % index)
 
-		var module_id := StringName(String(row.get("module_id", "")))
-		if module_id.is_empty():
+		var module_id_text := String(row.get("module_id", ""))
+		if module_id_text.is_empty():
 			return _failure("第 %d 个模块缺少 module_id" % index)
 
+		var module_id := StringName(module_id_text)
 		var definition := module_database.get_by_id(module_id)
 		if definition == null:
-			return _failure("找不到模块定义：%s" % module_id)
+			return _failure("找不到模块定义：%s" % module_id_text)
 
 		var pos := Vector2i(int(row.get("x", 0)), int(row.get("y", 0)))
 		var rotation := posmod(int(row.get("rotation", 0)), 4)
 		var check := ship.can_place(definition, pos, rotation)
 		if not check["ok"]:
-			return _failure("无法恢复模块 %s：%s" % [module_id, check["reason"]])
+			return _failure("无法恢复模块 %s：%s" % [module_id_text, check["reason"]])
 
+		# 恢复时沿用 ShipData 的放置规则：
+		# 只禁止占用格重叠和重复核心，不要求模块相邻、连通或填满格子。
 		ship.place(definition, pos, rotation)
 
 	return {
