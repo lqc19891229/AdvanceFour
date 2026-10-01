@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.24
+《前进四》项目目录规划 V0.25
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -109,4 +109,7 @@ res://
 34. RuntimeShip.get_effective_energy_output() 只统计未 destroyed 的能源模块；get_effective_energy_cost() 只统计未 destroyed 模块的 energy_cost。
 35. 当有效供能低于有效耗能时，RuntimeShip 进入能源不足状态：所有 WeaponRuntime powered=false，推进有效推力归零；飞船不会因此直接退出战斗。
 36. WeaponRuntime 将 operational（结构是否存活）与 powered（是否有能源）分离，能源恢复不会复活已经 destroyed 的武器。
-37. 当前 v0.24 尚未实现模块级供电优先级、部分负载切除、防护减伤或正式伤害类型；ShipData 静态统计继续保持不变。
+37. RuntimeShip 使用 module_powered_by_uid 记录每个存活模块的运行时供电状态；供能不足时按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 固定优先级逐个分配能源，同类型按 module.uid 升序稳定分配。
+38. is_energy_sufficient() 只表示是否足以覆盖全部存活模块需求；即使为 false，仍可能有部分模块保持 powered=true。
+39. get_powered_energy_cost() 返回当前实际已供电负载；动力只统计 powered 的存活动力模块，WeaponRuntime.powered 也按对应武器模块单独设置。
+40. 当前 v0.25 尚未实现玩家自定义供电优先级、手动开关模块、防护减伤或正式伤害类型；ShipData 静态统计继续保持不变。
