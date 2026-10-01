@@ -5,6 +5,8 @@
 - 飞船相关测试优先放在本目录，而不是放到 res:// 根级 dev/。
 
 当前测试：
+- ship_ai_test.gd / .tscn：敌舰 AI 双向交火测试；读取已保存设计，未找到存档时使用数据库中的示例模块构造测试船；存在但损坏 / 非法的存档会明确提示修正，不静默替换。
+- ship_regression_test.gd：Godot 无界面回归入口，验证 AI 移动、选敌与失效目标、数据驱动 HP、动力摧毁、双向实际命中、核心移除、旧 HUD 及编辑器往返。
 - ship_movement_test.tscn：读取 user://ships/test_ship.json，并实例化 RuntimeShip 做移动、朝向和武器运行时最小验证。
 - ship_movement_test.gd：负责加载 ShipData、创建玩家 RuntimeShip、创建第二艘 RuntimeShip 作为模块受击目标、绑定 PlayerShipController，以及显示测试信息。
 - weapon_target_dummy.gd：保留的通用 DamageReceiver 测试目标；当前 ship_movement_test 的主要目标已改为第二艘 RuntimeShip。
@@ -42,3 +44,14 @@
 - 模块不要求相邻或连通。
 - 格子不要求全部填满。
 - 仍然禁止模块占用格重叠。
+
+AI 交火测试：
+- 在编辑器点击“敌舰 AI 测试”，或单独 F6 运行 ship_ai_test.tscn。
+- WASD / 方向键控制玩家，敌舰自动追踪；双方自动炮塔攻击另一组目标。
+- R 重开测试，Esc 返回编辑器；玩家核心摧毁后相机留在场景中供查看结果。
+- 敌舰目前复用玩家布局，运行时 HP 和供电状态彼此独立；没有奖励、波次或战后维修。
+
+自动检查：
+- 在项目根目录执行 python3 tools/verify_project.py --godot /path/to/godot。
+- 使用 Godot 4.6.1，自动检查在临时用户目录运行；脚本错误即使引擎退出码为 0 也判为失败。
+- GitHub Actions 在 PR 和 main 推送时运行同一检查。

@@ -19,6 +19,7 @@ ModuleInstance   = 某艘船上安装的具体模块实例
 ShipData         = 一艘飞船的结构数据
 ShipRuntime      = ShipData 在游戏场景中的运行实体
 PlayerShipController = 玩家输入到 RuntimeShip 控制接口的适配层
+AIShipController     = 追踪目标与保持距离到同一 RuntimeShip 控制接口的适配层
 WeaponRuntime     = 单个武器模块进入游戏世界后的运行时执行对象
 ProjectileRuntime = 武器发射后独立存在、飞行并按生命周期销毁的弹丸对象
 DamageReceiver    = 接收数值伤害、维护 HP 并发出 damaged / destroyed 的运行时组件
@@ -33,7 +34,7 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 控制职责：
 - RuntimeShip 负责执行移动，不读取玩家键盘。
 - PlayerShipController 负责读取玩家输入并调用 RuntimeShip.set_control_input()。
-- 后续 AIController 可以复用同一 RuntimeShip 控制接口。
+- AIShipController 复用同一 RuntimeShip 控制接口，移动仍受模块有效推力及供电状态影响。
 
 
 武器运行时规则：

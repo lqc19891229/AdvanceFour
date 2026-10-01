@@ -119,10 +119,13 @@ func _find_nearest_target() -> Node2D:
 
 	return best_target
 
-func _is_target_valid(candidate: Node2D) -> bool:
+# A destroyed ship can be freed between physics frames; validate before using its type.
+func _is_target_valid(candidate) -> bool:
 	if candidate == null or not is_instance_valid(candidate):
 		return false
 	if not candidate.is_inside_tree():
+		return false
+	if candidate.is_queued_for_deletion():
 		return false
 	if not candidate.is_in_group(target_group):
 		return false

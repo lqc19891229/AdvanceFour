@@ -91,11 +91,22 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "飞船属性"
 
-[node name="StatsLabel" type="Label" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
+[node name="StatsScroll" type="ScrollContainer" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StatsLabel" type="Label" parent="MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "..."
 autowrap_mode = 2
+
+[node name="AITestButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "敌舰 AI 测试"
 
 [node name="SaveButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 42)
