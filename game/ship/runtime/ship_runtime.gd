@@ -16,6 +16,7 @@ signal module_damaged(
 	current_hp: float
 )
 signal module_destroyed(module_instance: ShipModuleInstance)
+signal destroyed
 
 const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tscn")
 const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile_runtime.tscn")
@@ -38,11 +39,13 @@ var weapon_runtimes: Array[WeaponRuntime] = []
 var weapon_runtime_by_uid: Dictionary = {}
 var module_runtimes: Array[ShipModuleRuntime] = []
 var module_runtime_by_uid: Dictionary = {}
+var removed_from_battle := false
 
 func setup(data: ShipData) -> void:
 	_clear_weapon_runtimes()
 	_clear_module_runtimes()
 	ship_data = data
+	removed_from_battle = false
 	velocity = Vector2.ZERO
 	throttle_input = 0.0
 	turn_input = 0.0
@@ -53,10 +56,14 @@ func setup(data: ShipData) -> void:
 	queue_redraw()
 
 func set_control_input(throttle: float, turn: float) -> void:
+	if removed_from_battle:
+		return
 	throttle_input = clampf(throttle, -1.0, 1.0)
 	turn_input = clampf(turn, -1.0, 1.0)
 
 func request_fire() -> void:
+	if removed_from_battle:
+		return
 	for weapon_runtime in weapon_runtimes:
 		if is_instance_valid(weapon_runtime):
 			weapon_runtime.fire_once()
@@ -80,6 +87,8 @@ func get_module_runtime(module: ShipModuleInstance) -> ShipModuleRuntime:
 	return module_runtime_by_uid.get(module.uid, null) as ShipModuleRuntime
 
 func has_operational_modules() -> bool:
+	if removed_from_battle:
+		return false
 	for module_runtime in module_runtimes:
 		if is_instance_valid(module_runtime) and not module_runtime.is_destroyed():
 			return true
@@ -119,6 +128,9 @@ func get_effective_acceleration_score() -> float:
 	var mass := ship_data.get_mass()
 	return 0.0 if mass <= 0.0 else get_effective_thrust() / mass
 
+func is_removed_from_battle() -> bool:
+	return removed_from_battle
+
 func get_speed() -> float:
 	return velocity.length()
 
@@ -132,7 +144,7 @@ func has_core_origin() -> bool:
 	return core_origin_valid
 
 func _physics_process(delta: float) -> void:
-	if ship_data == null:
+	if removed_from_battle or ship_data == null:
 		return
 
 	if not is_zero_approx(turn_input):
@@ -226,13 +238,37 @@ func _on_module_runtime_damaged(
 	module_damaged.emit(module_instance, amount, current_hp)
 
 func _on_module_runtime_destroyed(module_instance: ShipModuleInstance) -> void:
-	if module_instance != null and module_instance.definition is WeaponModuleDefinition:
+	if module_instance == null or module_instance.definition == null:
+		return
+
+	if module_instance.definition is WeaponModuleDefinition:
 		var weapon_runtime := weapon_runtime_by_uid.get(module_instance.uid, null) as WeaponRuntime
 		if weapon_runtime != null and is_instance_valid(weapon_runtime):
 			weapon_runtime.set_operational(false)
 
 	module_destroyed.emit(module_instance)
+
+	if module_instance.definition is CoreModuleDefinition:
+		_remove_from_battle()
+		return
+
 	queue_redraw()
+
+func _remove_from_battle() -> void:
+	if removed_from_battle:
+		return
+
+	removed_from_battle = true
+	throttle_input = 0.0
+	turn_input = 0.0
+	velocity = Vector2.ZERO
+
+	for weapon_runtime in weapon_runtimes:
+		if is_instance_valid(weapon_runtime):
+			weapon_runtime.set_operational(false)
+
+	destroyed.emit()
+	queue_free()
 
 func _on_weapon_runtime_fired(
 	module_instance: ShipModuleInstance,
