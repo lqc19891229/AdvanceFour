@@ -25,7 +25,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
 - 当前包含模块绘制、移动、自动炮塔、Projectile，以及每模块独立碰撞 / HP / damaged / destroyed 事件。
-- 当前模块 destroyed 只表示该模块运行时 HP 归零并禁用碰撞体；暂不影响推力、武器、供能或整船状态。
+- 当前武器模块 destroyed 会停用对应 WeaponRuntime；动力模块 destroyed 会从运行时有效推力中移除。能源、核心等其他模块功能失效尚未实现。
 
 飞船结构原则：
 - 模块允许分开放置。
@@ -77,4 +77,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - 模块 destroyed 后碰撞体会 deferred 禁用，RuntimeShip 将该模块绘制为深灰色。
 - RuntimeShip 通过 module_damaged / module_destroyed 向上转发模块受击状态。
 - 当前 prototype_module_hp = 20，尚未进入 Excel / ModuleDefinition。
-- 当前 destroyed 不删除 ShipData.modules，也不改变模块提供的推力、火力、供能或其他静态统计。
+- destroyed 不删除 ShipData.modules；运行时通过模块存活状态计算有效推力，并通过 UID 映射停用对应 WeaponRuntime。
+- get_effective_thrust() 只统计未 destroyed 的动力模块；get_effective_acceleration_score() = effective_thrust / 总质量。
+- get_aim_point(from_world_position) 会从未 destroyed 的 ShipModuleRuntime 中选择距离炮塔最近的模块中心作为瞄准点。
+- has_operational_modules() 用于让 WeaponRuntime 判断目标飞船是否还有可攻击模块。
