@@ -40,11 +40,12 @@ func _physics_process(delta: float) -> void:
 		_finish()
 		return
 
-	var travel_distance := maxf(speed, 0.0) * delta
+	var step_time := minf(delta, lifetime_remaining)
+	var travel_distance := maxf(speed, 0.0) * step_time
 	if travel_distance > 0.0:
 		_sweep_move(travel_distance)
 
-	lifetime_remaining -= delta
+	lifetime_remaining -= step_time
 	if not finished and lifetime_remaining <= 0.0:
 		_finish()
 
