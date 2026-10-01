@@ -16,22 +16,23 @@
 - is_destroyed()：读取是否已进入 destroyed 状态。
 
 信号：
-- damaged(amount, current_hp)
+- damaged(amount, current_hp)，其中 amount 为本次实际扣除的 HP，不包含超过剩余 HP 的 overkill 部分。
 - destroyed
 
 当前伤害规则：
 - 负数伤害按 0 处理。
 - current_hp 不低于 0。
+- apply_damage() 的 damaged.amount 使用 min(requested_damage, current_hp_before)，因此可以准确区分目标实际吸收伤害与 overkill 剩余。
 - HP 首次降到 0 时发出 destroyed。
 - destroyed 后继续调用 apply_damage() 不再重复生效。
 
 职责边界：
-- ProjectileRuntime 在首次有效命中时，如果目标提供 apply_damage()，会直接调用 apply_damage(firepower)。
+- ProjectileRuntime 命中 ShipModuleRuntime 时调用 apply_projectile_damage(remaining_damage)；该接口可在装甲被摧毁时返回 overkill 剩余伤害。
 - RuntimeShip.projectile_hit 只保留命中事件转发，不再承担实际伤害应用。
 - DamageReceiver 仍只接收数值伤害，不知道 Projectile、WeaponRuntime 或 ShipData。
 - 当前 Prototype 伤害值仍直接使用 firepower。
 - 防护模块不在 DamageReceiver 中做百分比 / 固定值减伤；其 protection 由 RuntimeShip 转换为该装甲模块额外最大 HP。
-- 装甲的“保护”来自空间碰撞顺序：Projectile 命中前方装甲后即销毁，后方模块本次不受伤；装甲 destroyed 后碰撞体失效，后续 Projectile 才能通过该局部位置。
+- 装甲的“保护”来自空间碰撞顺序和自身 HP：装甲优先吸收 incoming_damage；若本次伤害击穿装甲且仍有 leftover，Projectile 会立即携带剩余伤害继续向后方模块传播。
 
 当前范围：
 - 通用 HP。
