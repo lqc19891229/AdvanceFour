@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://dev/ship_movement_test.gd" id="1_script"]
+[ext_resource type="Resource" path="res://data/generated/module_database.tres" id="2_db"]
+
+[node name="ShipMovementTest" type="Node2D"]
+position = Vector2(576, 324)
+script = ExtResource("1_script")
+module_database = ExtResource("2_db")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = -576.0
+offset_top = -324.0
+offset_right = 576.0
+offset_bottom = 324.0
+mouse_filter = 2
+color = Color(0.045, 0.055, 0.075, 1)
+show_behind_parent = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Info" type="Label" parent="CanvasLayer"]
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 410.0
+offset_bottom = 230.0
+text = "正在加载飞船..."
