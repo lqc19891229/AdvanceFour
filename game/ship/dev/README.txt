@@ -5,8 +5,12 @@
 - 飞船相关测试优先放在本目录，而不是放到 res:// 根级 dev/。
 
 当前测试：
-- ship_movement_test.tscn：读取 user://ships/test_ship.json，并用 ShipData 的质量、推力和推重比做最小移动验证。
-- ship_movement_test.gd：测试场景控制与简单模块绘制。
+- ship_movement_test.tscn：读取 user://ships/test_ship.json，并实例化 RuntimeShip 做最小移动验证。
+- ship_movement_test.gd：只负责读取测试输入、加载 ShipData、创建 RuntimeShip 和显示测试信息。
+
+职责说明：
+- 飞船绘制、速度与基础移动逻辑位于 game/ship/runtime/ship_runtime.gd。
+- dev 测试不再维护另一套飞船运动实现。
 
 使用：
 1. 在飞船编辑器中点击“保存设计”。
