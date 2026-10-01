@@ -9,7 +9,7 @@
   Energy / Propulsion / Weapon / Defense / Function / Core。
 
 - import_excel.py
-  读取 Excel、校验字段、根据 Sheet 判断模块类型，并生成 JSON cache。
+  读取 Excel、校验字段、根据 Sheet 判断模块类型，并生成 JSON cache；所有模块基础字段都包含 hp，要求 hp > 0。
 
 - cache/modules.json
   Excel 解析后的中间数据，仅用于导入流程。
@@ -26,3 +26,4 @@
 - 不要把运行时 .tres 放在本目录。
 - 重新导入时，Excel 中已经删除或改名的模块，其旧 .tres 会自动清理；README.txt 等非 .tres 文件不会被删除。
 - 新的数据导入脚本、源表和缓存文件统一放在这里管理。
+- hp 属于六类模块共同基础字段；运行时模块最大 HP 直接来自导入后的 definition.hp。
