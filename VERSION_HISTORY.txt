@@ -18,6 +18,30 @@
 
 
 ========================================
+v0.14
+========================================
+
+新增：
+- RuntimeShip 新增以核心模块（舰桥核心）几何中心作为局部坐标原点。
+- RuntimeShip.rotation 现在围绕舰桥核心中心旋转。
+- ship_movement_test HUD 新增运行时旋转中心显示。
+
+调整：
+- RuntimeShip setup() 时计算核心模块中心对应的 origin_offset。
+- 所有模块绘制位置改为减去 origin_offset，使舰桥核心中心落在 RuntimeShip 的 (0, 0)。
+- RuntimeShip.position 现在表示舰桥核心中心在世界坐标中的位置。
+- 不修改 ShipData.grid_position，不改变飞船设计存档中的原始模块坐标。
+- 如果 ShipData 缺少核心模块，Prototype 回退使用原始网格原点 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
+- PROJECT_STRUCTURE.txt 更新到 V0.14。
+- game/ship/runtime/README.txt、game/ship/dev/README.txt 同步更新。
+
+结构原则：
+- 舰桥核心中心是 RuntimeShip 的逻辑 / 运行时基准点。
+- 该基准点暂不等同于未来可能加入的物理质量中心。
+- 飞船模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+
+========================================
 v0.13
 ========================================
 
