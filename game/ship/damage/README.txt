@@ -27,7 +27,7 @@
 - destroyed 后继续调用 apply_damage() 不再重复生效。
 
 职责边界：
-- ProjectileRuntime 命中 ShipModuleRuntime 时调用 apply_projectile_damage(remaining_damage)；该接口可在装甲被摧毁时返回 overkill 剩余伤害。
+- ProjectileRuntime 命中 ShipModuleRuntime 时调用 apply_projectile_damage(remaining_damage)；该接口在任意飞船模块被本次伤害摧毁时都可返回 overkill 剩余伤害。
 - RuntimeShip.projectile_hit 只保留命中事件转发，不再承担实际伤害应用。
 - DamageReceiver 仍只接收数值伤害，不知道 Projectile、WeaponRuntime 或 ShipData。
 - 当前 Prototype 伤害值仍直接使用 firepower。

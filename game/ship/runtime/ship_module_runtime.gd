@@ -48,12 +48,12 @@ func apply_projectile_damage(amount: float) -> float:
 		return 0.0
 
 	if is_destroyed():
-		return incoming if is_armor() else 0.0
+		return incoming
 
 	var hp_before := get_hp()
 	damage_receiver.apply_damage(incoming)
 
-	if is_armor() and is_destroyed():
+	if is_destroyed():
 		return maxf(incoming - hp_before, 0.0)
 	return 0.0
 
