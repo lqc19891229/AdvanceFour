@@ -101,6 +101,7 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 	d.size = Vector2i(int(row["width"]), int(row["height"]))
 	d.mass = float(row["mass"])
 	d.energy_cost = float(row["energy_cost"])
+	d.hp = float(row["hp"])
 	return d
 
 func _run_excel_parser() -> Dictionary:
