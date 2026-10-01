@@ -18,6 +18,69 @@
 
 
 ========================================
+v0.28
+========================================
+
+调整：
+- DefenseModuleDefinition.protection 的战斗语义由“额外最大 HP”改为“百分比减伤值”。
+- protection = 5 表示该块 Defense 模块每次被 Projectile 命中时减伤 5%。
+- RuntimeShip.get_module_max_hp() 不再给 Defense 模块叠加 protection；当前所有模块统一使用 prototype_module_hp 作为基础最大 HP。
+- ShipModuleRuntime.apply_projectile_damage() 在 Defense 模块上先应用 protection 百分比减伤，再把剩余伤害交给 DamageReceiver。
+- protection 不会被消耗，也不是独立护盾条；只要该 Defense 模块仍存活，每次 Projectile 命中都会重新应用同一个百分比。
+
+百分比减伤公式：
+- Defense：
+  protection_percent = clamp(protection, 0, 100)
+  damage_after_protection = incoming_damage * (1 - protection_percent / 100)
+- 非 Defense：
+  protection = 0
+  damage_after_protection = incoming_damage
+- protection < 0 按 0% 处理。
+- protection > 100 按 100% 处理。
+
+示例 1：
+- Defense protection = 5。
+- 模块 HP = 20。
+- Projectile incoming_damage = 100。
+- 减伤 5%，damage_after_protection = 95。
+- 模块吸收 20 并 destroyed。
+- leftover = 95 - 20 = 75。
+- Projectile 携带 75 继续沿原弹道穿透后方模块。
+
+示例 2：
+- Defense protection = 25。
+- 模块当前 HP = 20。
+- Projectile incoming_damage = 20。
+- 减伤 25%，damage_after_protection = 15。
+- 模块 HP 变为 5。
+- Projectile 结束。
+
+示例 3：
+- Defense protection = 100。
+- Projectile incoming_damage = 50。
+- damage_after_protection = 0。
+- 模块 HP 不变。
+- Projectile 在该装甲处结束。
+
+与穿透系统关系：
+- 所有 ShipModuleRuntime 仍保留 v0.27.1 的 overkill 连续穿透。
+- Defense 模块只是多一个“先按 protection 百分比减伤”的步骤。
+- 若 protection 将伤害降到 0，则没有 HP 伤害，也没有 leftover。
+- 若模块被摧毁，则 leftover 基于减伤后的伤害计算，而不是原始 incoming_damage。
+- 普通模块 protection = 0，因此继续使用原有 HP-overkill 规则。
+
+数据 / 结构：
+- 不新增 Excel 字段，继续使用现有 Defense.protection。
+- 不修改 JSON cache / .tres / ShipData 存档结构。
+- ShipData.get_protection() 继续作为设计阶段 Defense.protection 总和展示；战斗中实际减伤按被命中的单块 Defense 模块独立计算。
+- 模块仍允许分开放置、不相邻、不连通，并允许任意空格。
+
+当前限制：
+- protection 当前只表示百分比减伤，没有独立穿甲值、装甲材质、入射角或伤害类型。
+- Projectile swept collision 仍按中心线 ray 处理，不考虑 Projectile CircleShape 半径。
+
+
+========================================
 v0.27.1
 ========================================
 

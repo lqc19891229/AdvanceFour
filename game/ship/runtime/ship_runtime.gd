@@ -105,11 +105,7 @@ func get_module_runtime(module: ShipModuleInstance) -> ShipModuleRuntime:
 func get_module_max_hp(module: ShipModuleInstance) -> float:
 	if module == null or module.definition == null:
 		return 0.0
-
-	var max_hp := maxf(prototype_module_hp, 0.0)
-	if module.definition is DefenseModuleDefinition:
-		max_hp += maxf((module.definition as DefenseModuleDefinition).protection, 0.0)
-	return max_hp
+	return maxf(prototype_module_hp, 0.0)
 
 func has_operational_modules() -> bool:
 	if removed_from_battle:
