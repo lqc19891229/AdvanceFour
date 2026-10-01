@@ -8,10 +8,11 @@ signal fired(
 	world_direction: Vector2
 )
 
-@export var attack_range := 500.0
-@export var fire_interval := 0.5
-@export var turn_speed_degrees := 180.0
-@export var fire_angle_tolerance_degrees := 6.0
+var attack_range := 0.0
+var fire_interval := 0.0
+var turn_speed_degrees := 0.0
+var fire_angle_tolerance_degrees := 0.0
+var projectile_speed := 0.0
 var target_group: StringName = &"enemy_targets"
 
 var owner_ship: Node2D
@@ -31,6 +32,11 @@ func setup(
 	owner_ship = ship
 	module_instance = module
 	weapon_definition = module.definition as WeaponModuleDefinition
+	attack_range = weapon_definition.attack_range
+	fire_interval = weapon_definition.fire_interval
+	turn_speed_degrees = weapon_definition.turn_speed_degrees
+	fire_angle_tolerance_degrees = weapon_definition.fire_angle_tolerance_degrees
+	projectile_speed = weapon_definition.projectile_speed
 	position = local_position
 	target_group = p_target_group
 	rotation = deg_to_rad(float(module.rotation_quarters) * 90.0)

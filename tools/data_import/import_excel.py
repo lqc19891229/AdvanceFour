@@ -5,7 +5,7 @@ Uses only Python standard library so no openpyxl dependency is required.
 Sheet mapping:
 Energy      -> ENERGY      + energy_output
 Propulsion  -> PROPULSION  + thrust
-Weapon      -> WEAPON      + firepower
+Weapon      -> WEAPON      + firepower / range / interval / turret / projectile parameters
 Defense     -> DEFENSE     + protection
 Function    -> FUNCTION    + no type-specific field
 Core        -> CORE        + no type-specific field
@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 import zipfile
@@ -57,6 +58,10 @@ BASE_COLUMNS = [
     "width", "height", "mass", "energy_cost", "hp",
 ]
 TYPE_FIELDS = ["energy_output", "thrust", "firepower", "protection"]
+WEAPON_FIELDS = [
+    "attack_range", "fire_interval", "turn_speed_degrees",
+    "fire_angle_tolerance_degrees", "projectile_speed",
+]
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
@@ -194,6 +199,8 @@ def parse_sheet(
     required_columns = list(BASE_COLUMNS)
     if type_field:
         required_columns.append(type_field)
+    if module_type == "WEAPON":
+        required_columns.extend(WEAPON_FIELDS)
 
     if not rows:
         errors.append(f"{sheet_name} 工作表为空")
@@ -270,6 +277,23 @@ def parse_sheet(
         }
         if type_field:
             module[type_field] = type_value
+        if module_type == "WEAPON":
+            for field in WEAPON_FIELDS:
+                raw = get(field)
+                if raw == "" or raw is None:
+                    errors.append(f"{sheet_name}!第 {row_idx} 行：{field} 不能为空")
+                value = as_float(raw, field, sheet_name, row_idx, errors)
+                if not math.isfinite(value):
+                    errors.append(f"{sheet_name}!第 {row_idx} 行：{field} 必须是有限数字")
+                elif field == "fire_angle_tolerance_degrees":
+                    if not 0 <= value <= 180:
+                        errors.append(f"{sheet_name}!第 {row_idx} 行：{field} 必须在 0~180 度之间")
+                elif field == "turn_speed_degrees":
+                    if value < 0:
+                        errors.append(f"{sheet_name}!第 {row_idx} 行：{field} 不能为负数")
+                elif value <= 0:
+                    errors.append(f"{sheet_name}!第 {row_idx} 行：{field} 必须 > 0")
+                module[field] = value
         modules.append(module)
 
     if not modules:

@@ -47,6 +47,7 @@ func _run() -> void:
 	var previous_save := FileAccess.get_file_as_bytes(SAVE_PATH) if FileAccess.file_exists(SAVE_PATH) else PackedByteArray()
 	var had_save := FileAccess.file_exists(SAVE_PATH)
 	await _test_ai_and_damage()
+	await _test_weapon_parameters()
 	await _test_projectile_range()
 	if had_save:
 		DirAccess.remove_absolute(SAVE_PATH)
@@ -61,6 +62,72 @@ func _run() -> void:
 	print("Ship regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
 
+func _test_weapon_parameters() -> void:
+	# Compare generated resources to the parsed source, not just script defaults.
+	var payload: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tools/data_import/cache/modules.json"))
+	var fields := ["firepower", "attack_range", "fire_interval", "turn_speed_degrees", "fire_angle_tolerance_degrees", "projectile_speed"]
+	for row in payload["modules"]:
+		if row["module_type"] == "WEAPON":
+			var generated := DATABASE.get_by_id(StringName(row["id"])) as WeaponModuleDefinition
+			for field in fields:
+				_check(generated != null and is_equal_approx(float(generated.get(field)), float(row[field])), "Generated weapon %s must match source field %s" % [row["id"], field])
+
+	# Exercise non-default data so a hardcoded runtime value cannot pass unnoticed.
+	var definition := DATABASE.get_by_id(&"weapon_cannon").duplicate() as WeaponModuleDefinition
+	definition.firepower = 13.0
+	definition.attack_range = 120.0
+	definition.fire_interval = 0.25
+	definition.turn_speed_degrees = 90.0
+	definition.fire_angle_tolerance_degrees = 12.0
+	definition.projectile_speed = 240.0
+	var design := _design()
+	for module in design.modules:
+		if module.definition is WeaponModuleDefinition:
+			module.definition = definition
+	var world := Node2D.new()
+	root.add_child(world)
+	var owner := _spawn(world, Vector2(1000.0, 1000.0))
+	owner.setup(design)
+	owner.set_physics_process(false)
+	var weapon := owner.weapon_runtime_by_uid.values()[0] as WeaponRuntime
+	weapon.set_physics_process(false)
+	weapon.target_group = &"weapon_data_targets"
+	weapon.global_position = Vector2(0.0, 1000.0)
+	weapon.global_rotation = PI / 2.0
+	var shots: Array[ProjectileRuntime] = []
+	owner.projectile_spawned.connect(func(shot: ProjectileRuntime) -> void:
+		shot.set_physics_process(false)
+		shots.append(shot)
+	)
+	var outside := Node2D.new()
+	world.add_child(outside)
+	outside.position = Vector2(0.0, 870.0)
+	outside.add_to_group(&"weapon_data_targets")
+	weapon._physics_process(0.01)
+	_check(weapon.target == null and shots.is_empty(), "The custom 120-pixel range must reject a target 130 pixels away")
+	var inside := Node2D.new()
+	world.add_child(inside)
+	inside.position = Vector2(0.0, 900.0)
+	inside.add_to_group(&"weapon_data_targets")
+	weapon._physics_process(0.5)
+	_check(weapon.target == inside, "The custom range must acquire a target 100 pixels away")
+	_check(is_equal_approx(weapon.global_rotation, PI / 4.0) and shots.is_empty(), "The data-driven 90-degree turn speed must turn 45 degrees in half a second without firing early")
+	weapon.global_rotation = deg_to_rad(10.0)
+	weapon._physics_process(0.0)
+	_check(shots.size() == 1, "The custom 12-degree aim tolerance must permit firing at a 10-degree error")
+	if not shots.is_empty():
+		var shot := shots[0]
+		_check(is_equal_approx(shot.firepower, 13.0) and is_equal_approx(shot.max_distance, 120.0) and is_equal_approx(shot.speed, 240.0), "A shot must snapshot its weapon's damage, range and projectile speed")
+		var origin := shot.global_position
+		shot._physics_process(0.25)
+		_check(not shot.finished and shot.global_position.is_equal_approx(origin + shot.direction * 60.0), "The custom 240-pixel projectile speed must actually move 60 pixels in a quarter second")
+		weapon._physics_process(0.1)
+		_check(shots.size() == 1, "A custom quarter-second interval must prevent firing after one tenth of a second")
+		weapon._physics_process(0.16)
+		_check(shots.size() == 2, "A custom quarter-second interval must permit the next shot after the cooldown")
+	world.queue_free()
+	await process_frame
+
 func _range_target(world: Node2D, location: Vector2, hp: float) -> ShipModuleRuntime:
 	var module := ShipModuleInstance.new(1, DATABASE.get_by_id(&"function_radar"), Vector2i.ZERO)
 	var target := ShipModuleRuntime.new()
@@ -71,7 +138,8 @@ func _range_target(world: Node2D, location: Vector2, hp: float) -> ShipModuleRun
 func _range_projectile(world: Node2D, location: Vector2, shot_range: float) -> ProjectileRuntime:
 	var projectile := PROJECTILE.instantiate() as ProjectileRuntime
 	world.add_child(projectile)
-	projectile.setup(location, Vector2.RIGHT, 20.0, null, shot_range)
+	var definition := DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
+	projectile.setup(location, Vector2.RIGHT, 20.0, null, shot_range, definition.projectile_speed)
 	projectile.set_physics_process(false)
 	return projectile
 

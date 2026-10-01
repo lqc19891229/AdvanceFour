@@ -1,14 +1,18 @@
-[gd_resource type="Resource" script_class="WeaponModuleDefinition" format=3 uid="uid://ot83omrw2h2b"]
+[gd_resource type="Resource" script_class="WeaponModuleDefinition" format=3 uid="uid://dol81y4yyxqhx"]
 
 [ext_resource type="Script" uid="uid://cieg7176rd0wq" path="res://game/ship/definitions/weapon_module_definition.gd" id="1_ph2d0"]
 
 [resource]
 script = ExtResource("1_ph2d0")
 firepower = 5.0
+attack_range = 500.0
+fire_interval = 0.5
+turn_speed_degrees = 180.0
+fire_angle_tolerance_degrees = 6.0
+projectile_speed = 700.0
 id = &"weapon_cannon"
 display_name = "机炮"
 module_type = 2
 description = "基础武器模块，提供稳定的常规火力。"
 mass = 5.0
 energy_cost = 5.0
-hp = 20.0

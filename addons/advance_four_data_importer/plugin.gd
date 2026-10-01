@@ -85,6 +85,11 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 		"WEAPON":
 			d = WeaponDef.new()
 			(d as WeaponModuleDefinition).firepower = float(row["firepower"])
+			(d as WeaponModuleDefinition).attack_range = float(row["attack_range"])
+			(d as WeaponModuleDefinition).fire_interval = float(row["fire_interval"])
+			(d as WeaponModuleDefinition).turn_speed_degrees = float(row["turn_speed_degrees"])
+			(d as WeaponModuleDefinition).fire_angle_tolerance_degrees = float(row["fire_angle_tolerance_degrees"])
+			(d as WeaponModuleDefinition).projectile_speed = float(row["projectile_speed"])
 		"DEFENSE":
 			d = DefenseDef.new()
 			(d as DefenseModuleDefinition).protection = float(row["protection"])

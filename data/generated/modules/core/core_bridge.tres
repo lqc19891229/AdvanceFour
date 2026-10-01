@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CoreModuleDefinition" format=3 uid="uid://cvyytwixan6ed"]
+[gd_resource type="Resource" script_class="CoreModuleDefinition" format=3 uid="uid://n7pphadu4s6n"]
 
 [ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://game/ship/definitions/core_module_definition.gd" id="1_0m841"]
 
@@ -11,4 +11,3 @@ description = "飞船核心区域。核心模块被击毁时，飞船判定为�
 size = Vector2i(2, 2)
 mass = 40.0
 energy_cost = 20.0
-hp = 20.0

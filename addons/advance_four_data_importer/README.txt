@@ -9,3 +9,4 @@ Advance Four Data Importer - Godot 插件入口
 - Excel、Python 和 JSON cache 不放在 addons。
 - 真正的数据导入资源统一位于 res://tools/data_import/。
 - 最终运行数据输出到 res://data/generated/。
+- WeaponModuleDefinition 的火力、射程、射击间隔、炮塔转速、瞄准容差和弹速均从 JSON 映射，不在插件内补另一套默认数值。

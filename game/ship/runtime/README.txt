@@ -63,7 +63,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - get_weapon_count() 返回当前创建的 WeaponRuntime 总数量。
 - get_operational_weapon_count() 只统计结构上仍存活、is_operational() == true 的武器，不考虑当前是否有电。
 - get_active_weapon_count() 统计当前真正可工作的武器，即 is_active() == operational && powered。
-- WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime，并传入该武器开火时的 attack_range 作为最大飞行距离；不同武器、不同发射时刻分别记录。
+- WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime，并传入该武器开火时的 attack_range / projectile_speed 作为最大飞行距离及速度；不同武器、不同发射时刻分别记录。
 - ProjectileRuntime 会加入 RuntimeShip 的父节点，而不是成为 RuntimeShip 子节点，因此发射后不会继续跟随飞船自身平移或旋转。
 - RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
 - ProjectileRuntime 使用本帧 swept ray 选择弹道上最近碰撞；命中 ShipModuleRuntime 时调用 apply_projectile_damage()。任意模块被本次伤害摧毁且有 leftover 时，Projectile 会继续沿原弹道向后传播。

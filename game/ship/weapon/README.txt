@@ -42,7 +42,7 @@ fired 信号
 自动开火：
 - WeaponRuntime 在物理帧更新。
 - 有有效目标、已经瞄准且冷却结束时自动触发 fired。
-- fire_interval 控制当前 Prototype 的射击间隔。
+- fire_interval 控制两次射击的间隔，单位秒；每秒射击次数 = 1 / fire_interval。
 - fired 信号包含：
   - ShipModuleInstance
   - firepower
@@ -50,14 +50,19 @@ fired 信号
   - 世界坐标发射方向
 - RuntimeShip 继续通过 weapon_fired 向上转发事件。
 
-当前 Prototype 参数：
-- attack_range = 500
-- fire_interval = 0.5 秒
-- turn_speed_degrees = 180°/秒
-- fire_angle_tolerance_degrees = 6°
+数据参数（当前机炮）：
+- firepower = 5：每发初始伤害。
+- attack_range = 500 px：选敌范围，同时限制弹丸最大飞行距离。
+- fire_interval = 0.5 秒：射击间隔，相当于 2 发/秒。
+- turn_speed_degrees = 180°/秒：炮塔转速。
+- fire_angle_tolerance_degrees = 6°：允许开火的瞄准方向误差。
+- projectile_speed = 700 px/s：弹丸速度。
 
-这些参数当前属于 WeaponRuntime Prototype 运行参数，还没有写入 WeaponModuleDefinition / Excel。
-在正式设计不同武器射程、射速、炮塔转速前，不改动 Excel → JSON → .tres 数据真源结构。
+六项参数均来自 game_data.xlsx 的 Weapon Sheet，经 Python → JSON → Godot 插件生成 WeaponModuleDefinition。
+WeaponRuntime.setup() 从该模块定义初始化运行参数；场景不再单独配置同名默认值。
+修改 Excel 后执行“前进四：验证模块数据”和“前进四：导入模块数据”，再重新运行战斗。
+attack_range / fire_interval / projectile_speed 必须 > 0，炮塔转速 >= 0，瞄准容差在 0~180°；五个新增字段都必填且必须为有限数字。
+max_impacts_per_step 是碰撞查询实现上限，继续保留在弹丸脚本，不作为武器策划属性。
 
 手动发射：
 - RuntimeShip.request_fire() / WeaponRuntime.fire_once() 暂时保留为调试接口。
@@ -74,7 +79,7 @@ fired 信号
 - 能源不足时不再统一关闭全部武器；RuntimeShip 按模块供电优先级逐个分配，只有未获供电的武器 set_powered(false)。
 - 后续供能变化导致该模块重新获得电力时，只要 operational 仍为 true，就可以重新搜索、瞄准和开火。
 - is_active() = operational and powered。
-- firepower 继续来自 WeaponModuleDefinition，不复制另一套武器静态数据。
+- 六项武器参数统一来自 WeaponModuleDefinition；运行时参数变化不写回共享定义或 Excel。
 - ShipData.grid_position / rotation_quarters 不因炮塔运行时旋转而改变。
 
 飞船结构原则：

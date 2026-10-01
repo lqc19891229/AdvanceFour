@@ -3,7 +3,7 @@ extends Area2D
 
 signal hit(target: Node2D, firepower: float)
 
-@export var speed := 700.0
+var speed := 0.0
 @export var max_impacts_per_step := 16
 
 var direction := Vector2.UP
@@ -23,7 +23,8 @@ func setup(
 	world_direction: Vector2,
 	p_firepower: float,
 	p_source_owner: Node2D,
-	p_max_distance: float
+	p_max_distance: float,
+	p_speed: float
 ) -> void:
 	global_position = world_position
 	launch_position = world_position
@@ -33,6 +34,7 @@ func setup(
 	source_owner = p_source_owner
 	max_distance = maxf(p_max_distance, 0.0)
 	distance_remaining = max_distance
+	speed = maxf(p_speed, 0.0)
 	finished = false
 	rotation = Vector2.UP.angle_to(direction)
 	queue_redraw()

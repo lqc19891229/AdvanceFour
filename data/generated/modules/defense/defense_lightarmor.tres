@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DefenseModuleDefinition" format=3 uid="uid://d3cgij15dxy60"]
+[gd_resource type="Resource" script_class="DefenseModuleDefinition" format=3 uid="uid://ckva3u1iy71dh"]
 
 [ext_resource type="Script" uid="uid://dw8g3d8ctmge3" path="res://game/ship/definitions/defense_module_definition.gd" id="1_q0vbv"]
 
@@ -10,4 +10,3 @@ display_name = "轻型装甲"
 module_type = 3
 description = "基础防护模块，为飞船提供结构防护。"
 mass = 5.0
-hp = 20.0

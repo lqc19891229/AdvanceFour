@@ -45,6 +45,8 @@ def main() -> int:
         if parsed != cached:
             raise RuntimeError("Excel source differs from modules.json; run the data importer")
         print("Workbook archive and source/cache parity: OK")
+        run([sys.executable, "-B", "tools/data_import/test_import_excel.py"], environment)
+        print("Weapon import validation: OK")
         run([args.godot, "--headless", "--editor", "--path", str(ROOT), "--import"], environment)
         for label, script in [
             ("Ship", "game/ship/dev/ship_regression_test.gd"),
