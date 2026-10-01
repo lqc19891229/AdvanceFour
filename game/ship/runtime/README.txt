@@ -60,7 +60,9 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - WeaponRuntime 会独立搜索范围内最近目标、旋转炮塔并自动开火。
 - request_fire() 继续保留为调试接口，可让当前所有 WeaponRuntime 各执行一次 fire_once()。
 - ShipRuntime 通过 weapon_fired 信号向上转发单个武器的发射事件。
-- get_weapon_count() 返回当前创建的 WeaponRuntime 数量。
+- get_weapon_count() 返回当前创建的 WeaponRuntime 总数量。
+- get_operational_weapon_count() 只统计结构上仍存活、is_operational() == true 的武器，不考虑当前是否有电。
+- get_active_weapon_count() 统计当前真正可工作的武器，即 is_active() == operational && powered。
 - WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime。
 - ProjectileRuntime 会加入 RuntimeShip 的父节点，而不是成为 RuntimeShip 子节点，因此发射后不会继续跟随飞船自身平移或旋转。
 - RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
