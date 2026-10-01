@@ -26,6 +26,7 @@ fired 信号
 - RuntimeShip.weapon_target_group 可以在 setup 前配置，因此玩家飞船、敌方飞船以后可以使用不同敌对目标组。
 - 当前目标无效、离开攻击范围或退出场景后，WeaponRuntime 会重新搜索。
 - 搜索规则为：攻击范围内距离该炮塔最近的目标。
+- attack_range 同时决定弹丸最大飞行距离；RuntimeShip 在开火时将该值传给 ProjectileRuntime，每颗弹丸独立记录，不跟随发射者后续移动。
 - 如果目标实现 get_aim_point()，WeaponRuntime 会瞄准其返回的存活模块位置，而不是固定瞄准 RuntimeShip 原点。
 - RuntimeShip 当前返回距离该炮塔最近的未 destroyed 模块中心。
 - 目标飞船没有任何存活模块时，会视为无效目标，并在重新搜索阶段直接跳过，避免反复重新选中已完全摧毁目标。

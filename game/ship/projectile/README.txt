@@ -17,7 +17,7 @@ RuntimeShip
   ↓
 实例化 ProjectileRuntime
   ↓
-以 fired 提供的 world_position / world_direction / firepower 初始化
+以 fired 提供的 world_position / world_direction / firepower 和该武器开火时的 attack_range 初始化
   ↓
 作为 RuntimeShip 的同级节点加入世界
 
@@ -37,11 +37,13 @@ RuntimeShip
 为什么不作为 RuntimeShip 子节点：
 - Projectile 发射后应继续独立存在。
 - Projectile 不应继续继承飞船后续平移或旋转。
-- RuntimeShip 被移除后，已经发射的 Projectile 仍可按自身生命周期继续存在。
+- RuntimeShip 被移除后，已经发射的 Projectile 仍可按发射时记录的剩余射程继续存在。
 
 当前参数：
 - speed = 700
-- lifetime = 2.0 秒
+- max_impacts_per_step = 16
+- 最大飞行距离由发射武器的 attack_range 决定，当前默认 500 px；不再单独配置弹丸寿命。
+- 默认 speed = 700 px/s 时，无碰撞的 500 px 射程约飞行 0.714 秒；调整速度只改变飞行时间。
 
 这些参数当前属于 ProjectileRuntime Prototype 参数，尚未进入 WeaponModuleDefinition / Excel 数据真源。
 
@@ -49,13 +51,16 @@ RuntimeShip
 - direction：世界空间飞行方向。
 - firepower：发射时的初始伤害。
 - remaining_damage：当前剩余伤害；命中 Defense 模块时先应用该模块 protection 百分比减伤，再按模块实际吸收的 HP 继续扣减。
-- lifetime_remaining：剩余生命周期。
+- launch_position：固定的世界空间发射点，用于计算位置并避免逐帧累积坐标误差。
+- max_distance：发射时攻击范围的非负快照，后续修改武器参数不影响已发射弹丸。
+- distance_remaining：尚未走完的飞行距离；不以发射者当前位置为圆心判断。
 - source_owner：发射该 Projectile 的 RuntimeShip，用于基础自伤过滤。
 
 当前行为：
-- setup() 时设置世界坐标、方向、firepower、source_owner 和剩余生命周期。
-- _physics_process() 中先计算 step_time = min(delta, lifetime_remaining)，再按 direction * speed * step_time 得到本帧实际路径并做连续射线查询；因此最后一个物理帧不会超出剩余生命周期对应的距离。
-- 每帧只扣除实际使用的 step_time；生命周期结束或 remaining_damage <= 0 后 queue_free()。
+- setup() 时设置世界坐标、方向、firepower、source_owner 和最大 / 剩余飞行距离。
+- _physics_process() 先计算 travel_distance = min(speed * max(delta, 0), distance_remaining)，再查询截短后的连续射线路径；同帧穿透也不能伤害射程以外的目标。
+- 每帧从固定发射点和累计距离计算终点；若达到单步命中次数上限，只扣除实际走过的距离，后续帧继续剩余路径。
+- 射程耗尽、remaining_damage <= 0 或 speed <= 0 时 queue_free()；零 / 负射程弹丸不移动、不造成伤害。
 - 命中 Defense 模块时，先应用 protection 百分比减伤；减伤后的伤害再进入模块 HP。只要模块被本次伤害摧毁且仍有剩余伤害，就继续向内穿透；模块未被摧毁、protection 完全抵消伤害或刚好耗尽伤害时 Projectile 结束。
 - 如果某次命中使目标 RuntimeShip 进入 removed_from_battle（当前即核心模块被摧毁），该 Projectile 会立即结束，不会在同一物理帧继续伤害这艘已退出战斗的飞船其他模块。
 - 当前用简单白色图形显示弹丸，后续可替换正式视觉。
@@ -63,7 +68,7 @@ RuntimeShip
 当前范围：
 - 生成。
 - 世界空间直线飞行。
-- 生命周期自动销毁。
+- 走完攻击范围后自动销毁。
 - 基于物理空间 ray query 的连续弹道命中。
 - hit 事件。
 - 基础发射者过滤。
