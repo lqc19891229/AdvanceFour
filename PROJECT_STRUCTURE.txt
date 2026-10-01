@@ -1,10 +1,16 @@
-《前进四》项目目录规划 V0.30
+《前进四》项目目录规划 V0.31
 
 res://
 ├─ core/                         # 全项目共享底层系统
 │  └─ autoload/                 # AutoLoad 单例
 │
 ├─ game/                         # 核心玩法
+│  ├─ combat/                  # 单场战斗调度、波次、HUD 和结算
+│  │  ├─ README.txt
+│  │  ├─ battle.gd / .tscn
+│  │  └─ dev/                  # 战斗流程独立回归
+│  │     ├─ README.txt
+│  │     └─ combat_regression_test.gd
 │  └─ ship/
 │     ├─ definitions/           # 六类模块 Resource 定义
 │     ├─ data/                  # ShipData / ModuleInstance / Database / Serializer

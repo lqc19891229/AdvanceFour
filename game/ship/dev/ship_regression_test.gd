@@ -10,6 +10,9 @@ var failures: Array[String] = []
 var checks := 0
 
 func _initialize() -> void:
+	root.size = Vector2i(1152, 648)
+	root.content_scale_size = Vector2i(1152, 648)
+	root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
 	_run.call_deferred()
 
 func _check(condition: bool, message: String) -> void:
