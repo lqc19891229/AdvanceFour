@@ -13,7 +13,7 @@ var velocity := Vector2.ZERO
 func _ready() -> void:
 	var result := ShipSerializer.load_from_file(SAVE_PATH, module_database)
 	if result["ok"]:
-		ship = result["ship"]
+		ship = result["ship"] as ShipData
 		$CanvasLayer/Info.text = _build_info_text()
 		queue_redraw()
 	else:
