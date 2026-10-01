@@ -32,10 +32,10 @@
 12. 武器模块 HP 归零后，对应 WeaponRuntime 停止工作；动力模块 HP 归零后，目标飞船 effective_thrust 下降。
 13. 能源模块 HP 归零后，effective_energy_output 下降；若供能不足，则按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 优先级逐个为存活模块供电。
 14. 未获供电的动力模块不贡献 effective_thrust；未获供电的武器停止搜索、瞄准和开火。
-15. 核心模块 HP 归零后，目标 RuntimeShip 发出 destroyed 并 queue_free()，视作从战斗场景被移除。
+15. 核心模块 HP 归零后，目标 RuntimeShip 发出 destroyed 并 queue_free()，视作从战斗场景被移除；造成核心摧毁的 Projectile 会立即结束，不再继续命中该船其他模块。
 16. 已摧毁模块不再作为瞄准点，炮塔会继续转向其他存活模块；核心 destroyed 后整船直接退出目标集合。
 17. HUD 会分别显示目标可用武器（active）、存活武器（operational）与总武器数量，并显示有效推力、有效供能 / 总需求、实际已供电耗能、已供电模块数量、能源状态、整船移除事件、模块受伤 / 摧毁事件、最近模块 HP、protection 百分比减伤和伤害值。
-18. 已经发射的 Projectile 即使其 source_owner 后续因核心摧毁被移除，仍会按自身生命周期继续飞行并在命中时造成伤害。
+18. 已经发射的 Projectile 即使其 source_owner 后续因核心摧毁被移除，仍会按自身生命周期继续飞行并在命中时造成伤害；每次 swept ray 会预先排除当前有效 source_owner 节点树中的所有 CollisionObject2D，避免自身模块逐个占用 max_impacts_per_step。
 
 飞船结构原则：
 - 模块可以分开放置。
