@@ -290,20 +290,19 @@ func _on_module_runtime_destroyed(module_instance: ShipModuleInstance) -> void:
 	queue_redraw()
 
 func _refresh_energy_state() -> void:
-	var new_sufficient := get_effective_energy_output() >= get_effective_energy_cost()
-	var changed := new_sufficient != energy_sufficient
-	energy_sufficient = new_sufficient
+	var energy_output := get_effective_energy_output()
+	var energy_cost := get_effective_energy_cost()
+	energy_sufficient = energy_output >= energy_cost
 
 	for weapon_runtime in weapon_runtimes:
 		if is_instance_valid(weapon_runtime):
 			weapon_runtime.set_powered(energy_sufficient)
 
-	if changed:
-		energy_state_changed.emit(
-			get_effective_energy_output(),
-			get_effective_energy_cost(),
-			energy_sufficient
-		)
+	energy_state_changed.emit(
+		energy_output,
+		energy_cost,
+		energy_sufficient
+	)
 
 func _remove_from_battle() -> void:
 	if removed_from_battle:
