@@ -66,7 +66,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime。
 - ProjectileRuntime 会加入 RuntimeShip 的父节点，而不是成为 RuntimeShip 子节点，因此发射后不会继续跟随飞船自身平移或旋转。
 - RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
-- ProjectileRuntime 命中支持 apply_damage() 的对象时，会自行应用 firepower 伤害，再发出 hit(target, firepower)。
+- ProjectileRuntime 使用本帧 swept ray 选择弹道上最近碰撞；命中 ShipModuleRuntime 时优先调用 apply_projectile_damage()，其他支持 apply_damage() 的对象仍按普通命中处理。
 - RuntimeShip 仍通过 projectile_hit(target, firepower) 向上转发命中事件，但该转发只用于观察 / 调试，不再负责实际扣血。
 - RuntimeShip 创建 Projectile 时会把 self 作为 source_owner 传入，用于 Projectile 基础自伤过滤。
 - 因为伤害由 ProjectileRuntime 自身处理，发射者 RuntimeShip 即使已因核心摧毁而 queue_free()，已经发射出去的 Projectile 仍可正常命中并造成伤害。
@@ -79,9 +79,11 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip.get_module_max_hp(module) 当前以 prototype_module_hp 为基础；DefenseModuleDefinition 额外把 protection 作为该块装甲自身的耐久加成，因此 armor max_hp = prototype_module_hp + protection。
 - 模块之间允许空格；空格不会生成碰撞体。
 - 模块 destroyed 后碰撞体会 deferred 禁用，RuntimeShip 将该模块绘制为深灰色。
-- 防护模块采用“实体掩体”语义：Projectile 先撞到哪块模块，就只伤害哪块模块并销毁；装甲位于内部模块弹道前方时会实际挡弹。
-- 某一块装甲 destroyed 后，它自己的碰撞体失效，后续从同一路径射来的 Projectile 可以穿过该缺口继续命中后方模块；不要求其他装甲同时 destroyed。
-- 当前单发 Projectile 不做穿透：即使这一发正好摧毁装甲，也不会把剩余伤害继续传给后方模块。
+- 防护模块采用“实体掩体”语义：Projectile 先撞到弹道上的前方装甲，装甲先吸收伤害。
+- 如果本次 incoming_damage > 装甲当前 HP，装甲只吸收其剩余 HP，destroyed 后把 leftover = incoming_damage - hp_before 返回给 Projectile。
+- Projectile 会携带 leftover 在同一弹道继续向内查询，因此高伤害弹丸可以在击穿低血量装甲后继续伤害后方模块。
+- 如果装甲未被摧毁或刚好把伤害完全吃完，则 Projectile 在装甲处结束。
+- 某一块装甲 destroyed 后，它自己的碰撞体失效；其他装甲仍保持独立保护。
 - RuntimeShip 通过 module_damaged / module_destroyed 向上转发模块受击状态。
 - 当前 prototype_module_hp = 20，尚未进入 Excel / ModuleDefinition。
 - destroyed 不删除 ShipData.modules；运行时通过模块存活状态计算有效推力，并通过 UID 映射停用对应 WeaponRuntime。
