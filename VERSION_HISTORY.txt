@@ -18,6 +18,38 @@
 
 
 ========================================
+v0.13
+========================================
+
+新增：
+- RuntimeShip 新增运行时朝向。
+- 新增基础转向输入。
+- 新增基于自身朝向的推进。
+- 新增 get_heading_degrees()，用于读取当前舰首朝向。
+
+调整：
+- RuntimeShip 控制接口由二维世界坐标移动意图改为 set_control_input(throttle, turn)。
+- throttle > 0 时沿舰首方向推进。
+- throttle < 0 时沿舰尾方向倒车，当前倒车推力为前进推力的 50%。
+- turn < 0 左转，turn > 0 右转。
+- 0° 舰首方向统一定义为屏幕上方 Vector2.UP。
+- ship_movement_test 操作调整为：
+  - W / ↑：前进
+  - S / ↓：倒车
+  - A / ←：左转
+  - D / →：右转
+- 测试 HUD 新增当前朝向显示。
+- PROJECT_STRUCTURE.txt 更新到 V0.13。
+- game/ship/runtime/README.txt、game/ship/dev/README.txt 同步更新。
+
+结构原则：
+- RuntimeShip 仍只持有 ShipData，不复制模块结构。
+- 飞船模块仍允许分开放置，不要求相邻、连通或填满网格。
+- 当前转向速度属于 Prototype 基础参数，尚未由转向模块、质量分布或惯性计算。
+- 本阶段仍未加入武器、伤害、模块失效、PlayerController 或 AIController。
+
+
+========================================
 v0.12
 ========================================
 

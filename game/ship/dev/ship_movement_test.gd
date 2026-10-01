@@ -26,33 +26,40 @@ func _process(_delta: float) -> void:
 	if runtime_ship == null or ship == null:
 		return
 
-	var input_direction := Vector2.ZERO
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
-		input_direction.x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
-		input_direction.x += 1.0
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
-		input_direction.y -= 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
-		input_direction.y += 1.0
+	var throttle := 0.0
+	var turn := 0.0
 
-	runtime_ship.set_move_input(input_direction)
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+		throttle += 1.0
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+		throttle -= 1.0
+	if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+		turn -= 1.0
+	if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+		turn += 1.0
+
+	runtime_ship.set_control_input(throttle, turn)
 	$CanvasLayer/Info.text = _build_info_text()
 
 func _build_info_text() -> String:
-	return """RuntimeShip 移动测试
-WASD / 方向键：移动
+	return """RuntimeShip 朝向 / 推进测试
+W / ↑：沿舰首前进
+S / ↓：沿舰尾倒车
+A / ←：左转
+D / →：右转
 
 模块：%d
 质量：%.1f
 推力：%.1f
 推重比：%.3f
 速度：%.1f
+朝向：%.1f°
 
 结构规则：模块可分开放置，不要求相邻、连通或填满格子。""" % [
 		ship.modules.size(),
 		ship.get_mass(),
 		ship.get_thrust(),
 		ship.get_acceleration_score(),
-		runtime_ship.get_speed()
+		runtime_ship.get_speed(),
+		runtime_ship.get_heading_degrees()
 	]

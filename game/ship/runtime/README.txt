@@ -6,7 +6,7 @@
 
 当前文件：
 - ship_runtime.tscn：运行时飞船场景。
-- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度与基础移动。
+- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向与基于自身朝向的推进。
 
 核心关系：
 ShipData = 飞船结构与静态属性数据。
@@ -16,16 +16,24 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 1. 从存档、预设或其他来源得到 ShipData。
 2. 实例化 ship_runtime.tscn。
 3. 调用 setup(ship_data)。
-4. 控制器通过 set_move_input(direction) 提供移动意图。
+4. 控制器通过 set_control_input(throttle, turn) 提供推进与转向输入。
 
 职责边界：
 - RuntimeShip 不读取 JSON，不负责存档。
 - RuntimeShip 不硬编码玩家按键，因此以后玩家控制器和 AI 都可以驱动同一个 RuntimeShip。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前第一版只包含模块绘制和基础平移，暂不包含旋转、武器、伤害与模块失效。
+- 当前包含模块绘制、速度、朝向、基础转向和基于舰首方向的推进；暂不包含武器、伤害与模块失效。
 
 飞船结构原则：
 - 模块允许分开放置。
 - 模块不要求相邻或连通。
 - 网格不要求全部填满。
 - RuntimeShip 按 ShipData 中保存的实际网格位置直接显示，不自动压缩或补齐空格。
+
+
+移动规则：
+- RuntimeShip 的 0° 舰首方向定义为屏幕上方 Vector2.UP。
+- throttle > 0 时沿舰首方向推进。
+- throttle < 0 时沿舰尾方向倒车，当前倒车推力为前进推力的 50%。
+- turn < 0 左转，turn > 0 右转。
+- 当前转向速度为基础运行参数，尚未由具体转向模块或质量分布计算。

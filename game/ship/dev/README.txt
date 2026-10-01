@@ -9,13 +9,13 @@
 - ship_movement_test.gd：只负责读取测试输入、加载 ShipData、创建 RuntimeShip 和显示测试信息。
 
 职责说明：
-- 飞船绘制、速度与基础移动逻辑位于 game/ship/runtime/ship_runtime.gd。
+- 飞船绘制、速度、朝向、转向与自身朝向推进逻辑位于 game/ship/runtime/ship_runtime.gd。
 - dev 测试不再维护另一套飞船运动实现。
 
 使用：
 1. 在飞船编辑器中点击“保存设计”。
 2. 单独运行 res://game/ship/dev/ship_movement_test.tscn。
-3. 使用 WASD 或方向键移动。
+3. 使用 W / ↑ 前进，S / ↓ 倒车，A / ← 左转，D / → 右转。
 
 飞船结构原则：
 - 模块可以分开放置。
