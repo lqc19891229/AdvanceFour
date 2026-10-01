@@ -150,9 +150,9 @@ D / →：右转
 
 当前阶段：Projectile 每个物理帧沿本帧整段弹道做 swept ray，优先处理距离最近的碰撞模块。
 防护模块作为实体装甲/掩体使用：protection 增加该块装甲自身最大 HP；装甲存活时先吸收该方向伤害。
-如果 incoming_damage 大于装甲当前 HP，该块装甲 destroyed 后只扣掉自身剩余 HP，并把 leftover 伤害交回 Projectile。
-Projectile 会携带 leftover 在同一弹道继续向内查询，因此同一发高伤害弹丸可以击穿低血量装甲并继续命中后方模块。
-如果装甲没有被摧毁，或伤害刚好全部被装甲吸收，则该发 Projectile 在装甲处结束。
+所有飞船模块都采用同一 overkill 规则：模块最多吸收自己当前 HP；如果被本次伤害摧毁，则把 leftover = incoming_damage - hp_before 交回 Projectile。
+Projectile 会携带 leftover 在同一弹道继续向内查询，因此同一发高伤害弹丸可以连续击穿低血量装甲和内部模块。
+如果当前模块没有被摧毁，或伤害刚好全部被该模块吸收，则该发 Projectile 在这里结束。
 命中伤害不再依赖发射者 RuntimeShip 的 projectile_hit 转发，因此发射者先被摧毁时，已发射弹丸仍可造成伤害。
 武器模块摧毁后对应 WeaponRuntime 停止；动力模块摧毁后有效推力下降。
 能源模块摧毁后有效供能下降；供能不足时按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 优先级逐个供电。
