@@ -4,7 +4,7 @@ const SAVE_PATH := "user://ships/test_ship.json"
 
 @onready var grid: ShipGridView = $MainLayout/Center/Grid
 @onready var module_buttons: VBoxContainer = $MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons
-@onready var stats_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/StatsLabel
+@onready var stats_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll/StatsLabel
 @onready var status_label: Label = $BottomBar/BottomMargin/StatusLabel
 @onready var selected_label: Label = $MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
 
@@ -16,6 +16,10 @@ func _ready() -> void:
 	_refresh_selected_label()
 	_refresh_stats()
 	_show_status("左键放置｜右键删除｜R 旋转｜中键拖动画布")
+	if get_tree().has_meta(&"restore_ship_design"):
+		get_tree().remove_meta(&"restore_ship_design")
+		if FileAccess.file_exists(SAVE_PATH):
+			_load_ship()
 
 func _build_module_buttons() -> void:
 	for child in module_buttons.get_children():
@@ -58,6 +62,17 @@ func _bind_common_buttons() -> void:
 	$MainLayout/RightPanel/RightMargin/RightVBox/RotateButton.pressed.connect(grid.rotate_preview)
 	$MainLayout/RightPanel/RightMargin/RightVBox/CenterButton.pressed.connect(grid.center_view)
 	$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.pressed.connect(grid.clear_ship)
+	$MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.pressed.connect(_start_ai_test)
+
+func _start_ai_test() -> void:
+	if not grid.ship.is_design_valid():
+		_show_status("无法出航：%s" % grid.ship.get_design_invalid_reason())
+		return
+	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)
+	if not result["ok"]:
+		_show_status("保存失败：%s" % result["error"])
+		return
+	get_tree().change_scene_to_file("res://game/ship/dev/ship_ai_test.tscn")
 
 func _save_ship() -> void:
 	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)

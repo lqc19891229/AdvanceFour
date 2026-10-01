@@ -135,7 +135,7 @@ D / →：右转
 目标能源状态：%s
 目标战斗状态：%s
 整船移除事件：%d
-模块 Prototype HP：%.1f
+模块最大 HP：来自各自 ModuleDefinition.hp
 武器触发事件：%d
 弹丸生成事件：%d
 弹丸命中事件：%d
@@ -149,7 +149,7 @@ D / →：右转
 最近发射方向：(%.2f, %.2f)
 
 当前阶段：Projectile 每个物理帧沿本帧整段弹道做 swept ray，优先处理距离最近的碰撞模块。
-防护模块作为实体装甲/掩体使用：protection 是每次命中该防护模块时生效的百分比减伤值，例如 protection = 5 表示减伤 5%；不增加 max HP，也不会被消耗。
+防护模块作为实体装甲/掩体使用：protection 是每次命中该防护模块时生效的百分比减伤值，例如 protection = 5 表示减伤 5%%；不增加 max HP，也不会被消耗。
 Defense 命中先计算 damage_after_protection = incoming_damage * (1 - clamp(protection, 0, 100) / 100)，然后才扣模块 HP；非 Defense 模块 protection = 0。
 如果模块被本次伤害摧毁，则把 leftover = damage_after_protection - hp_before 交回 Projectile。
 Projectile 会携带 leftover 在同一弹道继续向内查询，因此同一发高伤害弹丸仍可连续击穿低血量模块。
@@ -184,7 +184,6 @@ Projectile 会携带 leftover 在同一弹道继续向内查询，因此同一�
 		_get_target_energy_state_text(),
 		"已移除" if target_removed_from_battle else "战斗中",
 		target_ship_destroyed_events,
-		_get_target_prototype_module_hp(),
 		weapon_fire_events,
 		projectile_spawn_events,
 		projectile_hit_events,
@@ -223,10 +222,6 @@ func _get_target_weapon_count() -> int:
 
 func _get_target_effective_thrust() -> float:
 	return target_runtime_ship.get_effective_thrust() if _has_target_runtime_ship() else 0.0
-
-func _get_target_prototype_module_hp() -> float:
-	return target_runtime_ship.prototype_module_hp if _has_target_runtime_ship() else 0.0
-
 
 func _get_target_effective_energy_output() -> float:
 	return target_runtime_ship.get_effective_energy_output() if _has_target_runtime_ship() else 0.0
