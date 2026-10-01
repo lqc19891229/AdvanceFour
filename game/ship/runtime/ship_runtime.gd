@@ -64,6 +64,13 @@ func request_fire() -> void:
 func get_weapon_count() -> int:
 	return weapon_runtimes.size()
 
+func get_operational_weapon_count() -> int:
+	var count := 0
+	for weapon_runtime in weapon_runtimes:
+		if is_instance_valid(weapon_runtime) and weapon_runtime.is_operational():
+			count += 1
+	return count
+
 func get_module_runtime_count() -> int:
 	return module_runtimes.size()
 
