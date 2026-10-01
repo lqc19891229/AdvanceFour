@@ -9,6 +9,7 @@
 - runtime/：飞船进入实际游戏世界后的运行实体与基础行为。
 - controller/：玩家、AI 等控制来源向 RuntimeShip 提供控制输入。
 - weapon/：飞船武器模块对应的运行时节点与发射事件。
+- projectile/：武器发射后进入世界空间独立飞行的弹丸运行时。
 - dev/：仅服务于飞船系统的独立开发测试场景。
 
 核心关系：
@@ -18,6 +19,7 @@ ShipData         = 一艘飞船的结构数据
 ShipRuntime      = ShipData 在游戏场景中的运行实体
 PlayerShipController = 玩家输入到 RuntimeShip 控制接口的适配层
 WeaponRuntime     = 单个武器模块进入游戏世界后的运行时执行对象
+ProjectileRuntime = 武器发射后独立存在、飞行并按生命周期销毁的弹丸对象
 
 
 运行时规则：
@@ -36,4 +38,6 @@ WeaponRuntime     = 单个武器模块进入游戏世界后的运行时执行对
 - WeaponRuntime 使用模块自身 grid_position / rotation_quarters 与 RuntimeShip 核心原点建立炮塔初始位置和初始朝向。
 - 炮塔进入战斗后可独立旋转，自动搜索攻击范围内最近敌人、瞄准并按冷却自动触发发射事件。
 - rotation_quarters 不再锁死最终发射方向，只定义炮塔初始朝向。
-- 当前只产生发射事件，不生成 Projectile，也不修改 ShipData。
+- RuntimeShip 收到 WeaponRuntime fired 后创建 ProjectileRuntime，并将其作为飞船同级节点加入世界，使弹丸不继续继承飞船后续移动或旋转。
+- ProjectileRuntime 当前只负责直线飞行与生命周期自动销毁，不处理碰撞、命中或伤害。
+- Projectile 创建过程不修改 ShipData。
