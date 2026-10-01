@@ -21,11 +21,11 @@ DamageReceiver
 module_damaged / module_destroyed
 
 当前 Prototype HP：
-- 所有模块暂时统一使用 RuntimeShip.prototype_module_hp，当前默认值为 20。
+- 所有模块的最大 HP 直接读取 ShipModuleDefinition.hp，数值来自 Excel → JSON → .tres 数据链。
 - DefenseModuleDefinition.protection 不再增加 max HP，而是该防护模块每次被 Projectile 命中时使用的百分比减伤值。
 - 当前公式：protection_percent = clamp(protection, 0, 100)；damage_after_protection = incoming_damage * (1 - protection_percent / 100)。
 - protection 不会被消耗；只要该 Defense 模块仍存活，每次命中都会重新应用同一个百分比减伤值。protection = 5 即减伤 5%。
-- prototype_module_hp 尚未进入 ModuleDefinition / Excel 数据真源；DefenseModuleDefinition.protection 已来自现有静态数据链。
+- hp 与 DefenseModuleDefinition.protection 都来自现有静态数据链；hp 表示模块耐久，protection 只表示 Defense 百分比减伤。
 
 当前范围：
 - 每模块独立碰撞体。
