@@ -113,9 +113,9 @@ res://
 38. is_energy_sufficient() 只表示是否足以覆盖全部存活模块需求；即使为 false，仍可能有部分模块保持 powered=true。
 39. get_powered_energy_cost() 返回当前实际已供电负载；动力只统计 powered 的存活动力模块，WeaponRuntime.powered 也按对应武器模块单独设置。
 40. RuntimeShip 的武器计数语义明确拆分：get_weapon_count() = 总 WeaponRuntime；get_operational_weapon_count() = 未 destroyed 的武器；get_active_weapon_count() = 未 destroyed 且当前 powered 的可工作武器。
-41. DefenseModuleDefinition.protection 的正式战斗语义改为“该块 Defense 模块每次受 Projectile 命中时的固定减伤值”；protection 不再增加 max HP，也不会被消耗。
-42. 防护采用空间掩体 + 固定减伤规则：Defense 命中先计算 damage_after_protection = max(incoming_damage - protection, 0)，之后才扣模块 HP；如果模块被摧毁且仍有 overkill，则返回 leftover = damage_after_protection - hp_before，Projectile 同一发继续向内穿透。
+41. DefenseModuleDefinition.protection 的正式战斗语义改为“该块 Defense 模块每次受 Projectile 命中时的百分比减伤值”；protection = 5 表示减伤 5%，运行时 clamp 到 0%~100%；protection 不再增加 max HP，也不会被消耗。
+42. 防护采用空间掩体 + 百分比减伤规则：Defense 命中先计算 damage_after_protection = incoming_damage * (1 - clamp(protection, 0, 100) / 100)，之后才扣模块 HP；如果模块被摧毁且仍有 overkill，则返回 leftover = damage_after_protection - hp_before，Projectile 同一发继续向内穿透。
 43. 装甲是逐块独立失效，不要求全船装甲全部 destroyed；飞船结构仍允许分离、不相邻、不连通和任意空格。
 44. ProjectileRuntime 每物理帧使用 PhysicsRayQueryParameters2D / intersect_ray() 沿本帧整段路径做 swept hit，按弹道最近顺序处理碰撞；任意 ShipModuleRuntime 被本次伤害摧毁且仍有 overkill 时，都会继续查询同一路径后方模块。
 45. DamageReceiver.damaged(amount, current_hp) 的 amount 现在表示实际扣除 HP，不包含超过目标剩余 HP 的 overkill 部分。
-46. 当前 v0.28 已实现所有飞船模块的 HP-overkill 连续穿透，并让 Defense.protection 作为每次命中的固定减伤值；尚未实现有限半径 shape cast、独立穿甲系数 / 穿深 / 材质抗性、爆炸 / 溅射、正式伤害类型或玩家自定义供电优先级；ShipData 静态统计继续保持不变。
+46. 当前 v0.28 已实现所有飞船模块的 HP-overkill 连续穿透，并让 Defense.protection 作为每次命中的百分比减伤值；尚未实现有限半径 shape cast、独立穿甲系数 / 穿深 / 材质抗性、爆炸 / 溅射、正式伤害类型或玩家自定义供电优先级；ShipData 静态统计继续保持不变。
