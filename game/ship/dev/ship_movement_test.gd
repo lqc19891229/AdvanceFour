@@ -123,6 +123,9 @@ D / →：右转
 目标模块 Runtime：%d
 目标可用武器：%d / %d
 目标有效推力：%.1f / %.1f
+目标有效供能：%.1f / %.1f
+目标有效耗能：%.1f
+目标能源状态：%s
 目标战斗状态：%s
 整船移除事件：%d
 模块 Prototype HP：%.1f
@@ -140,6 +143,7 @@ D / →：右转
 当前阶段：Projectile 直接碰撞目标飞船的 ShipModuleRuntime，并自行调用 apply_damage(firepower)。
 命中伤害不再依赖发射者 RuntimeShip 的 projectile_hit 转发，因此发射者先被摧毁时，已发射弹丸仍可造成伤害。
 武器模块摧毁后对应 WeaponRuntime 停止；动力模块摧毁后有效推力下降。
+能源模块摧毁后有效供能下降；有效供能低于存活模块耗能时进入能源不足，全部武器断电且有效推力变为 0。
 核心模块摧毁后 RuntimeShip 发出 destroyed，并从战斗场景 queue_free() 移除。
 炮塔始终瞄准距离自身最近的存活模块；已摧毁模块不会继续作为瞄准点。
 结构规则：模块可分开放置，不要求相邻、连通或填满格子；空格不会生成碰撞体。""" % [
@@ -156,6 +160,10 @@ D / →：右转
 		_get_target_weapon_count(),
 		_get_target_effective_thrust(),
 		ship.get_thrust(),
+		_get_target_effective_energy_output(),
+		ship.get_energy_output(),
+		_get_target_effective_energy_cost(),
+		_get_target_energy_state_text(),
 		"已移除" if target_removed_from_battle else "战斗中",
 		target_ship_destroyed_events,
 		_get_target_prototype_module_hp(),
@@ -195,3 +203,15 @@ func _get_target_effective_thrust() -> float:
 
 func _get_target_prototype_module_hp() -> float:
 	return target_runtime_ship.prototype_module_hp if _has_target_runtime_ship() else 0.0
+
+
+func _get_target_effective_energy_output() -> float:
+	return target_runtime_ship.get_effective_energy_output() if _has_target_runtime_ship() else 0.0
+
+func _get_target_effective_energy_cost() -> float:
+	return target_runtime_ship.get_effective_energy_cost() if _has_target_runtime_ship() else 0.0
+
+func _get_target_energy_state_text() -> String:
+	if not _has_target_runtime_ship():
+		return "无"
+	return "正常" if target_runtime_ship.is_energy_sufficient() else "能源不足"
