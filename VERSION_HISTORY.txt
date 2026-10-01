@@ -18,6 +18,43 @@
 
 
 ========================================
+v0.28.1
+========================================
+
+修复：
+- ProjectileRuntime 每次执行 swept ray 前，会递归遍历当前有效 source_owner 节点树，把其中所有 CollisionObject2D RID 预先加入 ray exclude。
+- 大型飞船发射弹丸时，不再需要先逐个命中自己的模块再通过 _belongs_to_source() 跳过，因此 source_owner 自身模块不再消耗 max_impacts_per_step。
+- _belongs_to_source() 仍保留为额外兜底过滤，但兜底跳过不再增加 impacts 计数。
+- Projectile 命中某个模块后，会检查该模块所属 RuntimeShip 是否已进入 removed_from_battle。
+- 如果本次命中摧毁核心并使目标 RuntimeShip 退出战斗，则 Projectile 立即结束，即使仍有 leftover，也不会在同一物理帧继续伤害该船其他模块。
+
+核心摧毁边界：
+- 例如 Projectile remaining_damage = 50。
+- 核心当前 HP = 5。
+- 核心吸收 5 并 destroyed，ShipModuleRuntime 可计算出 leftover = 45。
+- RuntimeShip 同步进入 removed_from_battle。
+- Projectile 检测到该状态后立即 _finish()。
+- leftover 不再继续用于命中这艘已退出战斗的 RuntimeShip 其他模块。
+
+发射者过滤：
+- source_owner 自身及其后代 CollisionObject2D 在 ray query 开始前直接排除。
+- 因此即使炮口弹道穿过大量己方模块，也不会因为这些自身碰撞而提前达到 max_impacts_per_step。
+- 已经发射并离开 source_owner 的 Projectile 仍是独立世界节点；source_owner 后续被摧毁不会让已发射弹丸自动消失。
+
+保持不变：
+- Defense.protection 仍是百分比减伤值，protection = 5 表示减伤 5%。
+- 所有模块仍保留 HP-overkill 连续穿透。
+- 非核心模块被击穿后，只要 leftover > 0，Projectile 仍继续沿原弹道命中后方模块。
+- 核心 destroyed 仍立即判定整船退出战斗。
+- ShipData、Excel、JSON cache、.tres 与存档格式不修改。
+- 模块仍允许分开放置、不相邻、不连通，并允许任意空格。
+
+当前限制：
+- Projectile swept collision 仍按中心线 ray 处理，不考虑 Projectile CircleShape 半径。
+- max_impacts_per_step 仍限制单个物理帧最多处理 16 次实际目标碰撞。
+
+
+========================================
 v0.28
 ========================================
 
