@@ -207,6 +207,17 @@ func is_removed_from_battle() -> bool:
 func get_speed() -> float:
 	return velocity.length()
 
+func estimate_design_top_speed(design: ShipData) -> float:
+	# Full-power, undamaged design, straight ahead at full throttle.
+	# Physics adds thrust before drag: v_next = (v + a * dt) * (1 - drag * dt).
+	var acceleration := design.get_acceleration_score() * acceleration_scale
+	if acceleration <= 0.0:
+		return 0.0
+	if drag <= 0.0:
+		return INF
+	var step_factor := maxf(1.0 - drag / float(Engine.physics_ticks_per_second), 0.0)
+	return acceleration * step_factor / drag
+
 func get_heading_degrees() -> float:
 	return wrapf(rad_to_deg(rotation), 0.0, 360.0)
 
