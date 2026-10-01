@@ -9,7 +9,7 @@
 - ship_movement_test.gd：只负责读取测试输入、加载 ShipData、创建 RuntimeShip 和显示测试信息。
 
 职责说明：
-- 飞船绘制、速度、朝向、转向与自身朝向推进逻辑位于 game/ship/runtime/ship_runtime.gd。
+- 飞船绘制、速度、朝向、转向、自身朝向推进与核心中心旋转原点逻辑位于 game/ship/runtime/ship_runtime.gd。
 - dev 测试不再维护另一套飞船运动实现。
 
 使用：
