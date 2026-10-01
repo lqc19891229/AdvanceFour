@@ -3,7 +3,7 @@
 用途：
 - 存放飞船战斗链中通用的受击 / 生命值运行时组件。
 - 当前 DamageReceiver 只负责 HP、受伤事件和 destroyed 事件。
-- 当前不负责全局护甲减伤公式、模块 HP 构造、核心模块沉没判定或受击特效。
+- 当前不负责全局减伤、模块 HP 构造、核心模块沉没判定或受击特效；Defense.protection 的固定减伤在 ShipModuleRuntime.apply_projectile_damage() 中处理。
 
 当前文件：
 - damage_receiver.gd：通用 HP 组件。
@@ -31,8 +31,10 @@
 - RuntimeShip.projectile_hit 只保留命中事件转发，不再承担实际伤害应用。
 - DamageReceiver 仍只接收数值伤害，不知道 Projectile、WeaponRuntime 或 ShipData。
 - 当前 Prototype 伤害值仍直接使用 firepower。
-- 防护模块不在 DamageReceiver 中做百分比 / 固定值减伤；其 protection 由 RuntimeShip 转换为该装甲模块额外最大 HP。
-- 装甲的“保护”来自空间碰撞顺序和自身 HP：装甲优先吸收 incoming_damage；若本次伤害击穿装甲且仍有 leftover，Projectile 会立即携带剩余伤害继续向后方模块传播。
+- DamageReceiver 本身仍不知道 protection；固定减伤由 ShipModuleRuntime 在把伤害交给 DamageReceiver 之前处理。
+- Defense.protection 当前表示固定减伤值：damage_after_protection = max(incoming_damage - protection, 0)。
+- protection 不增加 max HP，也不会像护盾值一样被消耗。
+- 若 damage_after_protection 击毁模块且仍有 overkill，则 Projectile 携带剩余伤害继续向后方模块传播。
 
 当前范围：
 - 通用 HP。
