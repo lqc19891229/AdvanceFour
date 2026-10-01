@@ -121,7 +121,8 @@ D / →：右转
 速度：%.1f
 朝向：%.1f°
 目标模块 Runtime：%d
-目标可用武器：%d / %d
+目标可用武器：%d
+目标存活武器：%d / %d
 目标有效推力：%.1f / %.1f
 目标有效供能：%.1f / %.1f
 目标有效耗能：%.1f
@@ -159,6 +160,7 @@ D / →：右转
 		runtime_ship.get_speed(),
 		runtime_ship.get_heading_degrees(),
 		_get_target_module_runtime_count(),
+		_get_target_active_weapon_count(),
 		_get_target_operational_weapon_count(),
 		_get_target_weapon_count(),
 		_get_target_effective_thrust(),
@@ -197,6 +199,9 @@ func _has_target_runtime_ship() -> bool:
 
 func _get_target_module_runtime_count() -> int:
 	return target_runtime_ship.get_module_runtime_count() if _has_target_runtime_ship() else 0
+
+func _get_target_active_weapon_count() -> int:
+	return target_runtime_ship.get_active_weapon_count() if _has_target_runtime_ship() else 0
 
 func _get_target_operational_weapon_count() -> int:
 	return target_runtime_ship.get_operational_weapon_count() if _has_target_runtime_ship() else 0
