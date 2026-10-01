@@ -18,6 +18,48 @@
 
 
 ========================================
+v0.19
+========================================
+
+新增：
+- ProjectileRuntime 根节点由 Node2D 调整为 Area2D。
+- projectile_runtime.tscn 新增 CircleShape2D 基础碰撞体。
+- ProjectileRuntime 新增 hit(target, firepower) 信号。
+- ProjectileRuntime 新增 source_owner，用于基础发射者过滤。
+- RuntimeShip 新增 projectile_hit(target, firepower) 信号。
+- weapon_target_dummy 改为 Area2D，并新增圆形碰撞体。
+- ship_movement_test HUD 新增 Projectile 命中事件计数与最近命中 firepower。
+
+碰撞 / 命中行为：
+- Projectile collision_layer = 2，collision_mask = 1。
+- 当前测试目标 collision_layer = 1。
+- Projectile 同时监听 area_entered 与 body_entered。
+- 首次有效碰撞后发出 hit(target, firepower)。
+- 命中后 Projectile 立即 queue_free()，当前不支持穿透。
+- RuntimeShip 创建 Projectile 时将自身作为 source_owner 传入。
+- Projectile 会忽略 source_owner 自身、source_owner 子节点，以及包含 source_owner 的祖先节点，避免基础自伤碰撞。
+- RuntimeShip 监听 ProjectileRuntime.hit 并通过 projectile_hit 向上转发。
+
+结构原则：
+- WeaponRuntime 继续只负责选敌、瞄准和 fired。
+- ProjectileRuntime 负责飞行、生命周期、基础碰撞和命中事件。
+- RuntimeShip 负责创建 Projectile，并作为 Projectile hit 事件的上层转发点。
+- firepower 继续只作为命中事件数据传递，本版本不应用伤害。
+- ShipData / WeaponModuleDefinition / Excel 数据结构保持不变。
+- 飞船模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+当前范围：
+- 已完成基础碰撞。
+- 已完成 Projectile hit 事件。
+- 已完成命中后销毁。
+- 已完成基础发射者过滤。
+- 尚未加入伤害。
+- 尚未加入模块 HP / 模块失效。
+- 尚未加入正式阵营过滤。
+- 尚未加入穿透、爆炸或连续碰撞 / swept collision。
+
+
+========================================
 v0.18
 ========================================
 
