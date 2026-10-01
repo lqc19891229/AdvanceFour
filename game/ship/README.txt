@@ -6,6 +6,7 @@
 - definitions/：模块定义 Resource 类，描述“某种模块是什么”。
 - data/：ShipData、ModuleInstance、ModuleDatabase 等运行数据结构。
 - editor/：玩家拼装飞船使用的编辑器场景与逻辑。
+- dev/：仅服务于飞船系统的独立开发测试场景。
 
 核心关系：
 ModuleDefinition = 模块模板/静态定义
