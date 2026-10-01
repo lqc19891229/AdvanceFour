@@ -26,10 +26,10 @@
 - destroyed 后继续调用 apply_damage() 不再重复生效。
 
 职责边界：
-- ProjectileRuntime 只负责命中并发出 hit。
-- RuntimeShip 只负责转发 projectile_hit。
-- 战斗层 / 测试层决定把 projectile_hit 的 firepower 交给哪个 DamageReceiver。
-- DamageReceiver 不知道 Projectile、WeaponRuntime 或 ShipData。
+- ProjectileRuntime 在首次有效命中时，如果目标提供 apply_damage()，会直接调用 apply_damage(firepower)。
+- RuntimeShip.projectile_hit 只保留命中事件转发，不再承担实际伤害应用。
+- DamageReceiver 仍只接收数值伤害，不知道 Projectile、WeaponRuntime 或 ShipData。
+- 当前 Prototype 伤害值仍直接使用 firepower；正式护甲 / 伤害类型解析层尚未加入。
 
 当前范围：
 - 通用 HP。
@@ -38,9 +38,8 @@
 
 暂不包含：
 - 防御 / 护甲减伤。
-- 模块独立 HP。
-- 核心模块击毁。
-- 飞船整体沉没。
+- 更复杂的模块耐久规则。
+- 核心爆炸 / 残骸表现。
 - 伤害类型。
 - 暴击。
 - 状态效果。
