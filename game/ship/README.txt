@@ -22,6 +22,7 @@ PlayerShipController = 玩家输入到 RuntimeShip 控制接口的适配层
 WeaponRuntime     = 单个武器模块进入游戏世界后的运行时执行对象
 ProjectileRuntime = 武器发射后独立存在、飞行并按生命周期销毁的弹丸对象
 DamageReceiver    = 接收数值伤害、维护 HP 并发出 damaged / destroyed 的运行时组件
+ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 
 
 运行时规则：
@@ -43,5 +44,6 @@ DamageReceiver    = 接收数值伤害、维护 HP 并发出 damaged / destroyed
 - RuntimeShip 收到 WeaponRuntime fired 后创建 ProjectileRuntime，并将其作为飞船同级节点加入世界，使弹丸不继续继承飞船后续移动或旋转。
 - ProjectileRuntime 负责直线飞行、生命周期、基础碰撞和 hit 事件；命中后销毁。
 - DamageReceiver 独立负责 HP 与 destroyed 状态；Projectile 不直接持有目标 HP。
-- 当前开发测试由测试层把 projectile_hit 的 firepower 作为伤害交给目标 DamageReceiver。
-- Projectile / DamageReceiver 都不修改 ShipData。
+- RuntimeShip 会为每个模块创建独立 ShipModuleRuntime，因此 Projectile 命中对象可以直接对应到具体 ShipModuleInstance。
+- 当前开发测试把 projectile_hit 的 firepower 直接作为该模块伤害。
+- 模块 destroyed 当前只改变运行时碰撞 / 显示状态，不删除或修改 ShipData。

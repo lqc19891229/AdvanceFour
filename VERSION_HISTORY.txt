@@ -18,6 +18,65 @@
 
 
 ========================================
+v0.21
+========================================
+
+新增：
+- 新增 ShipModuleRuntime。
+- 新增 runtime/SHIP_MODULE_RUNTIME_README.txt。
+- RuntimeShip 为每个 ShipModuleInstance 创建一个独立 ShipModuleRuntime。
+- 每个 ShipModuleRuntime 拥有独立 RectangleShape2D 碰撞体与 DamageReceiver。
+- RuntimeShip 新增 module_damaged(module_instance, amount, current_hp) 信号。
+- RuntimeShip 新增 module_destroyed(module_instance) 信号。
+- RuntimeShip 新增 module_runtimes 与 module_runtime_by_uid。
+- RuntimeShip 新增 get_module_runtime_count() / get_module_runtime()。
+- RuntimeShip 新增 prototype_module_hp，当前默认 20。
+- ship_movement_test 现在创建第二艘 RuntimeShip 作为真实模块受击目标。
+
+模块命中规则：
+- 每个模块的碰撞体位置使用与模块绘制完全相同的核心原点坐标换算。
+- 每个模块的碰撞体大小 = 模块旋转后的网格尺寸 × cell_size。
+- Projectile 命中 ShipModuleRuntime 时，命中对象天然对应具体 ShipModuleInstance。
+- 不使用整船连续包围盒，因此模块之间的空格不会产生碰撞。
+- 模块允许分开放置、不相邻、不连通的规则保持不变。
+
+模块 HP：
+- 每个 ShipModuleRuntime 组合独立 DamageReceiver。
+- 当前所有模块统一使用 prototype_module_hp = 20。
+- 测试层继续暂时使用 damage = firepower。
+- 模块 HP 归零后发出 destroyed。
+- destroyed 后使用 deferred 方式禁用该模块 CollisionShape2D，避免在物理查询刷新期间直接修改碰撞状态。
+- RuntimeShip 收到 module_destroyed 后将对应模块绘制为深灰色。
+
+开发测试：
+- 玩家 RuntimeShip 继续由 PlayerShipController 控制。
+- 场景创建第二艘 RuntimeShip，加入 enemy_targets。
+- 目标 RuntimeShip 的 weapon_target_group 设置为 player_targets，当前测试中不会主动攻击玩家。
+- 玩家自动炮塔会瞄准目标 RuntimeShip 并发射 Projectile。
+- HUD 显示模块 Runtime 数量、模块受伤事件、模块摧毁事件、最近受伤模块、剩余 HP 与最近伤害值。
+
+结构原则：
+- ShipData 仍是飞船结构唯一数据模型。
+- ShipModuleRuntime 只保存战斗期运行状态，不复制或改写模块静态定义。
+- 模块 destroyed 当前不会从 ShipData.modules 删除。
+- 模块 destroyed 当前不会改变 ShipData.get_thrust() / get_firepower() / get_energy_output() 等静态统计。
+- 武器模块摧毁后暂时仍可能继续射击。
+- 动力模块摧毁后暂时仍不影响推力。
+- 能量模块摧毁后暂时仍不影响供能。
+- 核心模块摧毁后暂时不会让整船沉没。
+
+当前范围：
+- 已完成“Projectile 命中 → 具体模块”映射。
+- 已完成每模块独立 HP。
+- 已完成模块 damaged / destroyed 事件。
+- 已完成模块摧毁后的碰撞禁用与基础视觉反馈。
+- 尚未加入模块功能失效。
+- 尚未加入核心模块击毁沉没。
+- 尚未将模块 HP 正式写入 Excel / ModuleDefinition。
+- 尚未加入护甲 / 防护减伤公式。
+
+
+========================================
 v0.20
 ========================================
 
