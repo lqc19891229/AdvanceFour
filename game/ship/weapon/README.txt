@@ -26,6 +26,9 @@ fired 信号
 - RuntimeShip.weapon_target_group 可以在 setup 前配置，因此玩家飞船、敌方飞船以后可以使用不同敌对目标组。
 - 当前目标无效、离开攻击范围或退出场景后，WeaponRuntime 会重新搜索。
 - 搜索规则为：攻击范围内距离该炮塔最近的目标。
+- 如果目标实现 get_aim_point()，WeaponRuntime 会瞄准其返回的存活模块位置，而不是固定瞄准 RuntimeShip 原点。
+- RuntimeShip 当前返回距离该炮塔最近的未 destroyed 模块中心。
+- 目标飞船没有任何存活模块时，会视为无效目标。
 - 同一艘飞船上的不同武器允许选择不同目标。
 
 炮塔瞄准：
@@ -64,7 +67,8 @@ fired 信号
 - WeaponRuntime 不读取玩家输入。
 - WeaponRuntime 不负责玩家移动。
 - WeaponRuntime 本身不直接创建 Projectile；它只发出 fired，RuntimeShip 负责生成 ProjectileRuntime。
-- WeaponRuntime 不计算命中、伤害或模块失效。
+- WeaponRuntime 不计算命中或伤害。
+- 对应武器模块 destroyed 后，RuntimeShip 会调用 set_operational(false)，该 WeaponRuntime 停止搜索、瞄准和开火。
 - firepower 继续来自 WeaponModuleDefinition，不复制另一套武器静态数据。
 - ShipData.grid_position / rotation_quarters 不因炮塔运行时旋转而改变。
 

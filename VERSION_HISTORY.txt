@@ -18,6 +18,58 @@
 
 
 ========================================
+v0.22
+========================================
+
+新增：
+- WeaponRuntime 新增 operational 运行状态。
+- WeaponRuntime 新增 set_operational() / is_operational()。
+- RuntimeShip 新增 weapon_runtime_by_uid，用于把武器模块与对应 WeaponRuntime 关联。
+- RuntimeShip 新增 get_operational_weapon_count()。
+- RuntimeShip 新增 has_operational_modules()。
+- RuntimeShip 新增 get_aim_point(from_world_position)。
+- RuntimeShip 新增 get_effective_thrust()。
+- RuntimeShip 新增 get_effective_acceleration_score()。
+- ship_movement_test HUD 新增目标可用武器数量和目标有效推力显示。
+
+瞄准调整：
+- WeaponRuntime 不再固定使用 target.global_position 作为最终瞄准点。
+- 如果目标实现 get_aim_point()，WeaponRuntime 会使用该运行时瞄准点。
+- RuntimeShip.get_aim_point() 当前从所有未 destroyed 的 ShipModuleRuntime 中选择距离该炮塔最近的模块中心。
+- 已摧毁模块不会继续作为炮塔瞄准点。
+- 当目标 RuntimeShip 不再有任何存活模块时，WeaponRuntime 将该目标视为无效。
+- 距离与攻击范围判断也使用实际瞄准点，而不是固定核心中心。
+
+武器模块失效：
+- 武器模块 destroyed 后，RuntimeShip 根据 module uid 找到对应 WeaponRuntime。
+- 对应 WeaponRuntime 调用 set_operational(false)。
+- 停用后的 WeaponRuntime 清空当前目标、隐藏调试炮塔图形，并停止自动搜索、转向和开火。
+- RuntimeShip.request_fire() 即使遍历到已停用 WeaponRuntime，也会被 WeaponRuntime 自身的 operational 检查阻止开火。
+
+动力模块失效：
+- RuntimeShip.get_effective_thrust() 只统计尚未 destroyed 的 PropulsionModuleDefinition。
+- RuntimeShip.get_effective_acceleration_score() = effective_thrust / ShipData 总质量。
+- RuntimeShip 推进时改用运行时有效加速度，而不再直接使用 ShipData.get_acceleration_score()。
+- 因此动力模块摧毁后，实际加速度与当前阻力平衡下的稳定速度都会下降。
+- 模块质量当前仍保留在总质量中；destroyed 不代表模块从飞船结构中消失。
+
+结构原则：
+- ShipData 仍是飞船结构与静态模块数据的唯一模型。
+- 模块受损 / destroyed / operational 属于战斗运行时状态，不改写 ShipData。
+- 分离模块、空格和不连通结构规则保持不变。
+- 运行时有效属性应根据“仍存活模块”计算，而不是修改静态定义数据。
+
+当前范围：
+- 已完成存活模块瞄准点。
+- 已完成武器模块摧毁后停火。
+- 已完成动力模块摧毁后有效推力下降。
+- 尚未加入能源模块失效。
+- 尚未加入核心模块击毁沉没。
+- 尚未加入防护 / 护甲减伤。
+- 尚未加入正式模块耐久 Excel 数据。
+
+
+========================================
 v0.21
 ========================================
 

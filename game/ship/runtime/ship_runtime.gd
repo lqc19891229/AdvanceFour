@@ -35,6 +35,7 @@ var turn_input := 0.0
 var local_origin_offset := Vector2.ZERO
 var core_origin_valid := false
 var weapon_runtimes: Array[WeaponRuntime] = []
+var weapon_runtime_by_uid: Dictionary = {}
 var module_runtimes: Array[ShipModuleRuntime] = []
 var module_runtime_by_uid: Dictionary = {}
 
@@ -63,6 +64,13 @@ func request_fire() -> void:
 func get_weapon_count() -> int:
 	return weapon_runtimes.size()
 
+func get_operational_weapon_count() -> int:
+	var count := 0
+	for weapon_runtime in weapon_runtimes:
+		if is_instance_valid(weapon_runtime) and weapon_runtime.is_operational():
+			count += 1
+	return count
+
 func get_module_runtime_count() -> int:
 	return module_runtimes.size()
 
@@ -70,6 +78,46 @@ func get_module_runtime(module: ShipModuleInstance) -> ShipModuleRuntime:
 	if module == null:
 		return null
 	return module_runtime_by_uid.get(module.uid, null) as ShipModuleRuntime
+
+func has_operational_modules() -> bool:
+	for module_runtime in module_runtimes:
+		if is_instance_valid(module_runtime) and not module_runtime.is_destroyed():
+			return true
+	return false
+
+func get_aim_point(from_world_position: Vector2) -> Vector2:
+	var best_point := global_position
+	var best_distance_squared := INF
+
+	for module_runtime in module_runtimes:
+		if not is_instance_valid(module_runtime) or module_runtime.is_destroyed():
+			continue
+		var point := module_runtime.global_position
+		var distance_squared := from_world_position.distance_squared_to(point)
+		if distance_squared < best_distance_squared:
+			best_distance_squared = distance_squared
+			best_point = point
+
+	return best_point
+
+func get_effective_thrust() -> float:
+	if ship_data == null:
+		return 0.0
+
+	var total := 0.0
+	for module in ship_data.modules:
+		if not (module.definition is PropulsionModuleDefinition):
+			continue
+		if not _is_module_operational(module):
+			continue
+		total += (module.definition as PropulsionModuleDefinition).thrust
+	return total
+
+func get_effective_acceleration_score() -> float:
+	if ship_data == null:
+		return 0.0
+	var mass := ship_data.get_mass()
+	return 0.0 if mass <= 0.0 else get_effective_thrust() / mass
 
 func get_speed() -> float:
 	return velocity.length()
@@ -92,7 +140,7 @@ func _physics_process(delta: float) -> void:
 
 	if not is_zero_approx(throttle_input):
 		var thrust_ratio := 1.0 if throttle_input > 0.0 else reverse_thrust_ratio
-		var acceleration := ship_data.get_acceleration_score() * acceleration_scale * thrust_ratio
+		var acceleration := get_effective_acceleration_score() * acceleration_scale * thrust_ratio
 		var forward := Vector2.UP.rotated(rotation)
 		velocity += forward * acceleration * throttle_input * delta
 
@@ -154,12 +202,14 @@ func _build_weapon_runtimes() -> void:
 		weapon_runtime.setup(self, module, _get_module_local_center(module), weapon_target_group)
 		weapon_runtime.fired.connect(_on_weapon_runtime_fired)
 		weapon_runtimes.append(weapon_runtime)
+		weapon_runtime_by_uid[module.uid] = weapon_runtime
 
 func _clear_weapon_runtimes() -> void:
 	for weapon_runtime in weapon_runtimes:
 		if is_instance_valid(weapon_runtime):
 			weapon_runtime.queue_free()
 	weapon_runtimes.clear()
+	weapon_runtime_by_uid.clear()
 
 func _get_module_local_center(module: ShipModuleInstance) -> Vector2:
 	var size := module.get_rotated_size()
@@ -176,6 +226,11 @@ func _on_module_runtime_damaged(
 	module_damaged.emit(module_instance, amount, current_hp)
 
 func _on_module_runtime_destroyed(module_instance: ShipModuleInstance) -> void:
+	if module_instance != null and module_instance.definition is WeaponModuleDefinition:
+		var weapon_runtime := weapon_runtime_by_uid.get(module_instance.uid, null) as WeaponRuntime
+		if weapon_runtime != null and is_instance_valid(weapon_runtime):
+			weapon_runtime.set_operational(false)
+
 	module_destroyed.emit(module_instance)
 	queue_redraw()
 
@@ -210,6 +265,10 @@ func _spawn_projectile(
 
 func _on_projectile_hit(target: Node2D, firepower: float) -> void:
 	projectile_hit.emit(target, firepower)
+
+func _is_module_operational(module: ShipModuleInstance) -> bool:
+	var module_runtime := get_module_runtime(module)
+	return module_runtime != null and is_instance_valid(module_runtime) and not module_runtime.is_destroyed()
 
 func _calculate_core_origin_offset() -> Vector2:
 	core_origin_valid = false
