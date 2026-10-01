@@ -103,6 +103,11 @@ size_flags_horizontal = 3
 text = "..."
 autowrap_mode = 2
 
+[node name="BattleButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "出航战斗"
+
 [node name="AITestButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2

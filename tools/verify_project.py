@@ -46,12 +46,15 @@ def main() -> int:
             raise RuntimeError("Excel source differs from modules.json; run the data importer")
         print("Workbook archive and source/cache parity: OK")
         run([args.godot, "--headless", "--editor", "--path", str(ROOT), "--import"], environment)
-        result = run([args.godot, "--headless", "--path", str(ROOT), "--script",
-                      "game/ship/dev/ship_regression_test.gd"], environment)
-        summary = re.search(r"Ship regression: \d+ checks, 0 failures", result)
-        if not summary:
-            raise RuntimeError(f"Godot regression did not complete:\n{result}")
-        print(summary.group())
+        for label, script in [
+            ("Ship", "game/ship/dev/ship_regression_test.gd"),
+            ("Combat", "game/combat/dev/combat_regression_test.gd"),
+        ]:
+            result = run([args.godot, "--headless", "--path", str(ROOT), "--script", script], environment)
+            summary = re.search(rf"{label} regression: \d+ checks, 0 failures", result)
+            if not summary:
+                raise RuntimeError(f"Godot regression did not complete:\n{result}")
+            print(summary.group())
     return 0
 
 
