@@ -32,6 +32,7 @@ ShipData = 飞船结构与静态属性数据。
 - PlayerShipController 不计算飞船质量、推力、速度或旋转物理。
 - RuntimeShip 不知道控制来源是玩家还是未来的 AI。
 - PlayerShipController 与 RuntimeShip 都使用物理帧更新控制/运动，避免控制采样与运动执行处于不同帧循环。
+- setup(new_runtime_ship) 重新绑定到不同飞船前，会先将旧 RuntimeShip 的推进和转向输入归零，避免旧飞船保留最后一次控制输入。
 - clear_target() 会先将推进和转向输入归零，再解除目标。
 
 飞船结构原则：
