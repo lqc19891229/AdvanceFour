@@ -14,6 +14,9 @@ var target_dummy: WeaponTargetDummy
 var weapon_fire_events := 0
 var projectile_spawn_events := 0
 var projectile_hit_events := 0
+var damage_events := 0
+var target_destroyed_events := 0
+var last_damage_amount := 0.0
 var last_hit_firepower := 0.0
 var last_firepower := 0.0
 var last_fire_direction := Vector2.ZERO
@@ -42,6 +45,8 @@ func _ready() -> void:
 	target_dummy = TARGET_DUMMY_SCRIPT.new() as WeaponTargetDummy
 	add_child(target_dummy)
 	target_dummy.position = runtime_ship.position + Vector2(260.0, -120.0)
+	target_dummy.damaged.connect(_on_target_damaged)
+	target_dummy.destroyed.connect(_on_target_destroyed)
 
 	$CanvasLayer/Info.text = _build_info_text()
 
@@ -64,9 +69,19 @@ func _on_weapon_fired(
 func _on_projectile_spawned(_projectile: ProjectileRuntime) -> void:
 	projectile_spawn_events += 1
 
-func _on_projectile_hit(_target: Node2D, firepower: float) -> void:
+func _on_projectile_hit(target: Node2D, firepower: float) -> void:
 	projectile_hit_events += 1
 	last_hit_firepower = firepower
+
+	if target != null and is_instance_valid(target) and target.has_method("apply_damage"):
+		target.apply_damage(firepower)
+
+func _on_target_damaged(amount: float, _current_hp: float) -> void:
+	damage_events += 1
+	last_damage_amount = amount
+
+func _on_target_destroyed() -> void:
+	target_destroyed_events += 1
 
 func _build_info_text() -> String:
 	return """RuntimeShip / WeaponRuntime 自动炮塔测试
@@ -91,11 +106,15 @@ D / →：右转
 武器触发事件：%d
 弹丸生成事件：%d
 弹丸命中事件：%d
+伤害事件：%d
+目标摧毁事件：%d
+目标 HP：%s
+最近伤害：%.1f
 最近命中火力：%.1f
 最近武器火力：%.1f
 最近发射方向：(%.2f, %.2f)
 
-当前阶段：Projectile 可碰撞测试目标；命中后发出 hit 事件并销毁，但不造成伤害。
+当前阶段：Projectile 命中后由测试层把 firepower 作为伤害交给 DamageReceiver；目标 HP 归零后发出 destroyed 并销毁。
 结构规则：模块可分开放置，不要求相邻、连通或填满格子。""" % [
 		ship.modules.size(),
 		runtime_ship.get_weapon_count(),
@@ -109,8 +128,18 @@ D / →：右转
 		weapon_fire_events,
 		projectile_spawn_events,
 		projectile_hit_events,
+		damage_events,
+		target_destroyed_events,
+		_build_target_hp_text(),
+		last_damage_amount,
 		last_hit_firepower,
 		last_firepower,
 		last_fire_direction.x,
 		last_fire_direction.y
 	]
+
+
+func _build_target_hp_text() -> String:
+	if target_dummy == null or not is_instance_valid(target_dummy):
+		return "已摧毁"
+	return "%.1f / %.1f" % [target_dummy.get_hp(), target_dummy.max_hp]
