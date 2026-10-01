@@ -12,7 +12,7 @@ signal fired(
 @export var fire_interval := 0.5
 @export var turn_speed_degrees := 180.0
 @export var fire_angle_tolerance_degrees := 6.0
-@export var target_group: StringName = &"weapon_targets"
+var target_group: StringName = &"enemy_targets"
 
 var owner_ship: Node2D
 var module_instance: ShipModuleInstance
@@ -20,11 +20,17 @@ var weapon_definition: WeaponModuleDefinition
 var target: Node2D
 var cooldown_remaining := 0.0
 
-func setup(ship: Node2D, module: ShipModuleInstance, local_position: Vector2) -> void:
+func setup(
+	ship: Node2D,
+	module: ShipModuleInstance,
+	local_position: Vector2,
+	p_target_group: StringName = &"enemy_targets"
+) -> void:
 	owner_ship = ship
 	module_instance = module
 	weapon_definition = module.definition as WeaponModuleDefinition
 	position = local_position
+	target_group = p_target_group
 	rotation = deg_to_rad(float(module.rotation_quarters) * 90.0)
 	target = null
 	cooldown_remaining = 0.0
@@ -68,7 +74,7 @@ func _find_nearest_target() -> Node2D:
 	var max_distance_squared := attack_range * attack_range
 
 	for candidate in get_tree().get_nodes_in_group(target_group):
-		if not candidate is Node2D:
+		if not (candidate is Node2D):
 			continue
 		var node := candidate as Node2D
 		if node == owner_ship or not is_instance_valid(node):
