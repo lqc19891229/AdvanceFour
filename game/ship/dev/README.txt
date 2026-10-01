@@ -13,6 +13,7 @@
 - 飞船绘制、速度、朝向、转向、自身朝向推进与核心中心旋转原点逻辑位于 game/ship/runtime/ship_runtime.gd。
 - 玩家键盘输入逻辑位于 game/ship/controller/player_ship_controller.gd。
 - 武器运行时逻辑位于 game/ship/weapon/weapon_runtime.gd，由 RuntimeShip 根据 ShipData 自动创建。
+- 弹丸运行时逻辑位于 game/ship/projectile/projectile_runtime.gd；RuntimeShip 在武器 fired 后生成 ProjectileRuntime。
 - dev 测试不再维护另一套飞船运动或玩家输入实现。
 
 使用：
@@ -21,7 +22,8 @@
 3. 测试场景会实例化 PlayerShipController 并绑定 RuntimeShip。
 4. 使用 W / ↑ 前进，S / ↓ 倒车，A / ← 左转，D / → 右转。
 5. 场景会在飞船附近创建白色十字圆测试目标；炮塔应自动转向目标并按冷却自动触发 fired。
-6. HUD 会显示 RuntimeShip 旋转中心、武器数量、武器触发事件、最近火力和最近发射方向。
+6. fired 后应从炮塔世界位置生成白色 Projectile，沿发射方向直线飞行，并在生命周期结束后自动销毁。
+7. HUD 会显示 RuntimeShip 旋转中心、武器数量、武器触发事件、弹丸生成事件、最近火力和最近发射方向。
 
 飞船结构原则：
 - 模块可以分开放置。
