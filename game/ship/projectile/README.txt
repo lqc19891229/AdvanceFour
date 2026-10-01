@@ -2,8 +2,8 @@
 
 用途：
 - 存放飞船武器发射后进入世界空间独立飞行的 Projectile 运行时逻辑。
-- ProjectileRuntime 当前负责生成后的世界空间飞行、生命周期、基础碰撞和命中事件。
-- 当前不处理伤害、穿透、爆炸或模块失效。
+- ProjectileRuntime 当前负责生成后的世界空间飞行、生命周期、基础碰撞、命中事件，以及把 firepower 直接交给支持 apply_damage() 的命中对象。
+- 当前不处理护甲公式、穿透、爆炸或模块功能失效。
 
 当前文件：
 - projectile_runtime.gd：基础弹丸运行时节点。
@@ -25,10 +25,11 @@ RuntimeShip
 - Projectile collision_layer = 2，collision_mask = 1。
 - 当前测试目标位于 collision_layer = 1。
 - Projectile 同时监听 area_entered 与 body_entered。
-- 首次有效碰撞时发出：
+- 首次有效碰撞时，如果目标提供 apply_damage()，ProjectileRuntime 先调用 apply_damage(firepower)。
+- 随后发出：
   hit(target: Node2D, firepower: float)
 - 命中后立即 queue_free()，当前不穿透。
-- RuntimeShip 会把 ProjectileRuntime.hit 转发为 projectile_hit 信号。
+- RuntimeShip 仍会把 ProjectileRuntime.hit 转发为 projectile_hit 信号，但该转发现在只用于观察 / 调试，不再是伤害生效的必要链路。
 - Projectile 保存 source_owner，并忽略 source_owner 自身及其子节点，避免基础自伤碰撞。
 
 为什么不作为 RuntimeShip 子节点：
@@ -44,7 +45,7 @@ RuntimeShip
 
 当前数据：
 - direction：世界空间飞行方向。
-- firepower：从 WeaponRuntime fired 事件带入；命中时随 hit 信号继续传递。ProjectileRuntime 本身不应用伤害，当前开发测试由上层把该数值交给 DamageReceiver。
+- firepower：从 WeaponRuntime fired 事件带入；命中支持 apply_damage() 的对象时，ProjectileRuntime 直接以该数值作为当前 Prototype 伤害，同时仍随 hit 信号继续传递。
 - lifetime_remaining：剩余生命周期。
 - source_owner：发射该 Projectile 的 RuntimeShip，用于基础自伤过滤。
 
@@ -52,7 +53,7 @@ RuntimeShip
 - setup() 时设置世界坐标、方向、firepower、source_owner 和剩余生命周期。
 - _physics_process() 中按 direction * speed * delta 移动。
 - 生命周期结束后 queue_free()。
-- 命中有效碰撞目标后发出 hit 并 queue_free()。
+- 命中有效碰撞目标后，先尝试 apply_damage(firepower)，再发出 hit 并 queue_free()。
 - 当前用简单白色图形显示弹丸，后续可替换正式视觉。
 
 当前范围：
@@ -64,8 +65,8 @@ RuntimeShip
 - 基础发射者过滤。
 
 暂不包含：
-- Projectile 内部直接应用伤害。
-- 正式飞船 / 模块 HP 与模块失效。
+- 正式伤害解析层、护甲 / 伤害类型公式。
+- 更复杂的模块失效联动。
 - 正式阵营过滤。
 - 连续碰撞 / swept collision。
 - 弹丸继承飞船速度。
