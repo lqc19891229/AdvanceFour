@@ -68,7 +68,10 @@ fired 信号
 - WeaponRuntime 不负责玩家移动。
 - WeaponRuntime 本身不直接创建 Projectile；它只发出 fired，RuntimeShip 负责生成 ProjectileRuntime。
 - WeaponRuntime 不计算命中或伤害。
-- 对应武器模块 destroyed 后，RuntimeShip 会调用 set_operational(false)，该 WeaponRuntime 停止搜索、瞄准和开火。
+- WeaponRuntime 将“结构存活”与“能源供电”分开：operational 表示武器模块是否已 destroyed，powered 表示当前飞船能源是否充足。
+- 对应武器模块 destroyed 后，RuntimeShip 会调用 set_operational(false)，该状态不会因能源恢复而复活。
+- 飞船能源不足时 RuntimeShip 会调用 set_powered(false)，武器停止搜索、瞄准和开火；能源恢复后，仍 operational 的武器可重新工作。
+- is_active() = operational and powered。
 - firepower 继续来自 WeaponModuleDefinition，不复制另一套武器静态数据。
 - ShipData.grid_position / rotation_quarters 不因炮塔运行时旋转而改变。
 
