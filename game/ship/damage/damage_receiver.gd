@@ -24,10 +24,11 @@ func apply_damage(amount: float) -> void:
 	if destroyed_state:
 		return
 
-	var applied := maxf(amount, 0.0)
-	if applied <= 0.0:
+	var requested := maxf(amount, 0.0)
+	if requested <= 0.0:
 		return
 
+	var applied := minf(requested, current_hp)
 	current_hp = maxf(0.0, current_hp - applied)
 	damaged.emit(applied, current_hp)
 
