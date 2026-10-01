@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.23.1
+《前进四》项目目录规划 V0.24
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -106,4 +106,7 @@ res://
 31. 核心击毁只结束当前 RuntimeShip 战斗实例，不改写 ShipData 或飞船设计存档；分离模块、空格与不连通结构规则保持不变。
 32. ProjectileRuntime 首次有效命中支持 apply_damage() 的对象时，会直接调用 apply_damage(firepower)；RuntimeShip.projectile_hit 只保留为观察 / 调试事件。
 33. Projectile 作为 RuntimeShip 同级独立节点，其伤害逻辑不依赖 source_owner 存活，因此发射者核心摧毁并 queue_free() 后，已发射弹丸仍可继续命中和造成伤害。
-34. 当前 v0.23.1 尚未实现能源模块失效、防护减伤或正式伤害类型；ShipData 静态统计继续保持不变。
+34. RuntimeShip.get_effective_energy_output() 只统计未 destroyed 的能源模块；get_effective_energy_cost() 只统计未 destroyed 模块的 energy_cost。
+35. 当有效供能低于有效耗能时，RuntimeShip 进入能源不足状态：所有 WeaponRuntime powered=false，推进有效推力归零；飞船不会因此直接退出战斗。
+36. WeaponRuntime 将 operational（结构是否存活）与 powered（是否有能源）分离，能源恢复不会复活已经 destroyed 的武器。
+37. 当前 v0.24 尚未实现模块级供电优先级、部分负载切除、防护减伤或正式伤害类型；ShipData 静态统计继续保持不变。

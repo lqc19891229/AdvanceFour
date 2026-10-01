@@ -20,6 +20,7 @@ var weapon_definition: WeaponModuleDefinition
 var target: Node2D
 var cooldown_remaining := 0.0
 var operational := true
+var powered := true
 
 func setup(
 	ship: Node2D,
@@ -36,6 +37,7 @@ func setup(
 	target = null
 	cooldown_remaining = 0.0
 	operational = true
+	powered = true
 	visible = true
 	queue_redraw()
 
@@ -47,6 +49,17 @@ func set_operational(value: bool) -> void:
 
 func is_operational() -> bool:
 	return operational
+
+func set_powered(value: bool) -> void:
+	powered = value
+	if not powered:
+		target = null
+
+func is_powered() -> bool:
+	return powered
+
+func is_active() -> bool:
+	return operational and powered
 
 func fire_once() -> void:
 	if not _can_fire():
@@ -61,7 +74,7 @@ func has_target() -> bool:
 	return _is_target_valid(target)
 
 func _physics_process(delta: float) -> void:
-	if not operational:
+	if not is_active():
 		return
 	if owner_ship == null or not is_instance_valid(owner_ship):
 		return
@@ -149,7 +162,7 @@ func _get_target_aim_point(candidate: Node2D) -> Vector2:
 
 func _can_fire() -> bool:
 	return (
-		operational
+		is_active()
 		and owner_ship != null
 		and is_instance_valid(owner_ship)
 		and module_instance != null
