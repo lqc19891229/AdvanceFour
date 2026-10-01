@@ -15,6 +15,7 @@ const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tsc
 @export var drag := 2.5
 @export var turn_speed_degrees := 120.0
 @export var reverse_thrust_ratio := 0.5
+@export var weapon_target_group: StringName = &"enemy_targets"
 
 var ship_data: ShipData
 var velocity := Vector2.ZERO
@@ -98,7 +99,7 @@ func _build_weapon_runtimes() -> void:
 
 		var weapon_runtime := WEAPON_RUNTIME_SCENE.instantiate() as WeaponRuntime
 		add_child(weapon_runtime)
-		weapon_runtime.setup(self, module, _get_module_local_center(module))
+		weapon_runtime.setup(self, module, _get_module_local_center(module), weapon_target_group)
 		weapon_runtime.fired.connect(_on_weapon_runtime_fired)
 		weapon_runtimes.append(weapon_runtime)
 

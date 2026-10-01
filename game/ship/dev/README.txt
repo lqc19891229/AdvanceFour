@@ -6,7 +6,8 @@
 
 当前测试：
 - ship_movement_test.tscn：读取 user://ships/test_ship.json，并实例化 RuntimeShip 做移动、朝向和武器运行时最小验证。
-- ship_movement_test.gd：只负责加载 ShipData、创建 RuntimeShip、创建并绑定 PlayerShipController，以及显示测试信息。
+- ship_movement_test.gd：负责加载 ShipData、创建 RuntimeShip、创建并绑定 PlayerShipController、放置自动瞄准测试目标，以及显示测试信息。
+- weapon_target_dummy.gd：武器自动瞄准测试目标，自动加入 enemy_targets 组。
 
 职责说明：
 - 飞船绘制、速度、朝向、转向、自身朝向推进与核心中心旋转原点逻辑位于 game/ship/runtime/ship_runtime.gd。
@@ -19,7 +20,7 @@
 2. 单独运行 res://game/ship/dev/ship_movement_test.tscn。
 3. 测试场景会实例化 PlayerShipController 并绑定 RuntimeShip。
 4. 使用 W / ↑ 前进，S / ↓ 倒车，A / ← 左转，D / → 右转。
-5. 按 Space 触发一次全部武器齐射。
+5. 场景会在飞船附近创建白色十字圆测试目标；炮塔应自动转向目标并按冷却自动触发 fired。
 6. HUD 会显示 RuntimeShip 旋转中心、武器数量、武器触发事件、最近火力和最近发射方向。
 
 飞船结构原则：

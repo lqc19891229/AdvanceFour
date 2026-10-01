@@ -33,5 +33,7 @@ WeaponRuntime     = 单个武器模块进入游戏世界后的运行时执行对
 
 武器运行时规则：
 - RuntimeShip 根据 ShipData 中的 WeaponModuleDefinition 自动创建 WeaponRuntime。
-- WeaponRuntime 使用模块自身 grid_position / rotation_quarters 与 RuntimeShip 核心原点换算运行时位置和发射方向。
+- WeaponRuntime 使用模块自身 grid_position / rotation_quarters 与 RuntimeShip 核心原点建立炮塔初始位置和初始朝向。
+- 炮塔进入战斗后可独立旋转，自动搜索攻击范围内最近敌人、瞄准并按冷却自动触发发射事件。
+- rotation_quarters 不再锁死最终发射方向，只定义炮塔初始朝向。
 - 当前只产生发射事件，不生成 Projectile，也不修改 ShipData。

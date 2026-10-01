@@ -14,7 +14,6 @@
 - S / ↓：倒车。
 - A / ←：左转。
 - D / →：右转。
-- Space：触发一次全部武器齐射。
 
 核心关系：
 PlayerShipController = 玩家输入来源。
@@ -26,12 +25,12 @@ ShipData = 飞船结构与静态属性数据。
 2. 实例化 PlayerShipController。
 3. 调用 controller.setup(runtime_ship)。
 4. PlayerShipController 在 _physics_process() 中按物理帧读取玩家输入并调用 RuntimeShip.set_control_input()。
-5. Space 从未按下变为按下时调用 RuntimeShip.request_fire()；当前每次按键只触发一次齐射。
 
 职责边界：
 - PlayerShipController 不加载 JSON。
 - PlayerShipController 不修改 ShipData。
-- PlayerShipController 不计算飞船质量、推力、速度、旋转物理或武器伤害。
+- PlayerShipController 不计算飞船质量、推力、速度、旋转物理、武器瞄准或武器伤害。
+- 武器自动选敌、自动瞄准和自动开火由 WeaponRuntime 独立负责。
 - RuntimeShip 不知道控制来源是玩家还是未来的 AI。
 - PlayerShipController 与 RuntimeShip 都使用物理帧更新控制/运动，避免控制采样与运动执行处于不同帧循环。
 - setup(new_runtime_ship) 重新绑定到不同飞船前，会先将旧 RuntimeShip 的推进和转向输入归零，避免旧飞船保留最后一次控制输入。
