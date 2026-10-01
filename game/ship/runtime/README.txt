@@ -22,7 +22,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 不读取 JSON，不负责存档。
 - RuntimeShip 不硬编码玩家按键，因此以后玩家控制器和 AI 都可以驱动同一个 RuntimeShip。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前包含模块绘制、速度、朝向、基础转向和基于舰首方向的推进；暂不包含武器、伤害与模块失效。
+- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进，以及以核心模块中心为局部原点/旋转中心；暂不包含武器、伤害与模块失效。
 
 飞船结构原则：
 - 模块允许分开放置。
@@ -37,3 +37,21 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - throttle < 0 时沿舰尾方向倒车，当前倒车推力为前进推力的 50%。
 - turn < 0 左转，turn > 0 右转。
 - 当前转向速度为基础运行参数，尚未由具体转向模块或质量分布计算。
+
+
+运行时原点 / 旋转中心：
+- RuntimeShip 的局部坐标原点固定使用核心模块（舰桥核心）的几何中心。
+- 所有模块绘制位置只在 RuntimeShip 中减去该 origin_offset；ShipData.grid_position 不做任何修改。
+- 因此无论核心位于编辑网格的哪个位置，RuntimeShip.position 都表示舰桥核心中心的世界坐标。
+- RuntimeShip.rotation 也围绕舰桥核心中心旋转。
+- 如果传入的 ShipData 没有核心模块，Prototype 会回退到原始网格原点 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
+- 该中心是逻辑 / 运行时基准点，不等同于未来可能计算的物理质量中心。
+
+
+运行时原点规则：
+- RuntimeShip 的 Node2D 局部原点固定在核心模块的几何中心。
+- setup(ship_data) 时根据核心模块 grid_position 与旋转后的尺寸计算 local_origin_offset。
+- 绘制模块时只减去 local_origin_offset，不修改 ShipData 中的原始 grid_position。
+- 因此飞船旋转时始终围绕核心模块中心旋转。
+- 模块即使彼此分离、存在空格，也不会改变这个原点规则。
+- 若传入的 ShipData 没有核心模块，RuntimeShip 防御性回退为 Vector2.ZERO；正式可用设计仍要求存在核心模块。

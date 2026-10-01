@@ -14,3 +14,8 @@ ModuleDefinition = 模块模板/静态定义
 ModuleInstance   = 某艘船上安装的具体模块实例
 ShipData         = 一艘飞船的结构数据
 ShipRuntime      = ShipData 在游戏场景中的运行实体
+
+
+运行时规则：
+- RuntimeShip 的局部原点与旋转中心使用核心模块的几何中心。
+- 该规则只影响运行时显示与旋转，不修改 ShipData 中的模块网格坐标。

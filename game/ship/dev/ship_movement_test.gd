@@ -54,6 +54,7 @@ D / →：右转
 推重比：%.3f
 速度：%.1f
 朝向：%.1f°
+旋转中心：%s
 
 结构规则：模块可分开放置，不要求相邻、连通或填满格子。""" % [
 		ship.modules.size(),
@@ -61,5 +62,6 @@ D / →：右转
 		ship.get_thrust(),
 		ship.get_acceleration_score(),
 		runtime_ship.get_speed(),
-		runtime_ship.get_heading_degrees()
+		runtime_ship.get_heading_degrees(),
+		"舰桥核心" if runtime_ship.has_core_origin() else "未找到核心（回退到网格原点）"
 	]

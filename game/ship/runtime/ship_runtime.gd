@@ -11,6 +11,7 @@ var ship_data: ShipData
 var velocity := Vector2.ZERO
 var throttle_input := 0.0
 var turn_input := 0.0
+var local_origin_offset := Vector2.ZERO
 
 func setup(data: ShipData) -> void:
 	ship_data = data
@@ -18,6 +19,7 @@ func setup(data: ShipData) -> void:
 	throttle_input = 0.0
 	turn_input = 0.0
 	rotation = 0.0
+	local_origin_offset = _calculate_core_origin_offset()
 	queue_redraw()
 
 func set_control_input(throttle: float, turn: float) -> void:
@@ -29,6 +31,9 @@ func get_speed() -> float:
 
 func get_heading_degrees() -> float:
 	return wrapf(rad_to_deg(rotation), 0.0, 360.0)
+
+func get_local_origin_offset() -> Vector2:
+	return local_origin_offset
 
 func _physics_process(delta: float) -> void:
 	if ship_data == null:
@@ -53,11 +58,25 @@ func _draw() -> void:
 	for module in ship_data.modules:
 		var size := module.get_rotated_size()
 		var rect := Rect2(
-			Vector2(module.grid_position) * cell_size,
+			Vector2(module.grid_position) * cell_size - local_origin_offset,
 			Vector2(size) * cell_size
 		)
 		draw_rect(rect.grow(-2.0), _get_module_color(module.definition.module_type))
 		draw_rect(rect.grow(-2.0), Color.WHITE, false, 1.0)
+
+func _calculate_core_origin_offset() -> Vector2:
+	if ship_data == null:
+		return Vector2.ZERO
+
+	for module in ship_data.modules:
+		if module.definition is CoreModuleDefinition:
+			var size := module.get_rotated_size()
+			return (
+				Vector2(module.grid_position)
+				+ Vector2(size) * 0.5
+			) * cell_size
+
+	return Vector2.ZERO
 
 func _get_module_color(module_type: ShipModuleDefinition.ModuleType) -> Color:
 	match module_type:
