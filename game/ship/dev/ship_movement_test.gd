@@ -64,7 +64,7 @@ A / ←：左转
 D / →：右转
 
 白色十字圆：自动瞄准测试目标
-武器会自动搜索 weapon_targets 组内、攻击范围内最近的目标。
+武器会自动搜索 enemy_targets 组内、攻击范围内最近的目标。
 
 控制器：PlayerShipController（只负责移动）
 模块：%d
