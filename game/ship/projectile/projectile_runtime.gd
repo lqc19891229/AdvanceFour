@@ -56,6 +56,10 @@ func _try_hit(candidate: Node2D) -> void:
 		return
 
 	has_hit = true
+
+	if candidate.has_method("apply_damage"):
+		candidate.apply_damage(firepower)
+
 	hit.emit(candidate, firepower)
 	queue_free()
 
