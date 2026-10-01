@@ -116,6 +116,8 @@ D / →：右转
 速度：%.1f
 朝向：%.1f°
 目标模块 Runtime：%d
+目标可用武器：%d / %d
+目标有效推力：%.1f / %.1f
 模块 Prototype HP：%.1f
 武器触发事件：%d
 弹丸生成事件：%d
@@ -129,7 +131,8 @@ D / →：右转
 最近发射方向：(%.2f, %.2f)
 
 当前阶段：Projectile 直接碰撞目标飞船的 ShipModuleRuntime，命中对象天然对应具体 ShipModuleInstance。
-模块 HP 归零后碰撞体禁用并显示为深灰色；暂不改变推力、武器、供能或核心状态。
+武器模块摧毁后对应 WeaponRuntime 停止；动力模块摧毁后有效推力下降。
+炮塔始终瞄准距离自身最近的存活模块；已摧毁模块不会继续作为瞄准点。
 结构规则：模块可分开放置，不要求相邻、连通或填满格子；空格不会生成碰撞体。""" % [
 		ship.modules.size(),
 		runtime_ship.get_weapon_count(),
@@ -140,6 +143,10 @@ D / →：右转
 		runtime_ship.get_speed(),
 		runtime_ship.get_heading_degrees(),
 		target_runtime_ship.get_module_runtime_count() if target_runtime_ship != null else 0,
+		target_runtime_ship.get_operational_weapon_count() if target_runtime_ship != null else 0,
+		target_runtime_ship.get_weapon_count() if target_runtime_ship != null else 0,
+		target_runtime_ship.get_effective_thrust() if target_runtime_ship != null else 0.0,
+		ship.get_thrust(),
 		target_runtime_ship.prototype_module_hp if target_runtime_ship != null else 0.0,
 		weapon_fire_events,
 		projectile_spawn_events,
