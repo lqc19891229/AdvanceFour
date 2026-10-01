@@ -54,8 +54,8 @@ RuntimeShip
 
 当前行为：
 - setup() 时设置世界坐标、方向、firepower、source_owner 和剩余生命周期。
-- _physics_process() 中计算 direction * speed * delta 对应的本帧路径，并沿整段路径做连续射线查询。
-- 生命周期结束或 remaining_damage <= 0 后 queue_free()。
+- _physics_process() 中先计算 step_time = min(delta, lifetime_remaining)，再按 direction * speed * step_time 得到本帧实际路径并做连续射线查询；因此最后一个物理帧不会超出剩余生命周期对应的距离。
+- 每帧只扣除实际使用的 step_time；生命周期结束或 remaining_damage <= 0 后 queue_free()。
 - 命中 Defense 模块时，先应用 protection 百分比减伤；减伤后的伤害再进入模块 HP。只要模块被本次伤害摧毁且仍有剩余伤害，就继续向内穿透；模块未被摧毁、protection 完全抵消伤害或刚好耗尽伤害时 Projectile 结束。
 - 如果某次命中使目标 RuntimeShip 进入 removed_from_battle（当前即核心模块被摧毁），该 Projectile 会立即结束，不会在同一物理帧继续伤害这艘已退出战斗的飞船其他模块。
 - 当前用简单白色图形显示弹丸，后续可替换正式视觉。
