@@ -2,7 +2,7 @@ class_name WeaponTargetDummy
 extends Node2D
 
 func _ready() -> void:
-	add_to_group(&"weapon_targets")
+	add_to_group(&"enemy_targets")
 	queue_redraw()
 
 func _draw() -> void:
