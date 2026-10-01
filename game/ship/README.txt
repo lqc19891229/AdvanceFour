@@ -54,7 +54,8 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 - RuntimeShip 使用存活模块计算有效供能 / 有效耗能；供能不足时按固定 Prototype 优先级 核心 > 能源 > 动力 > 防护 > 功能 > 武器 逐个供电，而不是整船统一断电。
 - 只有获得供电的动力模块才贡献运行时有效推力；只有获得供电且未 destroyed 的武器模块才能工作。能源不足本身不会让飞船退出战斗。
 - 自动炮塔会瞄准目标飞船距离自身最近的存活模块，而不是固定瞄准核心中心。
-- 核心模块 destroyed 视为整艘飞船战斗失败：RuntimeShip 发出 destroyed，并通过 queue_free() 从当前战斗场景移除。
+- 核心模块 destroyed 视为整艘飞船战斗失败：RuntimeShip 发出 destroyed，并通过 queue_free() 从当前战斗场景移除；造成该次核心摧毁的 Projectile 会立即结束，不再继续穿透这艘已退出战斗的飞船其他模块。
 - 该战斗移除只销毁 RuntimeShip 节点，不改写 ShipData，也不删除设计中的模块结构。
 
 - 已经发射的 Projectile 是独立世界节点，其伤害生效不依赖发射者 RuntimeShip 是否仍存活；发射者核心被摧毁并移除后，空中弹丸仍可继续造成伤害。
+- Projectile swept ray 会预先排除当前有效 source_owner 节点树中的 CollisionObject2D，避免大型发射者自身模块占用 max_impacts_per_step。
