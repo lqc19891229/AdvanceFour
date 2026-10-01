@@ -35,6 +35,7 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	lines.append("尺寸：%d×%d" % [definition.size.x, definition.size.y])
 	lines.append("质量：%.1f" % definition.mass)
 	lines.append("耗能：%.1f" % definition.energy_cost)
+	lines.append("HP：%.1f" % definition.hp)
 
 	if definition is EnergyModuleDefinition:
 		lines.append("供能：%.1f" % (definition as EnergyModuleDefinition).energy_output)

@@ -18,6 +18,53 @@
 
 
 ========================================
+v0.29
+========================================
+
+新增：
+- ShipModuleDefinition 新增共同基础字段 hp，表示该模块的最大生命值 / 耐久。
+- 六个 Excel 模块 Sheet 均新增 hp 列。
+- Python 数据导入器将 hp 作为 BASE_COLUMNS 必填字段，并校验 hp > 0。
+- JSON cache 新增 hp。
+- Godot 数据导入插件把 row["hp"] 写入生成的 ModuleDefinition .tres。
+- 飞船编辑器模块 tooltip 新增 HP 显示。
+
+运行时调整：
+- RuntimeShip 删除 prototype_module_hp Prototype 参数。
+- RuntimeShip.get_module_max_hp(module) 改为直接读取 module.definition.hp。
+- ShipModuleRuntime / DamageReceiver 继续按 RuntimeShip 提供的 max HP 初始化，不需要新增第二套 HP 数据。
+- Defense.protection 继续只表示百分比减伤，不参与最大 HP 计算。
+
+数据迁移：
+- 当前六个示例模块 hp 暂时全部设为 20，以保持 v0.28.2 的既有战斗耐久不变。
+- 后续可直接在 Excel 中为不同模块配置不同 hp，无需修改运行时代码。
+- game_data.xlsx 仍是策划数据唯一真源。
+- Excel → Python → JSON cache → Godot importer → .tres → ModuleDatabase → RuntimeShip 数据链保持不变，只新增 hp 基础字段。
+- 生成的六个模块 .tres 与 module_database.tres 已同步包含 hp = 20。
+
+存档兼容：
+- ShipData / ShipSerializer 设计存档格式不修改。
+- 存档仍只保存稳定 module_id、grid_position 与 rotation_quarters。
+- 加载后通过 ModuleDatabase 恢复当前 ModuleDefinition，因此 hp 数值不需要写入存档。
+
+战斗关系：
+- hp = 模块自身最大耐久。
+- Defense.protection = 该块装甲每次命中时的百分比减伤。
+- Projectile 命中 Defense 时先应用 protection，再扣该模块 hp。
+- 模块 destroyed 且有 overkill 时，仍按既有规则继续穿透。
+- 核心 hp 归零仍立即使 RuntimeShip removed_from_battle。
+
+结构规则保持不变：
+- 模块允许分开放置。
+- 模块不要求相邻或连通。
+- 网格允许任意空格。
+- 只禁止实际占用格重叠。
+
+当前限制：
+- 当前示例 hp 仍为统一 20，仅完成数据化；正式平衡数值尚未设计。
+
+
+========================================
 v0.28.2
 ========================================
 

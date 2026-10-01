@@ -54,7 +54,7 @@ SHEET_SCHEMAS = {
 
 BASE_COLUMNS = [
     "id", "display_name", "description",
-    "width", "height", "mass", "energy_cost",
+    "width", "height", "mass", "energy_cost", "hp",
 ]
 TYPE_FIELDS = ["energy_output", "thrust", "firepower", "protection"]
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -231,6 +231,7 @@ def parse_sheet(
         height = as_int(get("height"), "height", sheet_name, row_idx, errors)
         mass = as_float(get("mass"), "mass", sheet_name, row_idx, errors)
         energy_cost = as_float(get("energy_cost"), "energy_cost", sheet_name, row_idx, errors)
+        hp = as_float(get("hp"), "hp", sheet_name, row_idx, errors)
 
         if not ID_PATTERN.match(raw_id):
             errors.append(f"{sheet_name}!第 {row_idx} 行：id '{raw_id}' 只能使用小写英文、数字和下划线，并以字母开头")
@@ -243,6 +244,8 @@ def parse_sheet(
             errors.append(f"{sheet_name}!第 {row_idx} 行：width 和 height 必须 > 0")
         if mass < 0 or energy_cost < 0:
             errors.append(f"{sheet_name}!第 {row_idx} 行：mass 和 energy_cost 不能为负数")
+        if hp <= 0:
+            errors.append(f"{sheet_name}!第 {row_idx} 行：hp 必须 > 0")
 
         type_value = 0.0
         if type_field:
@@ -259,6 +262,7 @@ def parse_sheet(
             "height": height,
             "mass": mass,
             "energy_cost": energy_cost,
+            "hp": hp,
             "energy_output": 0.0,
             "thrust": 0.0,
             "firepower": 0.0,

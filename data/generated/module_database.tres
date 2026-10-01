@@ -17,6 +17,7 @@ display_name = "小型反应堆"
 module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
 mass = 10.0
+hp = 20.0
 
 [sub_resource type="Resource" id="Resource_vue2a"]
 script = ExtResource("3_82fgq")
@@ -27,6 +28,7 @@ module_type = 1
 description = "基础动力模块，为飞船提供主要推进力。"
 mass = 10.0
 energy_cost = 5.0
+hp = 20.0
 
 [sub_resource type="Resource" id="Resource_82fgq"]
 script = ExtResource("4_w5ypd")
@@ -37,6 +39,7 @@ module_type = 2
 description = "基础武器模块，提供稳定的常规火力。"
 mass = 5.0
 energy_cost = 5.0
+hp = 20.0
 
 [sub_resource type="Resource" id="Resource_w5ypd"]
 script = ExtResource("5_3kk2a")
@@ -46,6 +49,7 @@ display_name = "轻型装甲"
 module_type = 3
 description = "基础防护模块，为飞船提供结构防护。"
 mass = 5.0
+hp = 20.0
 
 [sub_resource type="Resource" id="Resource_3kk2a"]
 script = ExtResource("6_51is1")
@@ -54,6 +58,7 @@ display_name = "雷达"
 description = "基础功能模块。现阶段暂无额外参数。"
 mass = 5.0
 energy_cost = 10.0
+hp = 20.0
 
 [sub_resource type="Resource" id="Resource_51is1"]
 script = ExtResource("7_uyp4t")
@@ -64,6 +69,7 @@ description = "飞船核心区域。核心模块被击毁时，飞船判定为�
 size = Vector2i(2, 2)
 mass = 40.0
 energy_cost = 20.0
+hp = 20.0
 
 [resource]
 script = ExtResource("8_banwa")
