@@ -18,6 +18,42 @@
 
 
 ========================================
+v0.15
+========================================
+
+新增：
+- 新增 game/ship/controller/ 目录。
+- 新增 PlayerShipController。
+- 新增 player_ship_controller.tscn。
+- 新增 controller/README.txt。
+- PlayerShipController 提供 setup(runtime_ship) 与 clear_target() 基础接口。
+
+调整：
+- 玩家 WASD / 方向键输入从 ship_movement_test.gd 中移出。
+- PlayerShipController 现在负责读取玩家输入，并调用 RuntimeShip.set_control_input(throttle, turn)。
+- ship_movement_test 只负责：
+  - 加载测试 ShipData
+  - 实例化 RuntimeShip
+  - 实例化并绑定 PlayerShipController
+  - 显示调试 HUD
+- RuntimeShip 继续不读取键盘输入，也不知道控制来源是玩家还是未来的 AI。
+- PROJECT_STRUCTURE.txt 更新到 V0.15。
+- game/ship/README.txt、game/ship/controller/README.txt、game/ship/dev/README.txt 同步更新。
+
+结构原则：
+- ShipData = 飞船结构与静态属性数据。
+- RuntimeShip = 飞船在游戏世界中的运行实体与运动执行者。
+- PlayerShipController = 玩家输入来源，只负责把控制意图传给 RuntimeShip。
+- 后续 AIController 可以复用 RuntimeShip.set_control_input()，无需复制飞船运动逻辑。
+- 控制器不参与模块布局、存档或 ShipData 修改。
+- 模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+当前范围：
+- PlayerShipController 当前只包含推进与转向输入。
+- 尚未加入开火输入、AIController、网络控制或输入映射配置。
+
+
+========================================
 v0.14
 ========================================
 
