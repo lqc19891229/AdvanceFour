@@ -56,6 +56,7 @@ func _run() -> void:
 	var previous := FileAccess.get_file_as_bytes(SAVE_PATH) if had_save else PackedByteArray()
 	if had_save:
 		DirAccess.remove_absolute(SAVE_PATH)
+	await _test_movement_feedback()
 	await _test_waves_and_victory()
 	await _test_late_projectile_and_failure()
 	await _test_friendly_fire()
@@ -69,6 +70,53 @@ func _run() -> void:
 		DirAccess.remove_absolute(SAVE_PATH)
 	print("Combat regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
+
+func _key(code: Key, pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.keycode = code
+	event.physical_keycode = code
+	event.pressed = pressed
+	Input.parse_input_event(event)
+
+func _test_movement_feedback() -> void:
+	var battle := _new_battle([1])
+	battle.countdown = 60.0
+	await process_frame
+	await process_frame
+	var backdrop := battle.get_node("World/Backdrop") as Node2D
+	var landmark := Node2D.new()
+	landmark.position = Vector2(200.0, 200.0)
+	backdrop.add_child(landmark)
+	var world_before := landmark.global_position
+	var screen_before := landmark.get_global_transform_with_canvas().origin
+	var ship_before := battle.player.global_position
+	_key(KEY_W, true)
+	for frame in range(90):
+		await physics_frame
+	_key(KEY_W, false)
+	await process_frame
+	await process_frame
+	_check(battle.player.global_position.y < ship_before.y - 5.0 and battle.player.get_speed() > 0.0, "Real W input must propel the player's powered ship forward")
+	_check(landmark.global_position == world_before, "Backdrop landmarks must remain anchored in the world")
+	_check(landmark.get_global_transform_with_canvas().origin.distance_to(screen_before) > 5.0, "Following camera must make world landmarks visibly scroll when the ship moves")
+	_check(battle.camera.global_position.distance_to(battle.player.global_position) < 1.0, "Movement feedback must preserve the following camera")
+	_check(battle.hud.text.contains("速度：%.1f px/s" % battle.player.get_speed()) and battle.hud.text.contains("坐标："), "HUD must report live movement telemetry")
+	_key(KEY_S, true)
+	for frame in range(90):
+		await physics_frame
+	_key(KEY_S, false)
+	_check(battle.player.velocity.y > 0.0, "Real S input must reverse thrust along the ship's heading")
+	var heading_before := battle.player.rotation
+	_key(KEY_D, true)
+	for frame in range(15):
+		await physics_frame
+	_key(KEY_D, false)
+	_check(battle.player.rotation > heading_before, "Real D input must turn the player's ship")
+	await process_frame
+	var hud_panel: Control = battle.get_node("UI/HUD")
+	_check(root.get_visible_rect().encloses(hud_panel.get_global_rect()), "Movement telemetry and controls must fit in the game viewport")
+	battle.queue_free()
+	await process_frame
 
 func _test_waves_and_victory() -> void:
 	var battle := _new_battle([1, 2])

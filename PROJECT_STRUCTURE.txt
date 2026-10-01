@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.31
+《前进四》项目目录规划 V0.31.1
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -7,6 +7,7 @@ res://
 ├─ game/                         # 核心玩法
 │  ├─ combat/                  # 单场战斗调度、波次、HUD 和结算
 │  │  ├─ README.txt
+│  │  ├─ battle_backdrop.gd   # 世界固定星点与网格参照
 │  │  ├─ battle.gd / .tscn
 │  │  └─ dev/                  # 战斗流程独立回归
 │  │     ├─ README.txt
