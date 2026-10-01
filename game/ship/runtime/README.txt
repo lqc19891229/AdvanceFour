@@ -37,3 +37,12 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - throttle < 0 时沿舰尾方向倒车，当前倒车推力为前进推力的 50%。
 - turn < 0 左转，turn > 0 右转。
 - 当前转向速度为基础运行参数，尚未由具体转向模块或质量分布计算。
+
+
+运行时原点 / 旋转中心：
+- RuntimeShip 的局部坐标原点固定使用核心模块（舰桥核心）的几何中心。
+- 所有模块绘制位置只在 RuntimeShip 中减去该 origin_offset；ShipData.grid_position 不做任何修改。
+- 因此无论核心位于编辑网格的哪个位置，RuntimeShip.position 都表示舰桥核心中心的世界坐标。
+- RuntimeShip.rotation 也围绕舰桥核心中心旋转。
+- 如果传入的 ShipData 没有核心模块，Prototype 会回退到原始网格原点 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
+- 该中心是逻辑 / 运行时基准点，不等同于未来可能计算的物理质量中心。
