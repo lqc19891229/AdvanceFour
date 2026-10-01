@@ -48,6 +48,20 @@ func get_hp() -> float:
 func get_max_hp() -> float:
 	return 0.0 if damage_receiver == null else damage_receiver.max_hp
 
+func is_armor() -> bool:
+	return (
+		module_instance != null
+		and module_instance.definition is DefenseModuleDefinition
+	)
+
+func get_protection() -> float:
+	if not is_armor():
+		return 0.0
+	return maxf(
+		(module_instance.definition as DefenseModuleDefinition).protection,
+		0.0
+	)
+
 func is_destroyed() -> bool:
 	return damage_receiver != null and damage_receiver.is_destroyed()
 
