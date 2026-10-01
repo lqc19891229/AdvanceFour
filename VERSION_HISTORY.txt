@@ -22,51 +22,37 @@ v0.14
 ========================================
 
 新增：
+- RuntimeShip 新增 local_origin_offset。
 - RuntimeShip 新增以核心模块（舰桥核心）几何中心作为局部坐标原点。
 - RuntimeShip.rotation 现在围绕舰桥核心中心旋转。
+- 新增 get_local_origin_offset()，用于读取当前运行时局部原点偏移。
+- 新增 has_core_origin()，用于确认当前 ShipData 是否成功找到核心模块。
 - ship_movement_test HUD 新增运行时旋转中心显示。
 
 调整：
-- RuntimeShip setup() 时计算核心模块中心对应的 origin_offset。
-- 所有模块绘制位置改为减去 origin_offset，使舰桥核心中心落在 RuntimeShip 的 (0, 0)。
+- RuntimeShip setup() 时根据核心模块的 grid_position 与旋转后尺寸计算中心偏移。
+- 所有模块绘制位置统一减去 local_origin_offset，使舰桥核心中心落在 RuntimeShip 的 (0, 0)。
 - RuntimeShip.position 现在表示舰桥核心中心在世界坐标中的位置。
-- 不修改 ShipData.grid_position，不改变飞船设计存档中的原始模块坐标。
-- 如果 ShipData 缺少核心模块，Prototype 回退使用原始网格原点 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
+- ShipData 中原始 grid_position 保持不变，存档坐标与编辑器坐标不受影响。
+- 如果 ShipData 缺少核心模块，Prototype 回退使用 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
 - PROJECT_STRUCTURE.txt 更新到 V0.14。
-- game/ship/runtime/README.txt、game/ship/dev/README.txt 同步更新。
+- game/ship/README.txt、game/ship/runtime/README.txt、game/ship/dev/README.txt 同步更新。
+
+修复 / 健壮性：
+- 补充 has_core_origin()，修复 ship_movement_test 调用不存在方法的问题。
+- 核心是否存在使用独立 core_origin_valid 状态记录，不通过偏移值是否为零推断。
+- 清理 VERSION_HISTORY.txt 中重复的 v0.14 记录。
+- 清理 PROJECT_STRUCTURE.txt 中重复的规则编号与内容。
+- 合并 game/ship/runtime/README.txt 中重复的运行时原点说明。
 
 结构原则：
 - 舰桥核心中心是 RuntimeShip 的逻辑 / 运行时基准点。
 - 该基准点暂不等同于未来可能加入的物理质量中心。
 - 飞船模块仍允许分开放置，不要求相邻、连通或填满网格。
-
-
-========================================
-v0.14
-========================================
-
-新增：
-- RuntimeShip 新增 local_origin_offset。
-- 新增 get_local_origin_offset()，用于读取当前运行时局部原点偏移。
-- 新增核心模块中心定位逻辑。
-
-调整：
-- RuntimeShip 的 Node2D 局部原点与旋转中心改为核心模块的几何中心。
-- setup(ship_data) 时根据核心模块的 grid_position 与旋转后尺寸计算中心偏移。
-- 所有模块绘制位置统一减去 local_origin_offset。
-- ShipData 中原始 grid_position 保持不变，存档坐标与编辑器坐标不受影响。
-- ship_movement_test HUD 明确显示“旋转中心：核心模块中心”。
-- PROJECT_STRUCTURE.txt 更新到 V0.14。
-- game/ship/README.txt、game/ship/runtime/README.txt、game/ship/dev/README.txt 同步更新。
-
-规则：
-- 核心模块既是当前设计合法性要求的一部分，也是 RuntimeShip 的运行时坐标基准点。
-- 模块仍允许分开放置，不要求相邻、连通或填满网格。
 - 分离模块和空格不会改变 RuntimeShip 以核心中心为原点的规则。
-- 若异常 ShipData 不包含核心模块，RuntimeShip 防御性回退为 Vector2.ZERO；正式可用设计仍要求存在核心模块。
 
 当前范围：
-- 本阶段只调整运行时原点与旋转中心。
+- 本阶段只调整运行时原点、旋转中心及相关健壮性。
 - 尚未引入质量中心、惯性矩或基于质量分布的旋转物理。
 
 

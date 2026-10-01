@@ -12,6 +12,7 @@ var velocity := Vector2.ZERO
 var throttle_input := 0.0
 var turn_input := 0.0
 var local_origin_offset := Vector2.ZERO
+var core_origin_valid := false
 
 func setup(data: ShipData) -> void:
 	ship_data = data
@@ -34,6 +35,9 @@ func get_heading_degrees() -> float:
 
 func get_local_origin_offset() -> Vector2:
 	return local_origin_offset
+
+func has_core_origin() -> bool:
+	return core_origin_valid
 
 func _physics_process(delta: float) -> void:
 	if ship_data == null:
@@ -65,11 +69,13 @@ func _draw() -> void:
 		draw_rect(rect.grow(-2.0), Color.WHITE, false, 1.0)
 
 func _calculate_core_origin_offset() -> Vector2:
+	core_origin_valid = false
 	if ship_data == null:
 		return Vector2.ZERO
 
 	for module in ship_data.modules:
 		if module.definition is CoreModuleDefinition:
+			core_origin_valid = true
 			var size := module.get_rotated_size()
 			return (
 				Vector2(module.grid_position)
