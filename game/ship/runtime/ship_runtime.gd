@@ -93,7 +93,7 @@ func _build_weapon_runtimes() -> void:
 		return
 
 	for module in ship_data.modules:
-		if not module.definition is WeaponModuleDefinition:
+		if not (module.definition is WeaponModuleDefinition):
 			continue
 
 		var weapon_runtime := WEAPON_RUNTIME_SCENE.instantiate() as WeaponRuntime
