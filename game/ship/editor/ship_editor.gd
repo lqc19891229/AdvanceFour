@@ -1,5 +1,7 @@
 extends Control
 
+const SAVE_PATH := "user://ships/test_ship.json"
+
 @onready var grid: ShipGridView = $MainLayout/Center/Grid
 @onready var module_buttons: VBoxContainer = $MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons
 @onready var stats_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/StatsLabel
@@ -50,9 +52,26 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	return "\n".join(lines)
 
 func _bind_common_buttons() -> void:
+	$MainLayout/RightPanel/RightMargin/RightVBox/SaveButton.pressed.connect(_save_ship)
+	$MainLayout/RightPanel/RightMargin/RightVBox/LoadButton.pressed.connect(_load_ship)
 	$MainLayout/RightPanel/RightMargin/RightVBox/RotateButton.pressed.connect(grid.rotate_preview)
 	$MainLayout/RightPanel/RightMargin/RightVBox/CenterButton.pressed.connect(grid.center_view)
 	$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.pressed.connect(grid.clear_ship)
+
+func _save_ship() -> void:
+	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)
+	if result["ok"]:
+		_show_status("飞船设计已保存：%s" % SAVE_PATH)
+	else:
+		_show_status("保存失败：%s" % result["error"])
+
+func _load_ship() -> void:
+	var result := ShipSerializer.load_from_file(SAVE_PATH, grid.module_database)
+	if result["ok"]:
+		grid.set_ship(result["ship"])
+		_show_status("飞船设计已加载：%s" % SAVE_PATH)
+	else:
+		_show_status("加载失败：%s" % result["error"])
 
 func _select(id: String) -> void:
 	grid.select_definition(id)
@@ -83,6 +102,10 @@ func _refresh_stats() -> void:
 沉没判定：%s
 
 设计状态：%s
+
+结构规则：
+模块可分开放置；
+不要求相邻、连通或填满格子。
 
 能量规则：
 编辑时允许临时超额耗能；
