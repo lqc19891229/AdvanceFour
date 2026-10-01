@@ -48,8 +48,8 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 - ProjectileRuntime 命中支持 apply_damage() 的模块运行时后，会直接应用 firepower 伤害；RuntimeShip.projectile_hit 仅保留为命中事件转发。
 - 模块 destroyed 不删除或修改 ShipData；运行时状态独立决定模块是否仍能提供功能。
 - 武器模块 destroyed 后对应 WeaponRuntime 停火；动力模块 destroyed 后不再贡献有效推力；能源模块 destroyed 后不再贡献有效供能。
-- 防护模块采用实体装甲 / 掩体规则：protection 是该块 Defense 模块每次受 Projectile 命中时的固定减伤值，不增加最大 HP，也不会被消耗。
-- Defense 命中先执行 damage_after_protection = max(incoming_damage - protection, 0)，再扣模块 HP；某一块装甲被摧毁后，只打开这一块对应的局部射击缺口。
+- 防护模块采用实体装甲 / 掩体规则：protection 是该块 Defense 模块每次受 Projectile 命中时的百分比减伤值，protection = 5 表示减伤 5%，不增加最大 HP，也不会被消耗。
+- Defense 命中先执行 damage_after_protection = incoming_damage * (1 - clamp(protection, 0, 100) / 100)，再扣模块 HP；某一块装甲被摧毁后，只打开这一块对应的局部射击缺口。
 - 所有飞船模块若被本次伤害摧毁且仍有 overkill，则 Projectile 带着 leftover = damage_after_protection - hp_before 在同一发中继续沿弹道穿透后方模块。
 - RuntimeShip 使用存活模块计算有效供能 / 有效耗能；供能不足时按固定 Prototype 优先级 核心 > 能源 > 动力 > 防护 > 功能 > 武器 逐个供电，而不是整船统一断电。
 - 只有获得供电的动力模块才贡献运行时有效推力；只有获得供电且未 destroyed 的武器模块才能工作。能源不足本身不会让飞船退出战斗。
