@@ -18,6 +18,47 @@
 
 
 ========================================
+v0.27.1
+========================================
+
+调整：
+- 将 v0.27 的 overkill 穿透规则从“仅 Defense 装甲”扩展到所有 ShipModuleRuntime。
+- ShipModuleRuntime.apply_projectile_damage(amount) 现在对防护、武器、动力、能源、功能、核心模块统一处理剩余伤害。
+- 任意模块被本次 Projectile 伤害摧毁时，如果 incoming_damage > hp_before，则返回 leftover = incoming_damage - hp_before。
+- ProjectileRuntime 收到 leftover > 0 后继续沿原弹道查询下一模块。
+- 如果当前模块没有被摧毁，或 incoming_damage == hp_before 刚好耗尽伤害，则返回 0，Projectile 在当前模块处结束。
+
+示例：
+- Projectile remaining_damage = 25。
+- 第一层装甲当前 HP = 4：
+  - 装甲吸收 4并 destroyed。
+  - remaining_damage = 21。
+- 后方武器当前 HP = 6：
+  - 武器吸收 6并 destroyed。
+  - remaining_damage = 15。
+- 后方能源模块当前 HP = 20：
+  - 能源模块吸收 15，剩余 HP = 5。
+  - Projectile 结束。
+- 因此高伤害弹丸可以连续击穿多个低血量模块，但不会无条件穿过仍能承受剩余伤害的模块。
+
+核心模块：
+- 核心模块也遵循相同 HP-overkill 计算。
+- 核心 HP 归零时仍按既有规则立即触发 RuntimeShip removed_from_battle / destroyed / queue_free。
+- Projectile 的剩余伤害计算本身不改变“核心摧毁即整船战斗失败”的规则。
+
+保持不变：
+- Defense.protection 仍只增加单块装甲自身最大 HP。
+- DamageReceiver.damaged.amount 继续只表示实际扣除 HP。
+- ProjectileRuntime 继续使用 swept ray 按弹道最近顺序处理模块。
+- ShipData、Excel、JSON cache、.tres 与存档格式不修改。
+- 模块仍允许分开放置、不相邻、不连通，并允许任意空格。
+
+当前限制：
+- 当前连续检测仍是中心线 ray，不考虑 Projectile CircleShape 半径。
+- “穿透能力”目前完全由 remaining_damage 与模块当前 HP 决定，尚未加入独立穿甲值、装甲材质、入射角或伤害类型。
+
+
+========================================
 v0.27
 ========================================
 
