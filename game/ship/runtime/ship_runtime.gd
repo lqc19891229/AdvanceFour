@@ -32,7 +32,6 @@ const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile
 @export var turn_speed_degrees := 120.0
 @export var reverse_thrust_ratio := 0.5
 @export var weapon_target_group: StringName = &"enemy_targets"
-@export var prototype_module_hp := 20.0
 
 var ship_data: ShipData
 var velocity := Vector2.ZERO
@@ -105,7 +104,7 @@ func get_module_runtime(module: ShipModuleInstance) -> ShipModuleRuntime:
 func get_module_max_hp(module: ShipModuleInstance) -> float:
 	if module == null or module.definition == null:
 		return 0.0
-	return maxf(prototype_module_hp, 0.0)
+	return maxf(module.definition.hp, 0.0)
 
 func has_operational_modules() -> bool:
 	if removed_from_battle:
