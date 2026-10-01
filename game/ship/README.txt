@@ -46,4 +46,6 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 - DamageReceiver 独立负责 HP 与 destroyed 状态；Projectile 不直接持有目标 HP。
 - RuntimeShip 会为每个模块创建独立 ShipModuleRuntime，因此 Projectile 命中对象可以直接对应到具体 ShipModuleInstance。
 - 当前开发测试把 projectile_hit 的 firepower 直接作为该模块伤害。
-- 模块 destroyed 当前只改变运行时碰撞 / 显示状态，不删除或修改 ShipData。
+- 模块 destroyed 不删除或修改 ShipData；运行时状态独立决定模块是否仍能提供功能。
+- 武器模块 destroyed 后对应 WeaponRuntime 停火；动力模块 destroyed 后不再贡献有效推力。
+- 自动炮塔会瞄准目标飞船距离自身最近的存活模块，而不是固定瞄准核心中心。
