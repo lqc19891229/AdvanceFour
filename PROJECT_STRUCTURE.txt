@@ -72,4 +72,4 @@ res://
 12. RuntimeShip 的移动以自身朝向为基础：推进沿舰首方向，转向改变运行时 rotation；当前转向参数仍属于 Prototype 基础参数。
 13. RuntimeShip 的局部原点与旋转中心统一使用核心模块（舰桥核心）的几何中心；只调整运行时显示偏移，不修改 ShipData 中的模块网格坐标。
 
-14. 飞船控制来源与运行实体分离：PlayerShipController 只提供控制输入，RuntimeShip 负责执行运动；后续 AIController 可复用同一控制接口。
+14. 飞船控制来源与运行实体分离：PlayerShipController 只提供控制输入，RuntimeShip 负责执行运动；两者统一在物理帧更新，后续 AIController 可复用同一控制接口。
