@@ -26,13 +26,15 @@
 6. 玩家炮塔会自动选择目标飞船距离自身最近的存活模块中心进行瞄准并发射 Projectile。
 7. 目标飞船每个模块都拥有独立 ShipModuleRuntime 碰撞体与独立 HP。
 8. Projectile 命中哪个模块，就由 ProjectileRuntime 自身直接对该 ShipModuleRuntime 调用 apply_damage(firepower)；测试层不再负责扣血。
-9. 武器模块 HP 归零后，对应 WeaponRuntime 停止工作；动力模块 HP 归零后，目标飞船 effective_thrust 下降。
-10. 能源模块 HP 归零后，effective_energy_output 下降；若供能不足，则按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 优先级逐个为存活模块供电。
-11. 未获供电的动力模块不贡献 effective_thrust；未获供电的武器停止搜索、瞄准和开火。
-12. 核心模块 HP 归零后，目标 RuntimeShip 发出 destroyed 并 queue_free()，视作从战斗场景被移除。
-13. 已摧毁模块不再作为瞄准点，炮塔会继续转向其他存活模块；核心 destroyed 后整船直接退出目标集合。
-14. HUD 会分别显示目标可用武器（active）、存活武器（operational）与总武器数量，并显示有效推力、有效供能 / 总需求、实际已供电耗能、已供电模块数量、能源状态、整船移除事件、模块受伤 / 摧毁事件、最近模块 HP 和伤害值。
-15. 已经发射的 Projectile 即使其 source_owner 后续因核心摧毁被移除，仍会按自身生命周期继续飞行并在命中时造成伤害。
+9. 防护模块作为实体装甲：其 protection 增加该块装甲自身最大 HP；只要装甲仍存活，命中该方向的 Projectile 会先打在装甲上并被消耗。
+10. 某一块装甲 HP 归零后，该块装甲碰撞体失效；后续弹丸可穿过这个局部缺口攻击后方模块，不要求全船装甲同时被摧毁。
+11. 武器模块 HP 归零后，对应 WeaponRuntime 停止工作；动力模块 HP 归零后，目标飞船 effective_thrust 下降。
+12. 能源模块 HP 归零后，effective_energy_output 下降；若供能不足，则按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 优先级逐个为存活模块供电。
+13. 未获供电的动力模块不贡献 effective_thrust；未获供电的武器停止搜索、瞄准和开火。
+14. 核心模块 HP 归零后，目标 RuntimeShip 发出 destroyed 并 queue_free()，视作从战斗场景被移除。
+15. 已摧毁模块不再作为瞄准点，炮塔会继续转向其他存活模块；核心 destroyed 后整船直接退出目标集合。
+16. HUD 会分别显示目标可用武器（active）、存活武器（operational）与总武器数量，并显示有效推力、有效供能 / 总需求、实际已供电耗能、已供电模块数量、能源状态、整船移除事件、模块受伤 / 摧毁事件、最近模块 HP 和伤害值。
+17. 已经发射的 Projectile 即使其 source_owner 后续因核心摧毁被移除，仍会按自身生命周期继续飞行并在命中时造成伤害。
 
 飞船结构原则：
 - 模块可以分开放置。
