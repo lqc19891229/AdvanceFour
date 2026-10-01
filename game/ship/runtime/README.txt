@@ -41,17 +41,10 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 
 运行时原点 / 旋转中心：
 - RuntimeShip 的局部坐标原点固定使用核心模块（舰桥核心）的几何中心。
-- 所有模块绘制位置只在 RuntimeShip 中减去该 origin_offset；ShipData.grid_position 不做任何修改。
-- 因此无论核心位于编辑网格的哪个位置，RuntimeShip.position 都表示舰桥核心中心的世界坐标。
-- RuntimeShip.rotation 也围绕舰桥核心中心旋转。
-- 如果传入的 ShipData 没有核心模块，Prototype 会回退到原始网格原点 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
-- 该中心是逻辑 / 运行时基准点，不等同于未来可能计算的物理质量中心。
-
-
-运行时原点规则：
-- RuntimeShip 的 Node2D 局部原点固定在核心模块的几何中心。
 - setup(ship_data) 时根据核心模块 grid_position 与旋转后的尺寸计算 local_origin_offset。
-- 绘制模块时只减去 local_origin_offset，不修改 ShipData 中的原始 grid_position。
-- 因此飞船旋转时始终围绕核心模块中心旋转。
+- 所有模块绘制位置只在 RuntimeShip 中减去 local_origin_offset；ShipData.grid_position 不做任何修改。
+- 因此 RuntimeShip.position 表示舰桥核心中心的世界坐标，RuntimeShip.rotation 也围绕舰桥核心中心旋转。
+- has_core_origin() 用于确认当前 ShipData 是否成功找到核心模块。
 - 模块即使彼此分离、存在空格，也不会改变这个原点规则。
-- 若传入的 ShipData 没有核心模块，RuntimeShip 防御性回退为 Vector2.ZERO；正式可用设计仍要求存在核心模块。
+- 如果传入的 ShipData 没有核心模块，Prototype 会回退到 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
+- 该中心是逻辑 / 运行时基准点，不等同于未来可能计算的物理质量中心。
