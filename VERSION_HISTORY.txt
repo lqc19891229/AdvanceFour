@@ -21,14 +21,42 @@
 v0.11
 ========================================
 
+新增：
 - 新增根目录 WORKFLOW.txt。
+- 新增 ShipSerializer，支持 ShipData 与 JSON 存档之间的序列化 / 反序列化。
+- 飞船存档仅记录 module_id、网格位置与旋转，不保存 Resource 路径或运行时 uid。
+- 飞船编辑器新增“保存设计”“加载设计”功能。
+- 当前 Prototype 固定使用 user://ships/test_ship.json 作为测试存档。
+- 新增 game/ship/dev/ 飞船系统开发测试目录。
+- 新增 game/ship/dev/ship_movement_test.tscn 与 ship_movement_test.gd。
+- 移动测试场景可读取已保存的飞船，并使用质量、推力、推重比验证基础移动效果。
+- 移动测试支持 WASD / 方向键控制。
+
+调整：
 - 正式整理项目开发工作流。
 - 明确 Excel → JSON → .tres → 游戏读取的数据工作流。
 - 明确“设计确认 → 数据定义 → 最小实现 → 测试 → 集成 → 文档同步 → 打版本”的功能开发流程。
 - 明确场景、脚本、Resource、数据 ID 命名规范。
 - 明确 README 文档维护规则。
 - 明确 Bug 修复与版本发布检查流程。
-- 更新根目录 README.txt 与 PROJECT_STRUCTURE.txt，使总纲文档职责更加明确。
+- PROJECT_STRUCTURE.txt 更新到 V0.11，并纳入 ShipSerializer 与飞船 dev 测试目录。
+- 将原根级 res://dev/ 迁移到 res://game/ship/dev/，使测试代码按功能归属组织。
+- WORKFLOW.txt 明确开发测试默认放在所属功能目录的 dev/ 下。
+- game/ship/README.txt、game/ship/data/README.txt、game/ship/editor/README.txt、game/ship/dev/README.txt 同步更新。
+
+规则：
+- 飞船模块允许分开放置。
+- 模块不要求相邻。
+- 模块不要求彼此连通。
+- 网格不要求全部填满，允许保留任意空格。
+- 模块实际占用格仍然不能互相重叠。
+- 当前 Prototype 仍限制每艘飞船最多安装 1 个核心模块。
+- 编辑阶段仍允许临时能量不足；最终设计合法性要求总耗能 ≤ 总供能。
+
+修复 / 健壮性：
+- ShipSerializer 加载时会检查存档版本。
+- 加载时会检查未知 module_id、非法 JSON、非法模块记录等情况。
+- 加载恢复模块时继续复用 ShipData.can_place()，不会额外引入相邻、连通或填满规则。
 
 
 ========================================
