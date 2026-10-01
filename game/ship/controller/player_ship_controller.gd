@@ -7,7 +7,7 @@ func setup(target: ShipRuntime) -> void:
 	runtime_ship = target
 
 func clear_target() -> void:
-	if runtime_ship != null:
+	if runtime_ship != null and is_instance_valid(runtime_ship):
 		runtime_ship.set_control_input(0.0, 0.0)
 	runtime_ship = null
 
