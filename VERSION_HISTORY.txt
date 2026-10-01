@@ -32,6 +32,7 @@ v0.15
 - 玩家 WASD / 方向键输入从 ship_movement_test.gd 中移出。
 - PlayerShipController 现在负责读取玩家输入，并调用 RuntimeShip.set_control_input(throttle, turn)。
 - PlayerShipController 的输入采样由 _process() 调整为 _physics_process()，与 RuntimeShip 的运动更新统一到物理帧。
+- PlayerShipController.setup() 重新绑定到不同 RuntimeShip 前，会先将旧目标的控制输入归零，避免旧飞船持续保持上一次推进/转向输入。
 - ship_movement_test 只负责：
   - 加载测试 ShipData
   - 实例化 RuntimeShip
