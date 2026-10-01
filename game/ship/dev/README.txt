@@ -16,6 +16,7 @@
 1. 在飞船编辑器中点击“保存设计”。
 2. 单独运行 res://game/ship/dev/ship_movement_test.tscn。
 3. 使用 W / ↑ 前进，S / ↓ 倒车，A / ← 左转，D / → 右转。
+4. HUD 会显示当前 RuntimeShip 的旋转中心；正常设计应显示“舰桥核心”。
 
 飞船结构原则：
 - 模块可以分开放置。
