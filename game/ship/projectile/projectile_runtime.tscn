@@ -1,6 +1,15 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://game/ship/projectile/projectile_runtime.gd" id="1_script"]
 
-[node name="ProjectileRuntime" type="Node2D"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_projectile"]
+radius = 4.0
+
+[node name="ProjectileRuntime" type="Area2D"]
+collision_layer = 2
+collision_mask = 1
+monitorable = false
 script = ExtResource("1_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_projectile")
