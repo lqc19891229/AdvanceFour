@@ -44,6 +44,7 @@ var weapon_runtimes: Array[WeaponRuntime] = []
 var weapon_runtime_by_uid: Dictionary = {}
 var module_runtimes: Array[ShipModuleRuntime] = []
 var module_runtime_by_uid: Dictionary = {}
+var module_powered_by_uid: Dictionary = {}
 var energy_sufficient := true
 var removed_from_battle := false
 
@@ -59,6 +60,7 @@ func setup(data: ShipData) -> void:
 	local_origin_offset = _calculate_core_origin_offset()
 	_build_module_runtimes()
 	_build_weapon_runtimes()
+	module_powered_by_uid.clear()
 	_refresh_energy_state()
 	queue_redraw()
 
@@ -140,18 +142,44 @@ func get_effective_energy_cost() -> float:
 		total += module.definition.energy_cost
 	return total
 
+func get_powered_energy_cost() -> float:
+	if ship_data == null:
+		return 0.0
+
+	var total := 0.0
+	for module in ship_data.modules:
+		if not is_module_powered(module):
+			continue
+		total += module.definition.energy_cost
+	return total
+
 func is_energy_sufficient() -> bool:
 	return energy_sufficient
 
+func is_module_powered(module: ShipModuleInstance) -> bool:
+	if module == null:
+		return false
+	return bool(module_powered_by_uid.get(module.uid, false))
+
+func get_powered_module_count() -> int:
+	if ship_data == null:
+		return 0
+
+	var count := 0
+	for module in ship_data.modules:
+		if is_module_powered(module):
+			count += 1
+	return count
+
 func get_effective_thrust() -> float:
-	if ship_data == null or not energy_sufficient:
+	if ship_data == null:
 		return 0.0
 
 	var total := 0.0
 	for module in ship_data.modules:
 		if not (module.definition is PropulsionModuleDefinition):
 			continue
-		if not _is_module_operational(module):
+		if not _is_module_operational(module) or not is_module_powered(module):
 			continue
 		total += (module.definition as PropulsionModuleDefinition).thrust
 	return total
@@ -293,16 +321,60 @@ func _refresh_energy_state() -> void:
 	var energy_output := get_effective_energy_output()
 	var energy_cost := get_effective_energy_cost()
 	energy_sufficient = energy_output >= energy_cost
+	module_powered_by_uid.clear()
+
+	var remaining_energy := energy_output
+	var candidates: Array[ShipModuleInstance] = []
+	if ship_data != null:
+		for module in ship_data.modules:
+			if _is_module_operational(module):
+				candidates.append(module)
+
+	candidates.sort_custom(_compare_power_priority)
+
+	for module in candidates:
+		var cost := maxf(module.definition.energy_cost, 0.0)
+		var powered := cost <= remaining_energy
+		module_powered_by_uid[module.uid] = powered
+		if powered:
+			remaining_energy -= cost
 
 	for weapon_runtime in weapon_runtimes:
-		if is_instance_valid(weapon_runtime):
-			weapon_runtime.set_powered(energy_sufficient)
+		if not is_instance_valid(weapon_runtime):
+			continue
+		weapon_runtime.set_powered(is_module_powered(weapon_runtime.module_instance))
 
 	energy_state_changed.emit(
 		energy_output,
 		energy_cost,
 		energy_sufficient
 	)
+
+func _compare_power_priority(a: ShipModuleInstance, b: ShipModuleInstance) -> bool:
+	var a_priority := _get_power_priority(a)
+	var b_priority := _get_power_priority(b)
+	if a_priority == b_priority:
+		return a.uid < b.uid
+	return a_priority < b_priority
+
+func _get_power_priority(module: ShipModuleInstance) -> int:
+	if module == null or module.definition == null:
+		return 999
+
+	match module.definition.module_type:
+		ShipModuleDefinition.ModuleType.CORE:
+			return 0
+		ShipModuleDefinition.ModuleType.ENERGY:
+			return 1
+		ShipModuleDefinition.ModuleType.PROPULSION:
+			return 2
+		ShipModuleDefinition.ModuleType.DEFENSE:
+			return 3
+		ShipModuleDefinition.ModuleType.FUNCTION:
+			return 4
+		ShipModuleDefinition.ModuleType.WEAPON:
+			return 5
+	return 999
 
 func _remove_from_battle() -> void:
 	if removed_from_battle:
