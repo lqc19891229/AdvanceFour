@@ -13,9 +13,9 @@
 
 当前运行链：
 ProjectileRuntime
-  ↓ collision
+  ↓ swept collision
 ShipModuleRuntime
-  ↓ apply_damage(firepower)
+  ↓ apply_projectile_damage(remaining_damage)
 DamageReceiver
   ↓
 module_damaged / module_destroyed
@@ -33,7 +33,9 @@ module_damaged / module_destroyed
 - 模块 HP 归零后禁用该模块碰撞体，并发出 destroyed。
 - 防护模块的保护是空间性的：只保护实际位于其后方、且弹道会先穿过该装甲位置的模块。
 - 某块装甲 destroyed 后，只开放该块碰撞区域对应的局部缺口；其他装甲继续保持独立碰撞与独立 HP。
-- 当前 Projectile 命中第一个有效模块后立即销毁，所以摧毁装甲的这一发不会继续伤害后方模块；后续弹丸才会穿过已失效装甲位置。
+- ShipModuleRuntime.apply_projectile_damage(amount) 会在装甲被本次伤害摧毁时返回未被装甲 HP 吸收的剩余伤害。
+- ProjectileRuntime 收到 remaining_damage > 0 后会继续沿同一弹道向内查询，因此高伤害弹丸不会被低剩余 HP 装甲无条件完全吃掉。
+- 非防护模块当前不返回剩余伤害；即使被 overkill，也会终止该发 Projectile。
 - RuntimeShip 会转发 module_damaged / module_destroyed。
 
 暂不包含：
