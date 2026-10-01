@@ -27,8 +27,9 @@
 7. 目标飞船每个模块都拥有独立 ShipModuleRuntime 碰撞体与独立 HP。
 8. Projectile 命中哪个模块，就对哪个 ShipModuleRuntime 调用 apply_damage(firepower)。
 9. 武器模块 HP 归零后，对应 WeaponRuntime 停止工作；动力模块 HP 归零后，目标飞船 effective_thrust 下降。
-10. 已摧毁模块不再作为瞄准点，炮塔会继续转向其他存活模块。
-11. HUD 会显示目标可用武器数量、有效推力、模块受伤 / 摧毁事件、最近模块 HP 和伤害值。
+10. 核心模块 HP 归零后，目标 RuntimeShip 发出 destroyed 并 queue_free()，视作从战斗场景被移除。
+11. 已摧毁模块不再作为瞄准点，炮塔会继续转向其他存活模块；核心 destroyed 后整船直接退出目标集合。
+12. HUD 会显示目标可用武器数量、有效推力、整船移除事件、模块受伤 / 摧毁事件、最近模块 HP 和伤害值。
 
 飞船结构原则：
 - 模块可以分开放置。
