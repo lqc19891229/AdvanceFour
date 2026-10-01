@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.26
+《前进四》项目目录规划 V0.27
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -114,6 +114,8 @@ res://
 39. get_powered_energy_cost() 返回当前实际已供电负载；动力只统计 powered 的存活动力模块，WeaponRuntime.powered 也按对应武器模块单独设置。
 40. RuntimeShip 的武器计数语义明确拆分：get_weapon_count() = 总 WeaponRuntime；get_operational_weapon_count() = 未 destroyed 的武器；get_active_weapon_count() = 未 destroyed 且当前 powered 的可工作武器。
 41. DefenseModuleDefinition.protection 的正式战斗语义为“该块装甲的额外耐久”，不是全船减伤；RuntimeShip.get_module_max_hp() 对防护模块使用 prototype_module_hp + protection。
-42. 防护采用空间掩体规则：Projectile 只伤害首先碰撞到的模块并销毁；装甲存活时可挡住其后方模块，装甲 destroyed 后其碰撞体禁用，后续弹丸可通过该局部缺口继续命中后方模块。
+42. 防护采用空间掩体规则：装甲存活时先吸收弹道上到达它的 incoming_damage；如果该次伤害摧毁装甲且仍有 overkill，则 ShipModuleRuntime.apply_projectile_damage() 返回 leftover = incoming_damage - hp_before，Projectile 同一发继续携带 leftover 向内穿透。
 43. 装甲是逐块独立失效，不要求全船装甲全部 destroyed；飞船结构仍允许分离、不相邻、不连通和任意空格。
-44. 当前 v0.26 尚未实现同一发弹丸穿透、多段伤害、扫掠碰撞、正式伤害类型或玩家自定义供电优先级；ShipData 静态统计继续保持不变。
+44. ProjectileRuntime 每物理帧使用 PhysicsRayQueryParameters2D / intersect_ray() 沿本帧整段路径做 swept hit，按弹道最近顺序处理碰撞，并在装甲 overkill 时继续查询同一路径后方模块。
+45. DamageReceiver.damaged(amount, current_hp) 的 amount 现在表示实际扣除 HP，不包含超过目标剩余 HP 的 overkill 部分。
+46. 当前 v0.27 尚未实现有限半径 shape cast、通用穿甲到任意模块、爆炸 / 溅射、正式伤害类型或玩家自定义供电优先级；ShipData 静态统计继续保持不变。
