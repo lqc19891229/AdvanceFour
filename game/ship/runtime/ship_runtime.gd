@@ -102,6 +102,15 @@ func get_module_runtime(module: ShipModuleInstance) -> ShipModuleRuntime:
 		return null
 	return module_runtime_by_uid.get(module.uid, null) as ShipModuleRuntime
 
+func get_module_max_hp(module: ShipModuleInstance) -> float:
+	if module == null or module.definition == null:
+		return 0.0
+
+	var max_hp := maxf(prototype_module_hp, 0.0)
+	if module.definition is DefenseModuleDefinition:
+		max_hp += maxf((module.definition as DefenseModuleDefinition).protection, 0.0)
+	return max_hp
+
 func has_operational_modules() -> bool:
 	if removed_from_battle:
 		return false
@@ -256,7 +265,7 @@ func _build_module_runtimes() -> void:
 			module,
 			_get_module_local_center(module),
 			Vector2(module.get_rotated_size()) * cell_size,
-			prototype_module_hp
+			get_module_max_hp(module)
 		)
 		module_runtime.damaged.connect(_on_module_runtime_damaged)
 		module_runtime.destroyed.connect(_on_module_runtime_destroyed)
