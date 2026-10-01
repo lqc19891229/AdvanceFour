@@ -51,6 +51,13 @@ func get_all_definitions() -> Array[ShipModuleDefinition]:
 		return []
 	return module_database.modules
 
+func set_ship(new_ship: ShipData) -> void:
+	if new_ship == null:
+		return
+	ship = new_ship
+	ship_changed.emit()
+	queue_redraw()
+
 func select_definition(id: String) -> void:
 	if definitions.has(id):
 		selected_definition = definitions[id]

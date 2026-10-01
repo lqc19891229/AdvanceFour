@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.10
+《前进四》项目目录规划 V0.11
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -7,8 +7,13 @@ res://
 ├─ game/                         # 核心玩法
 │  └─ ship/
 │     ├─ definitions/           # 六类模块 Resource 定义
-│     ├─ data/                  # ShipData / ModuleInstance / Database
+│     ├─ data/                  # ShipData / ModuleInstance / Database / Serializer
 │     └─ editor/                # 飞船编辑器场景与逻辑
+│
+├─ dev/                          # 独立开发测试场景
+│  ├─ README.txt
+│  ├─ ship_movement_test.gd
+│  └─ ship_movement_test.tscn
 │
 ├─ addons/
 │  └─ advance_four_data_importer/
@@ -53,3 +58,5 @@ res://
 5. tools/data_import 集中管理 Excel、Python、JSON cache 和导入逻辑。
 6. data/generated 只保存最终运行时 .tres，不手动修改。
 7. 游戏系统通过 ModuleDatabase / DataManager 访问模块数据。
+8. 飞船设计存档只记录稳定 module_id、位置和旋转；运行时通过 ModuleDatabase 恢复定义。
+9. 飞船模块允许分开放置，不要求相邻、连通或填满所有格子；只禁止占用格重叠。

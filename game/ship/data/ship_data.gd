@@ -32,7 +32,7 @@ func can_place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -
 	if definition is CoreModuleDefinition and has_core():
 		return {"ok": false, "reason": "当前原型每艘飞船只能安装 1 个核心模块"}
 
-	# 模块之间不要求相邻或连通。
+	# 飞船结构允许留空：模块不要求相邻、连通，也不要求网格全部填满。
 	# 编辑阶段也不以能源不足阻止放置。
 	return {"ok": true, "reason": ""}
 
