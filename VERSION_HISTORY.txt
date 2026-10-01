@@ -18,6 +18,58 @@
 
 
 ========================================
+v0.24
+========================================
+
+新增：
+- RuntimeShip 新增 get_effective_energy_output()。
+- RuntimeShip 新增 get_effective_energy_cost()。
+- RuntimeShip 新增 is_energy_sufficient()。
+- RuntimeShip 新增 energy_state_changed(energy_output, energy_cost, sufficient) 信号。
+- WeaponRuntime 新增 powered 状态。
+- WeaponRuntime 新增 set_powered() / is_powered() / is_active()。
+- ship_movement_test HUD 新增目标有效供能、有效耗能与能源状态显示。
+
+能源模块失效：
+- EnergyModuleDefinition 对应模块 destroyed 后，不再贡献 energy_output。
+- RuntimeShip 的有效供能只统计未 destroyed 的能源模块。
+- RuntimeShip 的有效耗能只统计未 destroyed 模块的 energy_cost。
+- 每次模块 destroyed 后重新计算运行时能源状态。
+- 若 effective_energy_output < effective_energy_cost，则进入能源不足。
+- 若 effective_energy_output >= effective_energy_cost，则能源状态正常。
+
+能源不足行为：
+- 全部 WeaponRuntime set_powered(false)。
+- 武器停止搜索、瞄准和开火。
+- get_effective_thrust() 返回 0，推进不再产生新的加速度。
+- 飞船现有速度仍按当前 drag 规则衰减，不瞬间停止。
+- 飞船不会因为能源不足直接 queue_free()；只有核心模块 destroyed 才退出战斗。
+- 当前转向仍使用 Prototype 固定 turn_speed，不受能源状态影响。
+
+武器状态拆分：
+- operational 表示武器模块结构上是否仍存活。
+- powered 表示当前飞船能源是否充足。
+- is_active() = operational and powered。
+- destroyed 武器 operational=false 后，即使能源恢复也不会复活。
+- 能源恢复时，只会让仍 operational 的武器重新具备工作条件。
+
+数据原则：
+- 不修改 ShipData.get_energy_output() / get_energy_cost() 的静态设计统计。
+- 运行时有效能源根据 ShipModuleRuntime destroyed 状态单独计算。
+- 不修改 Excel、JSON cache 或 .tres 数据真源。
+- 模块仍允许分开放置、不相邻、不连通，并允许空格。
+
+当前范围：
+- 已完成能源模块 destroyed 后供能下降。
+- 已完成供能不足导致武器断电与推进失效。
+- 尚未加入模块级供电优先级。
+- 尚未加入部分负载切除。
+- 尚未加入防护 / 护甲减伤。
+- 尚未加入正式伤害类型。
+- 尚未加入正式模块耐久 Excel 数据。
+
+
+========================================
 v0.23.1
 ========================================
 
