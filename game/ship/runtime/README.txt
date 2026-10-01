@@ -79,9 +79,9 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip.get_module_max_hp(module) 当前对所有模块统一返回 prototype_module_hp；DefenseModuleDefinition.protection 不再增加最大 HP。
 - 模块之间允许空格；空格不会生成碰撞体。
 - 模块 destroyed 后碰撞体会 deferred 禁用，RuntimeShip 将该模块绘制为深灰色。
-- 防护模块采用“实体掩体 + 固定减伤”语义：Projectile 先撞到弹道上的前方装甲，先执行 damage_after_protection = max(incoming_damage - protection, 0)。
-- protection 是每次命中该 Defense 模块时生效的固定减伤值，不是额外 HP，也不会因承受伤害而消耗。
-- 对所有 ShipModuleRuntime，实际进入 HP 的伤害都是 damage_after_protection；非 Defense 模块 protection = 0，因此等于原始 incoming_damage。
+- 防护模块采用“实体掩体 + 百分比减伤”语义：Projectile 先撞到弹道上的前方装甲，先执行 protection_percent = clamp(protection, 0, 100)，再计算 damage_after_protection = incoming_damage * (1 - protection_percent / 100)。
+- protection 是每次命中该 Defense 模块时生效的百分比减伤值；例如 protection = 5 表示减伤 5%。它不是额外 HP，也不会因承受伤害而消耗。
+- 对所有 ShipModuleRuntime，实际进入 HP 的伤害都是 damage_after_protection；非 Defense 模块 protection = 0，因此等于原始 incoming_damage。protection 运行时按 0%~100% clamp。
 - 若本次伤害将模块摧毁，则 leftover = damage_after_protection - hp_before 返回给 Projectile；Projectile 会携带 leftover 在同一弹道继续向内查询。
 - 如果当前模块未被摧毁、伤害被 protection 完全抵消，或刚好把模块 HP 吃完，则 Projectile 在该模块处结束。
 - 某一块装甲 destroyed 后，它自己的碰撞体失效；其他装甲仍保持独立保护。
