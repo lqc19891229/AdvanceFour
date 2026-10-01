@@ -18,6 +18,65 @@
 
 
 ========================================
+v0.27
+========================================
+
+调整：
+- 修改 v0.26 的装甲击穿规则：高伤害 Projectile 不再因为击毁低剩余 HP 装甲而把全部伤害浪费在该装甲上。
+- ShipModuleRuntime 新增 apply_projectile_damage(amount) -> remaining_damage。
+- Defense 装甲被本次伤害摧毁时，返回未被该装甲剩余 HP 吸收的 overkill。
+- ProjectileRuntime 新增 remaining_damage，发射时等于初始 firepower。
+
+装甲剩余伤害：
+- incoming_damage <= 装甲当前 HP：
+  - 装甲吸收全部 incoming_damage。
+  - Projectile 结束。
+- incoming_damage > 装甲当前 HP：
+  - 装甲只吸收 hp_before。
+  - 装甲 destroyed。
+  - leftover = incoming_damage - hp_before。
+  - Projectile 携带 leftover 继续沿原弹道向飞船内部穿透。
+- 示例：
+  - 装甲当前 HP = 3。
+  - Projectile incoming_damage = 10。
+  - 装甲吸收 3 并 destroyed。
+  - Projectile remaining_damage = 7。
+  - 同一发 Projectile 可继续命中其后方模块。
+- 只有 DefenseModuleDefinition 装甲当前具备 overkill 穿透语义。
+- 普通内部模块即使被 overkill，当前仍终止 Projectile；暂不实现通用多模块穿透。
+
+连续命中检测：
+- ProjectileRuntime 不再依赖 area_entered / body_entered 的离散事件顺序。
+- 每个物理帧计算当前位置到 direction * speed * delta 的终点。
+- 使用 PhysicsRayQueryParameters2D / direct_space_state.intersect_ray() 沿整段路径查询最近碰撞。
+- 当装甲被击穿并产生 leftover 时，在同一物理帧继续从命中点向本帧终点查询下一目标。
+- 已处理的碰撞对象加入 ray exclude，避免 destroyed 碰撞体 deferred disable 前被重复命中。
+- source_owner 及其子节点仍被忽略。
+- max_impacts_per_step 当前默认 16，用于防止异常场景中的无限碰撞循环。
+- 当前 swept 检测按弹丸中心线 ray 处理，尚未升级为考虑 Projectile CircleShape 半径的 shape cast。
+
+DamageReceiver：
+- apply_damage() 现在区分 requested_damage 与实际吸收伤害。
+- damaged(amount, current_hp) 中 amount = min(requested_damage, current_hp_before)。
+- 因此装甲 overkill 不再被统计成装甲自身实际承受的伤害。
+- destroyed / HP 下限等既有规则保持不变。
+
+信号：
+- ProjectileRuntime.hit(target, firepower) 保持现有签名。
+- 一发发生装甲穿透的 Projectile 可能发出多次 hit。
+- hit 的 firepower 表示该次碰撞发生前 Projectile 当前携带的 incoming damage。
+- RuntimeShip.projectile_hit 继续只用于观察 / 调试，不承担实际伤害应用。
+
+保持不变：
+- protection 仍表示单块 Defense 装甲的额外耐久。
+- armor max HP = prototype_module_hp + protection。
+- 装甲逐块独立 destroyed，不要求全船装甲全部摧毁。
+- 核心 destroyed 仍立即让 RuntimeShip 退出战斗。
+- ShipData、Excel、JSON cache、.tres 与存档格式不修改。
+- 模块仍允许分开放置、不相邻、不连通，并允许任意空格。
+
+
+========================================
 v0.26
 ========================================
 
