@@ -27,8 +27,8 @@
 7. 目标飞船每个模块都拥有独立 ShipModuleRuntime 碰撞体与独立 HP。
 8. Projectile 每个物理帧沿本帧路径做 swept ray，按弹道最近顺序命中 ShipModuleRuntime；命中模块时调用 apply_projectile_damage(remaining_damage)。
 9. 防护模块作为实体装甲：其 protection 增加该块装甲自身最大 HP；装甲先吸收 incoming_damage。
-10. 如果本次伤害摧毁装甲且 incoming_damage > hp_before，则 leftover = incoming_damage - hp_before；同一发 Projectile 会继续携带 leftover 沿同一弹道向内命中后方模块。
-11. 如果装甲未 destroyed，或 incoming_damage == hp_before 没有剩余伤害，则该发 Projectile 在装甲处结束；其他装甲仍独立生效。
+10. 任意 ShipModuleRuntime 如果被本次伤害摧毁且 incoming_damage > hp_before，则 leftover = incoming_damage - hp_before；同一发 Projectile 会继续携带 leftover 沿同一弹道向后命中下一模块。
+11. 该规则同样适用于武器、动力、能源、功能、核心与防护模块；如果当前模块未 destroyed，或 incoming_damage == hp_before 没有剩余伤害，则该发 Projectile 在当前模块处结束。
 12. 武器模块 HP 归零后，对应 WeaponRuntime 停止工作；动力模块 HP 归零后，目标飞船 effective_thrust 下降。
 13. 能源模块 HP 归零后，effective_energy_output 下降；若供能不足，则按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 优先级逐个为存活模块供电。
 14. 未获供电的动力模块不贡献 effective_thrust；未获供电的武器停止搜索、瞄准和开火。
