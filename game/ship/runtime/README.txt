@@ -64,9 +64,10 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime。
 - ProjectileRuntime 会加入 RuntimeShip 的父节点，而不是成为 RuntimeShip 子节点，因此发射后不会继续跟随飞船自身平移或旋转。
 - RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
-- ProjectileRuntime 命中后会发出 hit(target, firepower)，RuntimeShip 再通过 projectile_hit(target, firepower) 向上转发。
+- ProjectileRuntime 命中支持 apply_damage() 的对象时，会自行应用 firepower 伤害，再发出 hit(target, firepower)。
+- RuntimeShip 仍通过 projectile_hit(target, firepower) 向上转发命中事件，但该转发只用于观察 / 调试，不再负责实际扣血。
 - RuntimeShip 创建 Projectile 时会把 self 作为 source_owner 传入，用于 Projectile 基础自伤过滤。
-- Projectile 命中 ShipModuleRuntime 后，上层可以直接对该具体模块 apply_damage(firepower)。
+- 因为伤害由 ProjectileRuntime 自身处理，发射者 RuntimeShip 即使已因核心摧毁而 queue_free()，已经发射出去的 Projectile 仍可正常命中并造成伤害。
 
 模块运行时：
 - setup(ship_data) 时，RuntimeShip 会为每个 ShipModuleInstance 创建一个 ShipModuleRuntime。

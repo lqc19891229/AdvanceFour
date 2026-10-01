@@ -45,9 +45,11 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 - ProjectileRuntime 负责直线飞行、生命周期、基础碰撞和 hit 事件；命中后销毁。
 - DamageReceiver 独立负责 HP 与 destroyed 状态；Projectile 不直接持有目标 HP。
 - RuntimeShip 会为每个模块创建独立 ShipModuleRuntime，因此 Projectile 命中对象可以直接对应到具体 ShipModuleInstance。
-- 当前开发测试把 projectile_hit 的 firepower 直接作为该模块伤害。
+- ProjectileRuntime 命中支持 apply_damage() 的模块运行时后，会直接应用 firepower 伤害；RuntimeShip.projectile_hit 仅保留为命中事件转发。
 - 模块 destroyed 不删除或修改 ShipData；运行时状态独立决定模块是否仍能提供功能。
 - 武器模块 destroyed 后对应 WeaponRuntime 停火；动力模块 destroyed 后不再贡献有效推力。
 - 自动炮塔会瞄准目标飞船距离自身最近的存活模块，而不是固定瞄准核心中心。
 - 核心模块 destroyed 视为整艘飞船战斗失败：RuntimeShip 发出 destroyed，并通过 queue_free() 从当前战斗场景移除。
 - 该战斗移除只销毁 RuntimeShip 节点，不改写 ShipData，也不删除设计中的模块结构。
+
+- 已经发射的 Projectile 是独立世界节点，其伤害生效不依赖发射者 RuntimeShip 是否仍存活；发射者核心被摧毁并移除后，空中弹丸仍可继续造成伤害。

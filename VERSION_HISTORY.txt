@@ -18,6 +18,32 @@
 
 
 ========================================
+v0.23.1
+========================================
+
+修复：
+- 修复发射者 RuntimeShip 因核心摧毁被 queue_free() 后，已发射 Projectile 可能失去伤害链的问题。
+- ProjectileRuntime 现在在首次有效命中时，如果碰撞目标提供 apply_damage()，会直接调用 apply_damage(firepower)。
+- 实际扣血不再依赖 RuntimeShip.projectile_hit 的信号转发。
+- ship_movement_test 移除通过 projectile_hit 再次 apply_damage() 的逻辑，避免重复伤害。
+
+行为调整：
+- ProjectileRuntime.hit(target, firepower) 仍然保留。
+- RuntimeShip.projectile_hit(target, firepower) 仍然保留，但只作为观察 / 调试事件。
+- 已发射 Projectile 仍是 RuntimeShip 的同级世界节点。
+- source_owner 仅继续用于基础自伤过滤，不再是伤害应用链中的必要节点。
+- 当 source_owner 已被释放时，Projectile 仍可继续飞行、碰撞并对支持 apply_damage() 的目标造成伤害。
+
+结构原则：
+- ProjectileRuntime 当前只知道目标是否提供 apply_damage()，不直接知道 DamageReceiver、ShipModuleRuntime 或 ShipData。
+- DamageReceiver 继续只负责数值 HP 与 destroyed 状态。
+- 当前 Prototype 仍采用 damage = firepower。
+- 正式护甲、伤害类型、抗性或独立 DamageResolver 尚未加入。
+- ShipData 不因战斗伤害而修改。
+- 模块仍允许分开放置、不相邻、不连通，并允许空格。
+
+
+========================================
 v0.23
 ========================================
 

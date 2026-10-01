@@ -76,12 +76,9 @@ func _on_weapon_fired(
 func _on_projectile_spawned(_projectile: ProjectileRuntime) -> void:
 	projectile_spawn_events += 1
 
-func _on_projectile_hit(target: Node2D, firepower: float) -> void:
+func _on_projectile_hit(_target: Node2D, firepower: float) -> void:
 	projectile_hit_events += 1
 	last_hit_firepower = firepower
-
-	if target != null and is_instance_valid(target) and target.has_method("apply_damage"):
-		target.apply_damage(firepower)
 
 func _on_target_module_damaged(
 	module_instance: ShipModuleInstance,
@@ -140,7 +137,8 @@ D / →：右转
 最近命中火力：%.1f
 最近发射方向：(%.2f, %.2f)
 
-当前阶段：Projectile 直接碰撞目标飞船的 ShipModuleRuntime，命中对象天然对应具体 ShipModuleInstance。
+当前阶段：Projectile 直接碰撞目标飞船的 ShipModuleRuntime，并自行调用 apply_damage(firepower)。
+命中伤害不再依赖发射者 RuntimeShip 的 projectile_hit 转发，因此发射者先被摧毁时，已发射弹丸仍可造成伤害。
 武器模块摧毁后对应 WeaponRuntime 停止；动力模块摧毁后有效推力下降。
 核心模块摧毁后 RuntimeShip 发出 destroyed，并从战斗场景 queue_free() 移除。
 炮塔始终瞄准距离自身最近的存活模块；已摧毁模块不会继续作为瞄准点。
