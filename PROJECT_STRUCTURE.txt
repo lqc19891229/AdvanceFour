@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.18
+《前进四》项目目录规划 V0.19
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -87,4 +87,6 @@ res://
 17. WeaponRuntime 默认在 RuntimeShip.weapon_target_group 指定的组中搜索攻击范围内最近目标，并在瞄准完成、冷却结束后自动开火；玩家控制器不负责武器瞄准或开火。
 18. 当前 attack_range / fire_interval / turn_speed_degrees / fire_angle_tolerance_degrees 仍是 WeaponRuntime Prototype 参数，尚未纳入 Excel 数据真源。
 19. WeaponRuntime fired 后由 RuntimeShip 创建 ProjectileRuntime；Projectile 作为 RuntimeShip 同级节点进入世界，独立直线飞行并按生命周期自动销毁。
-20. 当前 v0.18 Projectile 只负责生成、飞行、生命周期；speed / lifetime 仍为 Prototype 参数，不包含碰撞、命中、伤害、穿透、爆炸或模块失效。
+20. ProjectileRuntime 使用 Area2D 基础碰撞；首次有效碰撞时发出 hit(target, firepower) 并销毁，RuntimeShip 通过 projectile_hit 向上转发。
+21. Projectile 保存 source_owner，并忽略发射者自身及其子节点；当前只做基础自伤过滤，尚未建立正式阵营系统。
+22. 当前 v0.19 只完成碰撞与命中事件，不应用伤害，也不包含模块 HP、模块失效、穿透、爆炸或连续碰撞检测。

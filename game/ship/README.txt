@@ -39,5 +39,5 @@ ProjectileRuntime = 武器发射后独立存在、飞行并按生命周期销毁
 - 炮塔进入战斗后可独立旋转，自动搜索攻击范围内最近敌人、瞄准并按冷却自动触发发射事件。
 - rotation_quarters 不再锁死最终发射方向，只定义炮塔初始朝向。
 - RuntimeShip 收到 WeaponRuntime fired 后创建 ProjectileRuntime，并将其作为飞船同级节点加入世界，使弹丸不继续继承飞船后续移动或旋转。
-- ProjectileRuntime 当前只负责直线飞行与生命周期自动销毁，不处理碰撞、命中或伤害。
+- ProjectileRuntime 负责直线飞行、生命周期、基础碰撞和 hit 事件；命中后销毁，但当前不应用伤害。
 - Projectile 创建过程不修改 ShipData。

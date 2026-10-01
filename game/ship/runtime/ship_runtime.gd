@@ -9,6 +9,7 @@ signal weapon_fired(
 )
 
 signal projectile_spawned(projectile: ProjectileRuntime)
+signal projectile_hit(target: Node2D, firepower: float)
 
 const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tscn")
 const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile_runtime.tscn")
@@ -144,8 +145,12 @@ func _spawn_projectile(
 
 	var projectile := PROJECTILE_RUNTIME_SCENE.instantiate() as ProjectileRuntime
 	projectile_parent.add_child(projectile)
-	projectile.setup(world_position, world_direction, firepower)
+	projectile.setup(world_position, world_direction, firepower, self)
+	projectile.hit.connect(_on_projectile_hit)
 	projectile_spawned.emit(projectile)
+
+func _on_projectile_hit(target: Node2D, firepower: float) -> void:
+	projectile_hit.emit(target, firepower)
 
 func _calculate_core_origin_offset() -> Vector2:
 	core_origin_valid = false
