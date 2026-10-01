@@ -116,7 +116,6 @@ func _get_module_local_center(module: ShipModuleInstance) -> Vector2:
 	) * cell_size - local_origin_offset
 
 func _on_weapon_runtime_fired(
-	_weapon_runtime: WeaponRuntime,
 	module_instance: ShipModuleInstance,
 	firepower: float,
 	world_position: Vector2,
