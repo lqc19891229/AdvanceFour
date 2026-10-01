@@ -6,7 +6,7 @@
 
 当前文件：
 - ship_runtime.tscn：运行时飞船场景。
-- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向与基于自身朝向的推进。
+- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向、基于自身朝向的推进，以及创建和管理 WeaponRuntime。
 
 核心关系：
 ShipData = 飞船结构与静态属性数据。
@@ -22,7 +22,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 不读取 JSON，不负责存档。
 - RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进，以及以核心模块中心为局部原点/旋转中心；暂不包含武器、伤害与模块失效。
+- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进、核心中心原点，以及武器运行时创建/发射事件；暂不包含 Projectile、命中、伤害与模块失效。
 
 飞船结构原则：
 - 模块允许分开放置。
@@ -48,3 +48,12 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - 模块即使彼此分离、存在空格，也不会改变这个原点规则。
 - 如果传入的 ShipData 没有核心模块，Prototype 会回退到 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
 - 该中心是逻辑 / 运行时基准点，不等同于未来可能计算的物理质量中心。
+
+
+武器运行时：
+- setup(ship_data) 时会扫描 ShipData.modules，为每个 WeaponModuleDefinition 对应的模块创建一个 WeaponRuntime。
+- WeaponRuntime 的局部位置取该模块几何中心，并使用与舰桥核心相同的 local_origin_offset 坐标换算。
+- request_fire() 会让当前所有 WeaponRuntime 各执行一次 fire_once()。
+- ShipRuntime 通过 weapon_fired 信号向上转发单个武器的发射事件。
+- get_weapon_count() 返回当前创建的 WeaponRuntime 数量。
+- 当前阶段只建立武器运行时与发射事件，不生成弹丸。

@@ -18,6 +18,45 @@
 
 
 ========================================
+v0.16
+========================================
+
+新增：
+- 新增 game/ship/weapon/ 目录。
+- 新增 WeaponRuntime 与 weapon_runtime.tscn。
+- 新增 weapon/README.txt。
+- RuntimeShip 新增 weapon_runtimes，用于保存由 ShipData 构建出的武器运行时节点。
+- RuntimeShip 新增 request_fire()，用于触发当前全部武器各发射一次。
+- RuntimeShip 新增 get_weapon_count()。
+- RuntimeShip 新增 weapon_fired 信号，向上转发单个 WeaponRuntime 的发射事件。
+- PlayerShipController 新增 Space 测试开火输入。
+- ship_movement_test HUD 新增武器数量、武器触发事件、最近武器火力和最近发射方向显示。
+
+调整：
+- RuntimeShip.setup(ship_data) 现在会扫描 ShipData.modules，为每个 WeaponModuleDefinition 对应的模块创建一个 WeaponRuntime。
+- WeaponRuntime 的局部位置使用武器模块几何中心，并减去 RuntimeShip 的核心原点偏移。
+- WeaponRuntime 的局部旋转使用 ShipModuleInstance.rotation_quarters。
+- 武器最终世界发射方向由模块旋转与 RuntimeShip 自身 rotation 共同决定。
+- Space 当前采用“按下一次触发一次全部武器齐射”的 Prototype 行为，不做自动连射。
+- PROJECT_STRUCTURE.txt 更新到 V0.16。
+- game/ship/README.txt、game/ship/runtime/README.txt、game/ship/controller/README.txt、game/ship/dev/README.txt、game/ship/weapon/README.txt 同步更新。
+
+结构原则：
+- WeaponModuleDefinition 继续保存武器静态参数，当前仍只有 firepower。
+- WeaponRuntime 引用对应 ShipModuleInstance / WeaponModuleDefinition，不复制另一套武器静态数据。
+- RuntimeShip 负责根据 ShipData 创建和管理 WeaponRuntime。
+- PlayerShipController 只发送开火意图，不负责生成弹丸、计算命中或伤害。
+- ShipData.grid_position 与 rotation_quarters 继续作为设计数据来源，不因进入武器运行时而改写。
+- 模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+当前范围：
+- 本阶段只建立武器运行时、发射点、发射方向和 fired 事件链。
+- 尚未加入 Projectile。
+- 尚未加入射速 / 冷却数据。
+- 尚未加入命中检测、伤害、模块生命值或模块失效。
+
+
+========================================
 v0.15
 ========================================
 
