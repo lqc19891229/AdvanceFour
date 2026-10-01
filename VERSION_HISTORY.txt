@@ -18,6 +18,54 @@
 
 
 ========================================
+v0.17
+========================================
+
+新增：
+- WeaponRuntime 新增自动目标选择。
+- WeaponRuntime 新增可旋转炮塔瞄准。
+- WeaponRuntime 新增自动开火冷却。
+- RuntimeShip 新增 weapon_target_group，默认 enemy_targets。
+- 新增 game/ship/dev/weapon_target_dummy.gd，用于自动炮塔测试。
+- ship_movement_test 会自动创建 enemy_targets 测试目标。
+
+调整：
+- module.rotation_quarters 从“固定最终发射方向”调整为“炮塔初始朝向”。
+- WeaponRuntime 在战斗中可以独立于 RuntimeShip 持续旋转。
+- 每个 WeaponRuntime 独立搜索攻击范围内距离自身最近的目标。
+- 当前目标失效、离开攻击范围或退出场景后会重新选敌。
+- 炮塔按照 turn_speed_degrees 逐步转向目标，不瞬间锁定。
+- 炮口与目标方向误差进入 fire_angle_tolerance_degrees 后视为瞄准完成。
+- 有有效目标、瞄准完成且 fire_interval 冷却结束时自动触发 fired。
+- PlayerShipController 移除 Space 手动齐射输入，恢复为只负责移动控制。
+- RuntimeShip.request_fire() / WeaponRuntime.fire_once() 暂时保留为调试接口。
+- PROJECT_STRUCTURE.txt 更新到 V0.17。
+- game/ship/README.txt、runtime/README.txt、controller/README.txt、weapon/README.txt、dev/README.txt 同步更新。
+
+当前 Prototype 参数：
+- attack_range = 500。
+- fire_interval = 0.5 秒。
+- turn_speed_degrees = 180°/秒。
+- fire_angle_tolerance_degrees = 6°。
+
+结构原则：
+- 自动瞄准和自动开火属于 WeaponRuntime，不属于 PlayerShipController。
+- RuntimeShip 只负责创建 WeaponRuntime、提供目标组配置并转发 weapon_fired。
+- 默认 player RuntimeShip 搜索 enemy_targets；未来敌方飞船可在 setup 前配置其他目标组。
+- 同一艘飞船不同武器可独立选择不同目标。
+- firepower 继续来自 WeaponModuleDefinition / Excel 数据链。
+- 当前新增的射程、射击间隔、炮塔转速、瞄准容差仍属于运行时 Prototype 参数，尚未修改 Excel → JSON → .tres 数据结构。
+- ShipData.grid_position / rotation_quarters 不因炮塔运行时瞄准而改变。
+- 模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+当前范围：
+- 已完成自动选敌、炮塔转向、瞄准判定、自动 fired 事件。
+- 尚未加入 Projectile。
+- 尚未加入真正敌我阵营系统；当前使用目标组区分。
+- 尚未加入命中、伤害、模块生命值或模块失效。
+
+
+========================================
 v0.16
 ========================================
 
