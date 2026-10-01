@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.15
+《前进四》项目目录规划 V0.16
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -17,6 +17,10 @@ res://
 │     │  ├─ README.txt
 │     │  ├─ player_ship_controller.gd
 │     │  └─ player_ship_controller.tscn
+│     ├─ weapon/                # 武器模块运行时节点与发射事件
+│     │  ├─ README.txt
+│     │  ├─ weapon_runtime.gd
+│     │  └─ weapon_runtime.tscn
 │     └─ dev/                   # 飞船系统独立开发测试
 │        ├─ README.txt
 │        ├─ ship_movement_test.gd
@@ -73,3 +77,5 @@ res://
 13. RuntimeShip 的局部原点与旋转中心统一使用核心模块（舰桥核心）的几何中心；只调整运行时显示偏移，不修改 ShipData 中的模块网格坐标。
 
 14. 飞船控制来源与运行实体分离：PlayerShipController 只提供控制输入，RuntimeShip 负责执行运动；两者统一在物理帧更新，后续 AIController 可复用同一控制接口。
+15. 武器静态数据继续由 ShipData / WeaponModuleDefinition 提供；RuntimeShip 为每个武器模块创建 WeaponRuntime，WeaponRuntime 只负责运行时发射事件，不复制静态模块数据。
+16. 当前 v0.16 武器阶段只建立 request_fire() → WeaponRuntime.fire_once() → weapon_fired 信号链，不包含 Projectile、命中、伤害或模块失效。
