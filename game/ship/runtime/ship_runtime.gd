@@ -1,6 +1,15 @@
 class_name ShipRuntime
 extends Node2D
 
+signal weapon_fired(
+	module_instance: ShipModuleInstance,
+	firepower: float,
+	world_position: Vector2,
+	world_direction: Vector2
+)
+
+const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tscn")
+
 @export var cell_size := 36.0
 @export var acceleration_scale := 180.0
 @export var drag := 2.5
@@ -13,19 +22,30 @@ var throttle_input := 0.0
 var turn_input := 0.0
 var local_origin_offset := Vector2.ZERO
 var core_origin_valid := false
+var weapon_runtimes: Array[WeaponRuntime] = []
 
 func setup(data: ShipData) -> void:
+	_clear_weapon_runtimes()
 	ship_data = data
 	velocity = Vector2.ZERO
 	throttle_input = 0.0
 	turn_input = 0.0
 	rotation = 0.0
 	local_origin_offset = _calculate_core_origin_offset()
+	_build_weapon_runtimes()
 	queue_redraw()
 
 func set_control_input(throttle: float, turn: float) -> void:
 	throttle_input = clampf(throttle, -1.0, 1.0)
 	turn_input = clampf(turn, -1.0, 1.0)
+
+func request_fire() -> void:
+	for weapon_runtime in weapon_runtimes:
+		if is_instance_valid(weapon_runtime):
+			weapon_runtime.fire_once()
+
+func get_weapon_count() -> int:
+	return weapon_runtimes.size()
 
 func get_speed() -> float:
 	return velocity.length()
@@ -67,6 +87,47 @@ func _draw() -> void:
 		)
 		draw_rect(rect.grow(-2.0), _get_module_color(module.definition.module_type))
 		draw_rect(rect.grow(-2.0), Color.WHITE, false, 1.0)
+
+func _build_weapon_runtimes() -> void:
+	if ship_data == null:
+		return
+
+	for module in ship_data.modules:
+		if not module.definition is WeaponModuleDefinition:
+			continue
+
+		var weapon_runtime := WEAPON_RUNTIME_SCENE.instantiate() as WeaponRuntime
+		add_child(weapon_runtime)
+		weapon_runtime.setup(self, module, _get_module_local_center(module))
+		weapon_runtime.fired.connect(_on_weapon_runtime_fired)
+		weapon_runtimes.append(weapon_runtime)
+
+func _clear_weapon_runtimes() -> void:
+	for weapon_runtime in weapon_runtimes:
+		if is_instance_valid(weapon_runtime):
+			weapon_runtime.queue_free()
+	weapon_runtimes.clear()
+
+func _get_module_local_center(module: ShipModuleInstance) -> Vector2:
+	var size := module.get_rotated_size()
+	return (
+		Vector2(module.grid_position)
+		+ Vector2(size) * 0.5
+	) * cell_size - local_origin_offset
+
+func _on_weapon_runtime_fired(
+	_weapon_runtime: WeaponRuntime,
+	module_instance: ShipModuleInstance,
+	firepower: float,
+	world_position: Vector2,
+	world_direction: Vector2
+) -> void:
+	weapon_fired.emit(
+		module_instance,
+		firepower,
+		world_position,
+		world_direction
+	)
 
 func _calculate_core_origin_offset() -> Vector2:
 	core_origin_valid = false
