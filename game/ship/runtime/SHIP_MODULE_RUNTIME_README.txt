@@ -22,7 +22,7 @@ module_damaged / module_destroyed
 
 当前 Prototype HP：
 - 每个模块暂时使用 RuntimeShip.prototype_module_hp。
-- 当前默认值为 10。
+- 当前默认值为 20。
 - 该数值尚未进入 ModuleDefinition / Excel 数据真源。
 - 后续正式模块耐久字段确定后，再把 HP 从 Prototype 参数迁移到静态模块数据。
 
