@@ -10,6 +10,7 @@
 - controller/：玩家、AI 等控制来源向 RuntimeShip 提供控制输入。
 - weapon/：飞船武器模块对应的运行时节点与发射事件。
 - projectile/：武器发射后进入世界空间独立飞行的弹丸运行时。
+- damage/：通用 HP、受伤与 destroyed 运行时组件。
 - dev/：仅服务于飞船系统的独立开发测试场景。
 
 核心关系：
@@ -20,6 +21,7 @@ ShipRuntime      = ShipData 在游戏场景中的运行实体
 PlayerShipController = 玩家输入到 RuntimeShip 控制接口的适配层
 WeaponRuntime     = 单个武器模块进入游戏世界后的运行时执行对象
 ProjectileRuntime = 武器发射后独立存在、飞行并按生命周期销毁的弹丸对象
+DamageReceiver    = 接收数值伤害、维护 HP 并发出 damaged / destroyed 的运行时组件
 
 
 运行时规则：
@@ -39,5 +41,7 @@ ProjectileRuntime = 武器发射后独立存在、飞行并按生命周期销毁
 - 炮塔进入战斗后可独立旋转，自动搜索攻击范围内最近敌人、瞄准并按冷却自动触发发射事件。
 - rotation_quarters 不再锁死最终发射方向，只定义炮塔初始朝向。
 - RuntimeShip 收到 WeaponRuntime fired 后创建 ProjectileRuntime，并将其作为飞船同级节点加入世界，使弹丸不继续继承飞船后续移动或旋转。
-- ProjectileRuntime 负责直线飞行、生命周期、基础碰撞和 hit 事件；命中后销毁，但当前不应用伤害。
-- Projectile 创建过程不修改 ShipData。
+- ProjectileRuntime 负责直线飞行、生命周期、基础碰撞和 hit 事件；命中后销毁。
+- DamageReceiver 独立负责 HP 与 destroyed 状态；Projectile 不直接持有目标 HP。
+- 当前开发测试由测试层把 projectile_hit 的 firepower 作为伤害交给目标 DamageReceiver。
+- Projectile / DamageReceiver 都不修改 ShipData。

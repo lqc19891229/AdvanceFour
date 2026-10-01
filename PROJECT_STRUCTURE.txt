@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.19
+《前进四》项目目录规划 V0.20
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -21,10 +21,13 @@ res://
 │     │  ├─ README.txt
 │     │  ├─ weapon_runtime.gd
 │     │  └─ weapon_runtime.tscn
-│     ├─ projectile/            # 弹丸生成后独立飞行与生命周期
+│     ├─ projectile/            # 弹丸生成、飞行、碰撞与命中
 │     │  ├─ README.txt
 │     │  ├─ projectile_runtime.gd
 │     │  └─ projectile_runtime.tscn
+│     ├─ damage/                # 通用 HP / 受伤 / destroyed 组件
+│     │  ├─ README.txt
+│     │  └─ damage_receiver.gd
 │     └─ dev/                   # 飞船系统独立开发测试
 │        ├─ README.txt
 │        ├─ ship_movement_test.gd
@@ -89,4 +92,6 @@ res://
 19. WeaponRuntime fired 后由 RuntimeShip 创建 ProjectileRuntime；Projectile 作为 RuntimeShip 同级节点进入世界，独立直线飞行并按生命周期自动销毁。
 20. ProjectileRuntime 使用 Area2D 基础碰撞；首次有效碰撞时发出 hit(target, firepower) 并销毁，RuntimeShip 通过 projectile_hit 向上转发。
 21. Projectile 保存 source_owner，并忽略发射者自身及其子节点；当前只做基础自伤过滤，尚未建立正式阵营系统。
-22. 当前 v0.19 只完成碰撞与命中事件，不应用伤害，也不包含模块 HP、模块失效、穿透、爆炸或连续碰撞检测。
+22. DamageReceiver 独立负责 max_hp / current_hp、damaged 与 destroyed；ProjectileRuntime 不直接维护目标生命值。
+23. 当前 v0.20 由战斗层 / 测试层决定如何把 projectile_hit.firepower 交给 DamageReceiver；开发测试暂时直接使用 firepower 作为伤害值。
+24. 当前只验证通用 HP → destroyed 链路，尚未加入正式飞船 HP、模块 HP、核心模块击毁、护甲减伤、伤害类型或模块失效。

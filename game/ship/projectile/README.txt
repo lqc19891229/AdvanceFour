@@ -44,7 +44,7 @@ RuntimeShip
 
 当前数据：
 - direction：世界空间飞行方向。
-- firepower：从 WeaponRuntime fired 事件带入；命中时随 hit 信号继续传递，但当前不应用伤害。
+- firepower：从 WeaponRuntime fired 事件带入；命中时随 hit 信号继续传递。ProjectileRuntime 本身不应用伤害，当前开发测试由上层把该数值交给 DamageReceiver。
 - lifetime_remaining：剩余生命周期。
 - source_owner：发射该 Projectile 的 RuntimeShip，用于基础自伤过滤。
 
@@ -64,8 +64,8 @@ RuntimeShip
 - 基础发射者过滤。
 
 暂不包含：
-- 伤害。
-- 模块 HP / 模块失效。
+- Projectile 内部直接应用伤害。
+- 正式飞船 / 模块 HP 与模块失效。
 - 正式阵营过滤。
 - 连续碰撞 / swept collision。
 - 弹丸继承飞船速度。
