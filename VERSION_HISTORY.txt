@@ -18,6 +18,44 @@
 
 
 ========================================
+v0.12
+========================================
+
+新增：
+- 新增 game/ship/runtime/ 目录。
+- 新增 ship_runtime.tscn，作为飞船进入实际游戏世界后的运行时场景。
+- 新增 ship_runtime.gd，第一版负责：
+  - 持有 ShipData
+  - 按 ShipData 的网格位置绘制模块
+  - 保存当前速度
+  - 接收移动输入
+  - 根据质量、推力与推重比计算基础移动
+- RuntimeShip 提供 setup(ship_data)、set_move_input(direction)、get_speed() 基础接口。
+
+调整：
+- ship_movement_test 不再自己维护飞船绘制和移动实现。
+- ship_movement_test 现在只负责：
+  - 从 user://ships/test_ship.json 加载 ShipData
+  - 实例化 RuntimeShip
+  - 将 ShipData 传入 RuntimeShip
+  - 读取 WASD / 方向键测试输入并传给 RuntimeShip
+  - 显示测试数据
+- RuntimeShip 不直接读取 JSON，也不硬编码玩家按键，为后续玩家控制器与 AI 共用同一飞船实体预留接口。
+- PROJECT_STRUCTURE.txt 更新到 V0.12。
+- game/ship/README.txt、game/ship/runtime/README.txt、game/ship/dev/README.txt 同步更新。
+
+结构原则：
+- ShipData 继续作为飞船结构与属性的唯一数据模型。
+- RuntimeShip 不复制 ShipData.modules，不维护第二套模块结构。
+- RuntimeShip 按 ShipData 中的实际网格位置显示模块，不自动压缩、连接或补齐空格。
+- 飞船模块仍允许分开放置，不要求相邻、连通或填满网格。
+
+当前范围：
+- RuntimeShip 第一版仅完成基础平移与模块绘制。
+- 暂未加入旋转、武器、伤害、模块失效、玩家控制器或 AI 控制器。
+
+
+========================================
 v0.11
 ========================================
 

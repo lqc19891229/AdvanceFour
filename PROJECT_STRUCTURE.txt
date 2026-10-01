@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.11
+《前进四》项目目录规划 V0.12
 
 res://
 ├─ core/                         # 全项目共享底层系统
@@ -9,6 +9,10 @@ res://
 │     ├─ definitions/           # 六类模块 Resource 定义
 │     ├─ data/                  # ShipData / ModuleInstance / Database / Serializer
 │     ├─ editor/                # 飞船编辑器场景与逻辑
+│     ├─ runtime/               # ShipRuntime 场景与运行逻辑
+│     │  ├─ README.txt
+│     │  ├─ ship_runtime.gd
+│     │  └─ ship_runtime.tscn
 │     └─ dev/                   # 飞船系统独立开发测试
 │        ├─ README.txt
 │        ├─ ship_movement_test.gd
@@ -60,3 +64,4 @@ res://
 8. 飞船设计存档只记录稳定 module_id、位置和旋转；运行时通过 ModuleDatabase 恢复定义。
 9. 飞船模块允许分开放置，不要求相邻、连通或填满所有格子；只禁止占用格重叠。
 10. 开发测试按功能归属放置；飞船相关测试统一放在 game/ship/dev/。
+11. ShipData 负责飞船结构数据；ShipRuntime 负责该数据进入游戏世界后的运行表现，不重复维护另一套模块结构。

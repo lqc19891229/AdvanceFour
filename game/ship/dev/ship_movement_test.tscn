@@ -4,7 +4,6 @@
 [ext_resource type="Resource" path="res://data/generated/module_database.tres" id="2_db"]
 
 [node name="ShipMovementTest" type="Node2D"]
-position = Vector2(576, 324)
 script = ExtResource("1_script")
 module_database = ExtResource("2_db")
 
