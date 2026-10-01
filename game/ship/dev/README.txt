@@ -37,7 +37,7 @@
 15. 核心模块 HP 归零后，目标 RuntimeShip 发出 destroyed 并 queue_free()，视作从战斗场景被移除；造成核心摧毁的 Projectile 会立即结束，不再继续命中该船其他模块。
 16. 已摧毁模块不再作为瞄准点，炮塔会继续转向其他存活模块；核心 destroyed 后整船直接退出目标集合。
 17. HUD 会分别显示目标可用武器（active）、存活武器（operational）与总武器数量，并显示有效推力、有效供能 / 总需求、实际已供电耗能、已供电模块数量、能源状态、整船移除事件、模块受伤 / 摧毁事件、最近模块 HP、protection 百分比减伤和伤害值。
-18. 已经发射的 Projectile 即使其 source_owner 后续因核心摧毁被移除，仍会按自身生命周期继续飞行并在命中时造成伤害；每次 swept ray 会预先排除当前有效 source_owner 节点树中的所有 CollisionObject2D，避免自身模块逐个占用 max_impacts_per_step；每个物理帧的实际移动时间使用 min(delta, lifetime_remaining)，最后一帧不会超出设定 lifetime 对应的射程。
+18. 已经发射的 Projectile 即使其 source_owner 后续因核心摧毁被移除，仍会按发射时记录的射程继续飞行并在命中时造成伤害；每次 swept ray 会预先排除当前有效 source_owner 节点树中的所有 CollisionObject2D，避免自身模块逐个占用 max_impacts_per_step；每个物理帧的路径长度使用 min(speed * max(delta, 0), distance_remaining)，最后一帧的射线及穿透查询不会超出发射时 attack_range。
 
 飞船结构原则：
 - 模块可以分开放置。
@@ -55,3 +55,4 @@ AI 交火测试：
 - 在项目根目录执行 python3 tools/verify_project.py --godot /path/to/godot。
 - 使用 Godot 4.6.1，自动检查在临时用户目录运行；脚本错误即使引擎退出码为 0 也判为失败。
 - GitHub Actions 在 PR 和 main 推送时运行同一检查。
+- 射程回归覆盖边界内命中 / 边界外无伤害、穿透最后一帧、单步命中上限、速度变化、开火参数快照、发射者移动 / 旋转 / 销毁、超过旧 2 秒寿命、大坐标和零射程 / 零速度退场。

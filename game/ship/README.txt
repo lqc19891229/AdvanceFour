@@ -21,7 +21,7 @@ ShipRuntime      = ShipData 在游戏场景中的运行实体
 PlayerShipController = 玩家输入到 RuntimeShip 控制接口的适配层
 AIShipController     = 追踪目标与保持距离到同一 RuntimeShip 控制接口的适配层
 WeaponRuntime     = 单个武器模块进入游戏世界后的运行时执行对象
-ProjectileRuntime = 武器发射后独立存在、飞行并按生命周期销毁的弹丸对象
+ProjectileRuntime = 武器发射后独立存在、飞行并在走完武器攻击范围后销毁的弹丸对象
 DamageReceiver    = 接收数值伤害、维护 HP 并发出 damaged / destroyed 的运行时组件
 ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 
@@ -42,7 +42,7 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 - WeaponRuntime 使用模块自身 grid_position / rotation_quarters 与 RuntimeShip 核心原点建立炮塔初始位置和初始朝向。
 - 炮塔进入战斗后可独立旋转，自动搜索攻击范围内最近敌人、瞄准并按冷却自动触发发射事件。
 - rotation_quarters 不再锁死最终发射方向，只定义炮塔初始朝向。
-- RuntimeShip 收到 WeaponRuntime fired 后创建 ProjectileRuntime，并将其作为飞船同级节点加入世界，使弹丸不继续继承飞船后续移动或旋转。
+- RuntimeShip 收到 WeaponRuntime fired 后创建 ProjectileRuntime，记录该武器 attack_range，并将其作为飞船同级节点加入世界；弹丸走完射程后销毁，不继续继承飞船后续移动或旋转。
 - ProjectileRuntime 负责直线飞行、生命周期、基础碰撞和 hit 事件；命中后销毁。
 - DamageReceiver 独立负责 HP 与 destroyed 状态；Projectile 不直接持有目标 HP。
 - RuntimeShip 会为每个模块创建独立 ShipModuleRuntime，因此 Projectile 命中对象可以直接对应到具体 ShipModuleInstance。

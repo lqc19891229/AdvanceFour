@@ -4,6 +4,7 @@ const DATABASE := preload("res://data/generated/module_database.tres")
 const RUNTIME := preload("res://game/ship/runtime/ship_runtime.tscn")
 const AI_TEST := preload("res://game/ship/dev/ship_ai_test.tscn")
 const MOVEMENT_TEST := preload("res://game/ship/dev/ship_movement_test.tscn")
+const PROJECTILE := preload("res://game/ship/projectile/projectile_runtime.tscn")
 const SAVE_PATH := "user://ships/test_ship.json"
 
 var failures: Array[String] = []
@@ -46,6 +47,7 @@ func _run() -> void:
 	var previous_save := FileAccess.get_file_as_bytes(SAVE_PATH) if FileAccess.file_exists(SAVE_PATH) else PackedByteArray()
 	var had_save := FileAccess.file_exists(SAVE_PATH)
 	await _test_ai_and_damage()
+	await _test_projectile_range()
 	if had_save:
 		DirAccess.remove_absolute(SAVE_PATH)
 	await _test_battle_scene()
@@ -58,6 +60,109 @@ func _run() -> void:
 		DirAccess.remove_absolute(SAVE_PATH)
 	print("Ship regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
+
+func _range_target(world: Node2D, location: Vector2, hp: float) -> ShipModuleRuntime:
+	var module := ShipModuleInstance.new(1, DATABASE.get_by_id(&"function_radar"), Vector2i.ZERO)
+	var target := ShipModuleRuntime.new()
+	world.add_child(target)
+	target.setup(module, location, Vector2(0.2, 2.0), hp)
+	return target
+
+func _range_projectile(world: Node2D, location: Vector2, shot_range: float) -> ProjectileRuntime:
+	var projectile := PROJECTILE.instantiate() as ProjectileRuntime
+	world.add_child(projectile)
+	projectile.setup(location, Vector2.RIGHT, 20.0, null, shot_range)
+	projectile.set_physics_process(false)
+	return projectile
+
+func _test_projectile_range() -> void:
+	var world := Node2D.new()
+	root.add_child(world)
+	# A long step must clip collision queries, including the continuation after penetration.
+	var inside := _range_target(world, Vector2(99.5, 0.0), 1.0)
+	var outside := _range_target(world, Vector2(100.5, 0.0), 20.0)
+	var projectile := _range_projectile(world, Vector2.ZERO, 100.0)
+	await physics_frame
+	await physics_frame
+	projectile._physics_process(1.0)
+	_check(inside.is_destroyed(), "A projectile must hit a collider just inside its attack range")
+	_check(is_equal_approx(outside.get_hp(), 20.0), "Overkill must not hit a collider just outside attack range in the final step")
+	_check(projectile.finished and projectile.global_position.is_equal_approx(Vector2(100.0, 0.0)), "A long final step must retire the projectile at exactly its range")
+	await process_frame
+
+	# Normal frames consume the same range; changing speed changes flight time only.
+	projectile = _range_projectile(world, Vector2(0.0, 100.0), 500.0)
+	projectile._physics_process(0.5)
+	_check(not projectile.finished and projectile.global_position.is_equal_approx(Vector2(350.0, 100.0)), "A default shot must still fly before traveling 500 pixels")
+	projectile.speed = 100.0
+	projectile._physics_process(1.0)
+	_check(not projectile.finished and projectile.global_position.is_equal_approx(Vector2(450.0, 100.0)), "Changing projectile speed must preserve its remaining range")
+	projectile._physics_process(1.0)
+	_check(projectile.finished and projectile.global_position.is_equal_approx(Vector2(500.0, 100.0)), "A slower shot must still retire after the same total distance")
+	await process_frame
+
+	# Reaching the per-step collision limit must preserve the untraveled range.
+	var first := _range_target(world, Vector2(40.0, 200.0), 1.0)
+	var beyond := _range_target(world, Vector2(110.0, 200.0), 20.0)
+	projectile = _range_projectile(world, Vector2(0.0, 200.0), 100.0)
+	projectile.max_impacts_per_step = 1
+	await physics_frame
+	await physics_frame
+	projectile._physics_process(1.0)
+	_check(first.is_destroyed() and not projectile.finished and projectile.distance_remaining > 60.0, "The impact limit must only consume distance actually traveled")
+	await physics_frame
+	await physics_frame
+	projectile._physics_process(1.0)
+	_check(projectile.finished and projectile.global_position.is_equal_approx(Vector2(100.0, 200.0)) and is_equal_approx(beyond.get_hp(), 20.0), "A penetration paused across frames must still finish at its range without hitting beyond it")
+	await process_frame
+
+	var owner := _spawn(world, Vector2(200.0, 300.0))
+	owner.set_physics_process(false)
+	var weapon := owner.weapon_runtime_by_uid.values()[0] as WeaponRuntime
+	weapon.set_physics_process(false)
+	weapon.global_rotation = PI / 2.0
+	weapon.attack_range = 1600.0
+	var shots: Array[ProjectileRuntime] = []
+	owner.projectile_spawned.connect(func(shot: ProjectileRuntime) -> void:
+		shot.set_physics_process(false)
+		shots.append(shot)
+	)
+	owner.request_fire()
+	_check(shots.size() == 1 and is_equal_approx(shots[0].max_distance, 1600.0), "ShipRuntime must pass the firing weapon's attack range into its projectile")
+	if not shots.is_empty():
+		projectile = shots[0]
+		var origin := projectile.global_position
+		weapon.attack_range = 200.0
+		weapon.cooldown_remaining = 0.0
+		owner.request_fire()
+		_check(shots.size() == 2 and is_equal_approx(shots[1].max_distance, 200.0) and is_equal_approx(projectile.max_distance, 1600.0), "Each shot must snapshot its own range without changing shots already in flight")
+		owner.position += Vector2(2000.0, 1000.0)
+		owner.rotation = PI
+		projectile._physics_process(2.01)
+		_check(not projectile.finished and projectile.global_position.is_equal_approx(origin + Vector2(1407.0, 0.0)), "A long-range shot must survive beyond the old two-second lifetime and ignore source movement")
+		owner.free()
+		projectile._physics_process(1.0)
+		_check(projectile.finished and projectile.global_position.is_equal_approx(origin + Vector2(1600.0, 0.0)), "Destroying the source must not change a projectile's independent flight or range")
+	else:
+		owner.free()
+	await process_frame
+
+	# Large world coordinates must not leave a tiny residual distance alive forever.
+	projectile = _range_projectile(world, Vector2(100000.0, -100000.0), 500.0)
+	for step in range(43):
+		projectile._physics_process(1.0 / 60.0)
+	_check(projectile.finished and projectile.global_position.distance_to(Vector2(100500.0, -100000.0)) < 0.1, "Default-range shots must retire at distant world coordinates without a residual-distance stall")
+	await process_frame
+	projectile = _range_projectile(world, Vector2.ZERO, 0.0)
+	projectile._physics_process(1.0)
+	_check(projectile.finished and projectile.global_position == Vector2.ZERO, "A zero-range projectile must retire without moving or dealing damage")
+	await process_frame
+	projectile = _range_projectile(world, Vector2.ZERO, 500.0)
+	projectile.speed = 0.0
+	projectile._physics_process(1.0)
+	_check(projectile.finished, "A stationary projectile must retire rather than prevent battle resolution indefinitely")
+	world.queue_free()
+	await process_frame
 
 func _test_ai_and_damage() -> void:
 	var world := Node2D.new()
