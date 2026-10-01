@@ -22,7 +22,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 不读取 JSON，不负责存档。
 - RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进、核心中心原点，以及自动炮塔 WeaponRuntime 和 ProjectileRuntime 生成；暂不包含碰撞、命中、伤害与模块失效。
+- 当前包含模块绘制、速度、朝向、基础转向、基于舰首方向的推进、核心中心原点，以及自动炮塔 WeaponRuntime、ProjectileRuntime 生成和命中事件转发；暂不包含伤害与模块失效。
 
 飞船结构原则：
 - 模块允许分开放置。
@@ -60,5 +60,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - get_weapon_count() 返回当前创建的 WeaponRuntime 数量。
 - WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime。
 - ProjectileRuntime 会加入 RuntimeShip 的父节点，而不是成为 RuntimeShip 子节点，因此发射后不会继续跟随飞船自身平移或旋转。
-- RuntimeShip 新增 projectile_spawned 信号，用于调试或后续战斗层观察弹丸生成。
-- 当前 Projectile 只负责世界空间直线飞行与生命周期自动销毁，不包含碰撞和伤害。
+- RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
+- ProjectileRuntime 命中后会发出 hit(target, firepower)，RuntimeShip 再通过 projectile_hit(target, firepower) 向上转发。
+- RuntimeShip 创建 Projectile 时会把 self 作为 source_owner 传入，用于 Projectile 基础自伤过滤。
+- 当前 Projectile 已包含基础碰撞 / 命中事件，但不应用伤害。
