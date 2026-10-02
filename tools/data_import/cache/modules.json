@@ -20,11 +20,16 @@
       "height": 1,
       "mass": 10,
       "energy_cost": 0,
+      "hp": 20,
       "energy_output": 20,
       "thrust": 0,
       "firepower": 0,
       "protection": 0,
-      "hp": 20
+      "attack_range": 0,
+      "fire_interval": 0,
+      "turn_speed_degrees": 0,
+      "projectile_speed": 0,
+      "fire_angle_tolerance_degrees": 0
     },
     {
       "id": "propulsion_smallengine",
@@ -35,11 +40,16 @@
       "height": 1,
       "mass": 10,
       "energy_cost": 5,
+      "hp": 20,
       "energy_output": 0,
       "thrust": 10,
       "firepower": 0,
       "protection": 0,
-      "hp": 20
+      "attack_range": 0,
+      "fire_interval": 0,
+      "turn_speed_degrees": 0,
+      "projectile_speed": 0,
+      "fire_angle_tolerance_degrees": 0
     },
     {
       "id": "weapon_cannon",
@@ -50,11 +60,16 @@
       "height": 1,
       "mass": 5,
       "energy_cost": 5,
+      "hp": 20,
       "energy_output": 0,
       "thrust": 0,
       "firepower": 5,
       "protection": 0,
-      "hp": 20
+      "attack_range": 500,
+      "fire_interval": 0.5,
+      "turn_speed_degrees": 180,
+      "projectile_speed": 700,
+      "fire_angle_tolerance_degrees": 6
     },
     {
       "id": "defense_lightarmor",
@@ -65,11 +80,16 @@
       "height": 1,
       "mass": 5,
       "energy_cost": 0,
+      "hp": 20,
       "energy_output": 0,
       "thrust": 0,
       "firepower": 0,
       "protection": 10,
-      "hp": 20
+      "attack_range": 0,
+      "fire_interval": 0,
+      "turn_speed_degrees": 0,
+      "projectile_speed": 0,
+      "fire_angle_tolerance_degrees": 0
     },
     {
       "id": "function_radar",
@@ -80,11 +100,16 @@
       "height": 1,
       "mass": 5,
       "energy_cost": 10,
+      "hp": 20,
       "energy_output": 0,
       "thrust": 0,
       "firepower": 0,
       "protection": 0,
-      "hp": 20
+      "attack_range": 0,
+      "fire_interval": 0,
+      "turn_speed_degrees": 0,
+      "projectile_speed": 0,
+      "fire_angle_tolerance_degrees": 0
     },
     {
       "id": "core_bridge",
@@ -95,11 +120,16 @@
       "height": 2,
       "mass": 40,
       "energy_cost": 20,
+      "hp": 20,
       "energy_output": 0,
       "thrust": 0,
       "firepower": 0,
       "protection": 0,
-      "hp": 20
+      "attack_range": 0,
+      "fire_interval": 0,
+      "turn_speed_degrees": 0,
+      "projectile_speed": 0,
+      "fire_angle_tolerance_degrees": 0
     }
   ]
 }
