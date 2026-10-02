@@ -3,6 +3,7 @@ extends Control
 
 signal ship_changed
 signal status_message(text: String)
+signal selected_module_changed(module: ShipModuleInstance)
 
 const CELL_SIZE := 48.0
 const GRID_HALF_EXTENT := 30
@@ -12,6 +13,8 @@ const GRID_HALF_EXTENT := 30
 var ship := ShipData.new()
 var definitions: Dictionary = {}
 var selected_definition: ShipModuleDefinition
+var selected_module: ShipModuleInstance
+var moving_selected := false
 var preview_cell := Vector2i.ZERO
 var rotation_quarters := 0
 var pan_offset := Vector2.ZERO
@@ -55,22 +58,92 @@ func set_ship(new_ship: ShipData) -> void:
 	if new_ship == null:
 		return
 	ship = new_ship
+	_set_selected_module(null)
+	moving_selected = false
 	ship_changed.emit()
 	queue_redraw()
 
 func select_definition(id: String) -> void:
 	if definitions.has(id):
 		selected_definition = definitions[id]
-		status_message.emit("已选择：%s" % selected_definition.display_name)
+		_set_selected_module(null)
+		moving_selected = false
+		status_message.emit("放置模块：%s" % selected_definition.display_name)
 		queue_redraw()
+
+func select_installed_module(module: ShipModuleInstance) -> void:
+	if module == null or not ship.modules.has(module):
+		_set_selected_module(null)
+		return
+	moving_selected = false
+	_set_selected_module(module)
+	status_message.emit("已选中：%s｜可移动或旋转" % module.definition.display_name)
+	queue_redraw()
+
+func begin_move_selected() -> void:
+	if selected_module == null or not ship.modules.has(selected_module):
+		status_message.emit("请先点击飞船上的模块")
+		return
+	moving_selected = true
+	preview_cell = selected_module.grid_position
+	status_message.emit("移动 %s：点击目标格，右键可取消" % selected_module.definition.display_name)
+	queue_redraw()
+
+func cancel_move_selected() -> void:
+	if not moving_selected:
+		return
+	moving_selected = false
+	status_message.emit("已取消移动")
+	queue_redraw()
+
+func move_selected_to(cell: Vector2i) -> bool:
+	if selected_module == null or not ship.modules.has(selected_module):
+		moving_selected = false
+		status_message.emit("没有可移动的已选模块")
+		return false
+	var check := ship.can_relocate(selected_module, cell, selected_module.rotation_quarters)
+	if not check["ok"]:
+		status_message.emit(check["reason"])
+		queue_redraw()
+		return false
+	var name := selected_module.definition.display_name
+	if not ship.relocate(selected_module, cell, selected_module.rotation_quarters):
+		return false
+	moving_selected = false
+	ship_changed.emit()
+	selected_module_changed.emit(selected_module)
+	status_message.emit("已移动：%s → (%d, %d)" % [name, cell.x, cell.y])
+	queue_redraw()
+	return true
+
+func rotate_selection_or_preview() -> void:
+	if selected_module == null or not ship.modules.has(selected_module):
+		rotate_preview()
+		return
+	var next_rotation := posmod(selected_module.rotation_quarters + 1, 4)
+	var check := ship.can_relocate(selected_module, selected_module.grid_position, next_rotation)
+	if not check["ok"]:
+		status_message.emit("无法旋转：%s" % check["reason"])
+		return
+	ship.relocate(selected_module, selected_module.grid_position, next_rotation)
+	moving_selected = false
+	ship_changed.emit()
+	selected_module_changed.emit(selected_module)
+	status_message.emit("已旋转：%s → %d°" % [
+		selected_module.definition.display_name,
+		selected_module.rotation_quarters * 90
+	])
+	queue_redraw()
 
 func rotate_preview() -> void:
 	rotation_quarters = posmod(rotation_quarters + 1, 4)
-	status_message.emit("模块旋转：%d°" % (rotation_quarters * 90))
+	status_message.emit("待放置模块旋转：%d°" % (rotation_quarters * 90))
 	queue_redraw()
 
 func clear_ship() -> void:
 	ship.clear()
+	_set_selected_module(null)
+	moving_selected = false
 	ship_changed.emit()
 	status_message.emit("已清空飞船")
 	queue_redraw()
@@ -78,6 +151,12 @@ func clear_ship() -> void:
 func center_view() -> void:
 	pan_offset = Vector2.ZERO
 	queue_redraw()
+
+func _set_selected_module(module: ShipModuleInstance) -> void:
+	if selected_module == module:
+		return
+	selected_module = module
+	selected_module_changed.emit(selected_module)
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -92,25 +171,45 @@ func _gui_input(event: InputEvent) -> void:
 			return
 		if not event.pressed:
 			return
+
 		var cell := screen_to_grid(event.position)
 		if event.button_index == MOUSE_BUTTON_LEFT:
+			if moving_selected:
+				move_selected_to(cell)
+				accept_event()
+				return
+
+			var installed := ship.get_module_at(cell)
+			if installed != null:
+				select_installed_module(installed)
+				accept_event()
+				return
+
 			var check := ship.can_place(selected_definition, cell, rotation_quarters)
 			if check["ok"]:
-				ship.place(selected_definition, cell, rotation_quarters)
+				var placed := ship.place(selected_definition, cell, rotation_quarters)
+				_set_selected_module(null)
 				ship_changed.emit()
-				status_message.emit("已放置：%s" % selected_definition.display_name)
+				status_message.emit("已放置：%s" % placed.definition.display_name)
 			else:
 				status_message.emit(check["reason"])
 			queue_redraw()
 			accept_event()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			var m := ship.get_module_at(cell)
-			var check := ship.can_remove(m)
+			if moving_selected:
+				cancel_move_selected()
+				accept_event()
+				return
+			var module := ship.get_module_at(cell)
+			var check := ship.can_remove(module)
 			if check["ok"]:
-				var n := m.definition.display_name
-				ship.remove(m)
+				var name := module.definition.display_name
+				var was_selected := module == selected_module
+				ship.remove(module)
+				if was_selected:
+					_set_selected_module(null)
 				ship_changed.emit()
-				status_message.emit("已删除：%s" % n)
+				status_message.emit("已删除：%s" % name)
 			else:
 				status_message.emit(check["reason"])
 			queue_redraw()
@@ -118,7 +217,7 @@ func _gui_input(event: InputEvent) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.pressed and not event.echo and event.keycode == KEY_R:
-		rotate_preview()
+		rotate_selection_or_preview()
 
 func screen_to_grid(p: Vector2) -> Vector2i:
 	var origin := size * 0.5 + pan_offset
@@ -138,20 +237,51 @@ func _draw() -> void:
 		var y := origin.y + float(i) * CELL_SIZE
 		draw_line(Vector2(x, 0), Vector2(x, size.y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
 		draw_line(Vector2(0, y), Vector2(size.x, y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
-	for m in ship.modules:
-		_draw_module(m)
+	for module in ship.modules:
+		_draw_module(module)
 	_draw_preview()
 
-func _draw_module(m: ShipModuleInstance) -> void:
-	var rect := Rect2(grid_to_screen(m.grid_position), Vector2(m.get_rotated_size()) * CELL_SIZE)
-	var color: Color = type_colors[m.definition.module_type]
+func _draw_module(module: ShipModuleInstance) -> void:
+	var rect := Rect2(grid_to_screen(module.grid_position), Vector2(module.get_rotated_size()) * CELL_SIZE)
+	var color: Color = type_colors[module.definition.module_type]
 	draw_rect(rect.grow(-3), color)
 	draw_rect(rect.grow(-3), color.lightened(0.22), false, 2.0)
+	if module == selected_module:
+		draw_rect(rect.grow(-1), Color.WHITE, false, 3.0)
 	var font := ThemeDB.fallback_font
-	draw_string(font, rect.position + Vector2(7, rect.size.y * 0.5 + 5), m.definition.display_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#101319"))
+	draw_string(
+		font,
+		rect.position + Vector2(7, rect.size.y * 0.5 + 5),
+		module.definition.display_name,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		14,
+		Color("#101319")
+	)
 
 func _draw_preview() -> void:
-	if selected_definition == null:
+	if moving_selected and selected_module != null:
+		var temp := ShipModuleInstance.new(
+			selected_module.uid,
+			selected_module.definition,
+			preview_cell,
+			selected_module.rotation_quarters
+		)
+		var check := ship.can_relocate(
+			selected_module,
+			preview_cell,
+			selected_module.rotation_quarters
+		)
+		var move_color := Color(0.35, 0.85, 0.55, 0.36) if check["ok"] else Color(0.95, 0.25, 0.25, 0.36)
+		var move_rect := Rect2(
+			grid_to_screen(preview_cell),
+			Vector2(temp.get_rotated_size()) * CELL_SIZE
+		)
+		draw_rect(move_rect.grow(-4), move_color)
+		draw_rect(move_rect.grow(-4), Color(move_color.r, move_color.g, move_color.b, 0.9), false, 2.0)
+		return
+
+	if selected_module != null or selected_definition == null:
 		return
 	var temp := ShipModuleInstance.new(-1, selected_definition, preview_cell, rotation_quarters)
 	var check := ship.can_place(selected_definition, preview_cell, rotation_quarters)

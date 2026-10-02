@@ -299,7 +299,44 @@ func _test_saved_design_and_editor() -> void:
 	_check(current_scene == editor, "Editor must reject an empty design without leaving")
 	_check(editor.speed_label.text.contains("预计最高速度：0.0 px/s"), "Empty design must show zero predicted speed")
 	_check(root.get_visible_rect().encloses(editor.speed_label.get_global_rect()), "Predicted speed must be visible without scrolling")
-	editor.get_node("MainLayout/Center/Grid").set_ship(_design())
+	var editable_design := _design()
+	editor.get_node("MainLayout/Center/Grid").set_ship(editable_design)
+	var editor_grid := editor.grid as ShipGridView
+	var installed_weapon := editable_design.get_module_at(Vector2i(0, -1))
+	var installed_weapon_uid := installed_weapon.uid
+	editor_grid.select_installed_module(installed_weapon)
+	_check(
+		editor.stats_label.text.contains("已选模块：机炮")
+		and editor.stats_label.text.contains("射程：500.0")
+		and editor.stats_label.text.contains("射击间隔：0.50 秒")
+		and editor.stats_label.text.contains("弹速：700.0 px/s"),
+		"Selecting an installed weapon must show its complete combat details"
+	)
+	editor_grid.begin_move_selected()
+	_check(
+		not editor_grid.move_selected_to(Vector2i.ZERO)
+		and installed_weapon.grid_position == Vector2i(0, -1),
+		"Moving an installed module onto an occupied cell must be rejected"
+	)
+	_check(
+		editor_grid.move_selected_to(Vector2i(4, -1))
+		and installed_weapon.uid == installed_weapon_uid
+		and editable_design.get_module_at(Vector2i(0, -1)) == null
+		and editable_design.get_module_at(Vector2i(4, -1)) == installed_weapon,
+		"Moving an installed module must preserve its instance and rebuild occupancy"
+	)
+	editor_grid.rotate_selection_or_preview()
+	_check(
+		installed_weapon.rotation_quarters == 1
+		and editor.stats_label.text.contains("旋转：90°"),
+		"Rotating an installed module must update its stored rotation and detail view"
+	)
+	var move_button: Button = editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/MoveButton")
+	_check(
+		root.get_visible_rect().encloses(move_button.get_global_rect())
+		and root.get_visible_rect().encloses(launch_button.get_global_rect()),
+		"Installed-module editing controls and battle entry must remain visible in the default viewport"
+	)
 	var flight_world := Node2D.new()
 	root.add_child(flight_world)
 	var runtime := _spawn(flight_world, Vector2.ZERO)

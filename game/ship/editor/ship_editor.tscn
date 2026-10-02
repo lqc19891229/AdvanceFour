@@ -129,6 +129,11 @@ custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 text = "加载设计"
 
+[node name="MoveButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "移动已选模块"
+
 [node name="RotateButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2

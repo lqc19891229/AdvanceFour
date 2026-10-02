@@ -47,6 +47,27 @@ func place(definition: ShipModuleDefinition, pos: Vector2i, rotation: int) -> Sh
 		occupied_cells[c] = m
 	return m
 
+func can_relocate(target: ShipModuleInstance, pos: Vector2i, rotation: int) -> Dictionary:
+	if target == null or not modules.has(target):
+		return {"ok": false, "reason": "没有选择已安装模块"}
+
+	var temp := ShipModuleInstance.new(target.uid, target.definition, pos, rotation)
+	for c in temp.get_cells():
+		var occupant := occupied_cells.get(c, null) as ShipModuleInstance
+		if occupant != null and occupant != target:
+			return {"ok": false, "reason": "模块与现有模块重叠"}
+
+	return {"ok": true, "reason": ""}
+
+func relocate(target: ShipModuleInstance, pos: Vector2i, rotation: int) -> bool:
+	var check := can_relocate(target, pos, rotation)
+	if not check["ok"]:
+		return false
+	target.grid_position = pos
+	target.rotation_quarters = posmod(rotation, 4)
+	rebuild_occupancy()
+	return true
+
 func can_remove(target: ShipModuleInstance) -> Dictionary:
 	if target == null:
 		return {"ok": false, "reason": "这里没有模块"}
