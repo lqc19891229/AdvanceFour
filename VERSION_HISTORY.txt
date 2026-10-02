@@ -18,6 +18,22 @@
 
 
 ========================================
+v0.31.4
+========================================
+
+调整：
+- Weapon Sheet 新增 attack_range、fire_interval、turn_speed_degrees、projectile_speed、fire_angle_tolerance_degrees；与现有 firepower 一起成为每种武器独立配置。
+- WeaponModuleDefinition 保存完整武器战斗参数；WeaponRuntime setup() 从当前模块定义载入，不再由所有武器共享脚本默认数值。
+- RuntimeShip 在开火时同时快照攻击范围与弹速并传给 ProjectileRuntime，已发射弹丸不受后续武器参数变化影响。
+- 当前 weapon_cannon 继续沿用 firepower=5、attack_range=500、fire_interval=0.5、turn_speed_degrees=180、projectile_speed=700、fire_angle_tolerance_degrees=6，迁移本身不改变现有机炮手感。
+- Excel、JSON cache、生成 .tres、导入插件和系统文档同步更新。
+
+验证：
+- 飞船回归新增武器定义 → WeaponRuntime 参数加载，以及每发弹丸射程 / 弹速快照检查。
+- 数据导入器要求 Weapon Sheet 的六项战斗参数均为正数。
+
+
+========================================
 v0.31.3
 ========================================
 
