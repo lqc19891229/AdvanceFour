@@ -17,7 +17,7 @@ RuntimeShip
   ↓
 实例化 ProjectileRuntime
   ↓
-以 fired 提供的 world_position / world_direction / firepower 和该武器开火时的 attack_range 初始化
+以 fired 提供的 world_position / world_direction / firepower，以及该武器开火时的 attack_range / projectile_speed 初始化
   ↓
 作为 RuntimeShip 的同级节点加入世界
 
@@ -40,12 +40,10 @@ RuntimeShip
 - RuntimeShip 被移除后，已经发射的 Projectile 仍可按发射时记录的剩余射程继续存在。
 
 当前参数：
-- speed = 700
-- max_impacts_per_step = 16
-- 最大飞行距离由发射武器的 attack_range 决定，当前默认 500 px；不再单独配置弹丸寿命。
-- 默认 speed = 700 px/s 时，无碰撞的 500 px 射程约飞行 0.714 秒；调整速度只改变飞行时间。
-
-这些参数当前属于 ProjectileRuntime Prototype 参数，尚未进入 WeaponModuleDefinition / Excel 数据真源。
+- speed：由发射武器的 projectile_speed 在开火时传入并保存为快照。
+- max_impacts_per_step = 16：仍属于 ProjectileRuntime 的通用运行时保护参数。
+- 最大飞行距离由发射武器的 attack_range 决定；不再单独配置弹丸寿命。
+- 当前 weapon_cannon 的 projectile_speed = 700 px/s、attack_range = 500 px，无碰撞时约飞行 0.714 秒。
 
 当前数据：
 - direction：世界空间飞行方向。
@@ -57,7 +55,7 @@ RuntimeShip
 - source_owner：发射该 Projectile 的 RuntimeShip，用于基础自伤过滤。
 
 当前行为：
-- setup() 时设置世界坐标、方向、firepower、source_owner 和最大 / 剩余飞行距离。
+- setup() 时设置世界坐标、方向、firepower、source_owner、弹速和最大 / 剩余飞行距离。
 - _physics_process() 先计算 travel_distance = min(speed * max(delta, 0), distance_remaining)，再查询截短后的连续射线路径；同帧穿透也不能伤害射程以外的目标。
 - 每帧从固定发射点和累计距离计算终点；若达到单步命中次数上限，只扣除实际走过的距离，后续帧继续剩余路径。
 - 射程耗尽、remaining_damage <= 0 或 speed <= 0 时 queue_free()；零 / 负射程弹丸不移动、不造成伤害。
