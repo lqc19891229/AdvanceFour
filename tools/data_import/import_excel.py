@@ -57,6 +57,13 @@ BASE_COLUMNS = [
     "width", "height", "mass", "energy_cost", "hp",
 ]
 TYPE_FIELDS = ["energy_output", "thrust", "firepower", "protection"]
+WEAPON_FIELDS = [
+    "attack_range",
+    "fire_interval",
+    "turn_speed_degrees",
+    "projectile_speed",
+    "fire_angle_tolerance_degrees",
+]
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
@@ -194,6 +201,8 @@ def parse_sheet(
     required_columns = list(BASE_COLUMNS)
     if type_field:
         required_columns.append(type_field)
+    if module_type == "WEAPON":
+        required_columns.extend(WEAPON_FIELDS)
 
     if not rows:
         errors.append(f"{sheet_name} 工作表为空")
@@ -253,6 +262,14 @@ def parse_sheet(
             if type_value <= 0:
                 errors.append(f"{sheet_name}!第 {row_idx} 行：{module_type} 模块必须填写 {type_field} > 0")
 
+        weapon_values: dict[str, float] = {}
+        if module_type == "WEAPON":
+            for field in WEAPON_FIELDS:
+                value = as_float(get(field), field, sheet_name, row_idx, errors)
+                if value <= 0:
+                    errors.append(f"{sheet_name}!第 {row_idx} 行：WEAPON 模块必须填写 {field} > 0")
+                weapon_values[field] = value
+
         module = {
             "id": raw_id,
             "display_name": display_name,
@@ -267,9 +284,16 @@ def parse_sheet(
             "thrust": 0.0,
             "firepower": 0.0,
             "protection": 0.0,
+            "attack_range": 0.0,
+            "fire_interval": 0.0,
+            "turn_speed_degrees": 0.0,
+            "projectile_speed": 0.0,
+            "fire_angle_tolerance_degrees": 0.0,
         }
         if type_field:
             module[type_field] = type_value
+        if module_type == "WEAPON":
+            module.update(weapon_values)
         modules.append(module)
 
     if not modules:
