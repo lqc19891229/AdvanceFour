@@ -14,10 +14,11 @@ func _ready() -> void:
 	_build_module_buttons()
 	_bind_common_buttons()
 	grid.ship_changed.connect(_refresh_stats)
+	grid.selected_module_changed.connect(_on_selected_module_changed)
 	grid.status_message.connect(_show_status)
 	_refresh_selected_label()
 	_refresh_stats()
-	_show_status("左键放置｜右键删除｜R 旋转｜中键拖动画布")
+	_show_status("左键空格放置｜左键模块选中｜右键删除｜R 旋转｜中键拖动画布")
 	if get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
@@ -48,7 +49,13 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	elif definition is PropulsionModuleDefinition:
 		lines.append("动力：%.1f" % (definition as PropulsionModuleDefinition).thrust)
 	elif definition is WeaponModuleDefinition:
-		lines.append("火力：%.1f" % (definition as WeaponModuleDefinition).firepower)
+		var weapon := definition as WeaponModuleDefinition
+		lines.append("火力：%.1f" % weapon.firepower)
+		lines.append("射程：%.1f" % weapon.attack_range)
+		lines.append("射击间隔：%.2f 秒" % weapon.fire_interval)
+		lines.append("炮塔转速：%.1f°/秒" % weapon.turn_speed_degrees)
+		lines.append("弹速：%.1f px/s" % weapon.projectile_speed)
+		lines.append("开火角容差：%.1f°" % weapon.fire_angle_tolerance_degrees)
 	elif definition is DefenseModuleDefinition:
 		lines.append("防护：%.1f" % (definition as DefenseModuleDefinition).protection)
 	elif definition is FunctionModuleDefinition:
@@ -61,7 +68,8 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 func _bind_common_buttons() -> void:
 	$MainLayout/RightPanel/RightMargin/RightVBox/SaveButton.pressed.connect(_save_ship)
 	$MainLayout/RightPanel/RightMargin/RightVBox/LoadButton.pressed.connect(_load_ship)
-	$MainLayout/RightPanel/RightMargin/RightVBox/RotateButton.pressed.connect(grid.rotate_preview)
+	$MainLayout/RightPanel/RightMargin/RightVBox/MoveButton.pressed.connect(grid.begin_move_selected)
+	$MainLayout/RightPanel/RightMargin/RightVBox/RotateButton.pressed.connect(grid.rotate_selection_or_preview)
 	$MainLayout/RightPanel/RightMargin/RightVBox/CenterButton.pressed.connect(grid.center_view)
 	$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.pressed.connect(grid.clear_ship)
 	$MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.pressed.connect(_start_ai_test)
@@ -105,9 +113,52 @@ func _select(id: String) -> void:
 
 func _refresh_selected_label() -> void:
 	if grid.selected_definition == null:
-		selected_label.text = "当前：未选择"
+		selected_label.text = "待放置：未选择"
 	else:
-		selected_label.text = "当前：%s" % grid.selected_definition.display_name
+		selected_label.text = "待放置：%s" % grid.selected_definition.display_name
+
+func _on_selected_module_changed(_module: ShipModuleInstance) -> void:
+	_refresh_stats()
+
+func _build_installed_module_details(module: ShipModuleInstance) -> String:
+	if module == null:
+		return "已选模块：无\n点击飞船上的模块查看详情。"
+
+	var definition := module.definition
+	var lines: Array[String] = []
+	lines.append("已选模块：%s" % definition.display_name)
+	lines.append("类型：%s" % definition.get_type_name())
+	lines.append("位置：(%d, %d)" % [module.grid_position.x, module.grid_position.y])
+	lines.append("旋转：%d°" % (module.rotation_quarters * 90))
+	lines.append("尺寸：%d×%d" % [module.get_rotated_size().x, module.get_rotated_size().y])
+	lines.append("质量：%.1f" % definition.mass)
+	lines.append("耗能：%.1f" % definition.energy_cost)
+	lines.append("HP：%.1f" % definition.hp)
+
+	if definition is EnergyModuleDefinition:
+		lines.append("供能：%.1f" % (definition as EnergyModuleDefinition).energy_output)
+	elif definition is PropulsionModuleDefinition:
+		lines.append("动力：%.1f" % (definition as PropulsionModuleDefinition).thrust)
+	elif definition is WeaponModuleDefinition:
+		var weapon := definition as WeaponModuleDefinition
+		lines.append("火力：%.1f" % weapon.firepower)
+		lines.append("射程：%.1f" % weapon.attack_range)
+		lines.append("射击间隔：%.2f 秒" % weapon.fire_interval)
+		lines.append("理论射速：%.2f 发/秒" % (1.0 / weapon.fire_interval))
+		lines.append("理论 DPS：%.2f" % (weapon.firepower / weapon.fire_interval))
+		lines.append("炮塔转速：%.1f°/秒" % weapon.turn_speed_degrees)
+		lines.append("弹速：%.1f px/s" % weapon.projectile_speed)
+		lines.append("开火角容差：%.1f°" % weapon.fire_angle_tolerance_degrees)
+	elif definition is DefenseModuleDefinition:
+		lines.append("防护：%.1f%%" % (definition as DefenseModuleDefinition).protection)
+	elif definition is FunctionModuleDefinition:
+		lines.append("功能：暂无额外参数")
+	elif definition is CoreModuleDefinition:
+		lines.append("核心规则：被击毁时整船沉没")
+
+	lines.append("")
+	lines.append("操作：移动已选模块 / R 旋转 / 右键删除")
+	return "\n".join(lines)
 
 func _refresh_stats() -> void:
 	var s := grid.ship
@@ -122,7 +173,14 @@ func _refresh_stats() -> void:
 	speed_label.text = "预计最高速度：%s" % speed_text
 	speed_label.tooltip_text = "完整耐久、供能充足、持续直线全速推进时的稳定航速。\n战损、转向和倒车会影响实际速度。"
 
-	stats_label.text = """模块数量：%d
+	var selected_details := _build_installed_module_details(grid.selected_module)
+	stats_label.text = """%s
+
+────────────
+
+飞船汇总
+
+模块数量：%d
 
 质量：%.1f
 
@@ -145,6 +203,7 @@ func _refresh_stats() -> void:
 能量规则：
 编辑时允许临时超额耗能；
 出航时总耗能必须 ≤ 总供能。""" % [
+		selected_details,
 		s.modules.size(),
 		s.get_mass(),
 		s.get_energy_cost(),
