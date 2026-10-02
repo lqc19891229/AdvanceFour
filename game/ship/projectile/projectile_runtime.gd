@@ -23,7 +23,8 @@ func setup(
 	world_direction: Vector2,
 	p_firepower: float,
 	p_source_owner: Node2D,
-	p_max_distance: float
+	p_max_distance: float,
+	p_speed: float = 700.0
 ) -> void:
 	global_position = world_position
 	launch_position = world_position
@@ -31,6 +32,7 @@ func setup(
 	firepower = maxf(p_firepower, 0.0)
 	remaining_damage = firepower
 	source_owner = p_source_owner
+	speed = maxf(p_speed, 0.0)
 	max_distance = maxf(p_max_distance, 0.0)
 	distance_remaining = max_distance
 	finished = false
