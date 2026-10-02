@@ -33,6 +33,11 @@ hp = 20.0
 [sub_resource type="Resource" id="Resource_82fgq"]
 script = ExtResource("4_w5ypd")
 firepower = 5.0
+attack_range = 500.0
+fire_interval = 0.5
+turn_speed_degrees = 180.0
+projectile_speed = 700.0
+fire_angle_tolerance_degrees = 6.0
 id = &"weapon_cannon"
 display_name = "机炮"
 module_type = 2
