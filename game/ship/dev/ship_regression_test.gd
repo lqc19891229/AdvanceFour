@@ -119,6 +119,24 @@ func _test_projectile_range() -> void:
 	var owner := _spawn(world, Vector2(200.0, 300.0))
 	owner.set_physics_process(false)
 	var weapon := owner.weapon_runtime_by_uid.values()[0] as WeaponRuntime
+	var weapon_definition := weapon.weapon_definition
+	_check(
+		weapon_definition != null
+		and is_equal_approx(weapon_definition.attack_range, 500.0)
+		and is_equal_approx(weapon_definition.fire_interval, 0.5)
+		and is_equal_approx(weapon_definition.turn_speed_degrees, 180.0)
+		and is_equal_approx(weapon_definition.projectile_speed, 700.0)
+		and is_equal_approx(weapon_definition.fire_angle_tolerance_degrees, 6.0),
+		"Weapon combat stats must come from generated weapon data"
+	)
+	_check(
+		is_equal_approx(weapon.attack_range, weapon_definition.attack_range)
+		and is_equal_approx(weapon.fire_interval, weapon_definition.fire_interval)
+		and is_equal_approx(weapon.turn_speed_degrees, weapon_definition.turn_speed_degrees)
+		and is_equal_approx(weapon.projectile_speed, weapon_definition.projectile_speed)
+		and is_equal_approx(weapon.fire_angle_tolerance_degrees, weapon_definition.fire_angle_tolerance_degrees),
+		"WeaponRuntime must load its own definition stats during setup"
+	)
 	weapon.set_physics_process(false)
 	weapon.global_rotation = PI / 2.0
 	weapon.attack_range = 1600.0
@@ -128,14 +146,27 @@ func _test_projectile_range() -> void:
 		shots.append(shot)
 	)
 	owner.request_fire()
-	_check(shots.size() == 1 and is_equal_approx(shots[0].max_distance, 1600.0), "ShipRuntime must pass the firing weapon's attack range into its projectile")
+	_check(
+		shots.size() == 1
+		and is_equal_approx(shots[0].max_distance, 1600.0)
+		and is_equal_approx(shots[0].speed, 700.0),
+		"ShipRuntime must pass the firing weapon's range and projectile speed into its projectile"
+	)
 	if not shots.is_empty():
 		projectile = shots[0]
 		var origin := projectile.global_position
 		weapon.attack_range = 200.0
+		weapon.projectile_speed = 350.0
 		weapon.cooldown_remaining = 0.0
 		owner.request_fire()
-		_check(shots.size() == 2 and is_equal_approx(shots[1].max_distance, 200.0) and is_equal_approx(projectile.max_distance, 1600.0), "Each shot must snapshot its own range without changing shots already in flight")
+		_check(
+			shots.size() == 2
+			and is_equal_approx(shots[1].max_distance, 200.0)
+			and is_equal_approx(shots[1].speed, 350.0)
+			and is_equal_approx(projectile.max_distance, 1600.0)
+			and is_equal_approx(projectile.speed, 700.0),
+			"Each shot must snapshot its own range and speed without changing shots already in flight"
+		)
 		owner.position += Vector2(2000.0, 1000.0)
 		owner.rotation = PI
 		projectile._physics_process(2.01)
