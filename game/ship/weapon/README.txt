@@ -50,14 +50,17 @@ fired 信号
   - 世界坐标发射方向
 - RuntimeShip 继续通过 weapon_fired 向上转发事件。
 
-当前 Prototype 参数：
-- attack_range = 500
-- fire_interval = 0.5 秒
-- turn_speed_degrees = 180°/秒
-- fire_angle_tolerance_degrees = 6°
+当前武器数据：
+- firepower：单发基础火力。
+- attack_range：自动选敌范围，同时作为弹丸最大飞行距离。
+- fire_interval：两次开火之间的秒数。
+- turn_speed_degrees：炮塔旋转速度（度/秒）。
+- projectile_speed：弹丸飞行速度（px/s）。
+- fire_angle_tolerance_degrees：炮口与目标方向允许的开火角误差。
 
-这些参数当前属于 WeaponRuntime Prototype 运行参数，还没有写入 WeaponModuleDefinition / Excel。
-在正式设计不同武器射程、射速、炮塔转速前，不改动 Excel → JSON → .tres 数据真源结构。
+这些参数全部来自 WeaponModuleDefinition，并由 Excel Weapon Sheet 经过 JSON cache / Godot 导入插件生成。
+WeaponRuntime 在 setup() 时读取当前模块自己的定义，所以不同武器可以拥有独立射程、射速、转速、弹速和开火角容差。
+当前 weapon_cannon 的数值为 firepower=5、attack_range=500、fire_interval=0.5、turn_speed_degrees=180、projectile_speed=700、fire_angle_tolerance_degrees=6。
 
 手动发射：
 - RuntimeShip.request_fire() / WeaponRuntime.fire_once() 暂时保留为调试接口。
