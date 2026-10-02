@@ -5,6 +5,11 @@
 [resource]
 script = ExtResource("1_ph2d0")
 firepower = 5.0
+attack_range = 500.0
+fire_interval = 0.5
+turn_speed_degrees = 180.0
+projectile_speed = 700.0
+fire_angle_tolerance_degrees = 6.0
 id = &"weapon_cannon"
 display_name = "机炮"
 module_type = 2
