@@ -423,21 +423,23 @@ func _on_weapon_runtime_fired(
 	var weapon := weapon_runtime_by_uid.get(module_instance.uid) as WeaponRuntime
 	if not is_instance_valid(weapon):
 		return
-	# Snapshot the firing weapon's range before notifying observers.
+	# Snapshot the firing weapon's projectile parameters before notifying observers.
 	var projectile_range := maxf(weapon.attack_range, 0.0)
+	var projectile_speed := maxf(weapon.projectile_speed, 0.0)
 	weapon_fired.emit(
 		module_instance,
 		firepower,
 		world_position,
 		world_direction
 	)
-	_spawn_projectile(world_position, world_direction, firepower, projectile_range)
+	_spawn_projectile(world_position, world_direction, firepower, projectile_range, projectile_speed)
 
 func _spawn_projectile(
 	world_position: Vector2,
 	world_direction: Vector2,
 	firepower: float,
-	projectile_range: float
+	projectile_range: float,
+	projectile_speed: float
 ) -> void:
 	var projectile_parent := get_parent()
 	if projectile_parent == null:
@@ -445,7 +447,7 @@ func _spawn_projectile(
 
 	var projectile := PROJECTILE_RUNTIME_SCENE.instantiate() as ProjectileRuntime
 	projectile_parent.add_child(projectile)
-	projectile.setup(world_position, world_direction, firepower, self, projectile_range)
+	projectile.setup(world_position, world_direction, firepower, self, projectile_range, projectile_speed)
 	projectile.hit.connect(_on_projectile_hit)
 	projectile_spawned.emit(projectile)
 
