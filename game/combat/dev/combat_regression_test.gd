@@ -101,6 +101,8 @@ func _test_movement_feedback() -> void:
 	_check(landmark.get_global_transform_with_canvas().origin.distance_to(screen_before) > 5.0, "Following camera must make world landmarks visibly scroll when the ship moves")
 	_check(battle.camera.global_position.distance_to(battle.player.global_position) < 1.0, "Movement feedback must preserve the following camera")
 	_check(battle.hud.text.contains("速度：%.1f px/s" % battle.player.get_speed()) and battle.hud.text.contains("坐标："), "HUD must report live movement telemetry")
+	# Isolate reverse-input semantics from the new acceleration/braking model.
+	battle.player.velocity = Vector2.ZERO
 	_key(KEY_S, true)
 	for frame in range(90):
 		await physics_frame
