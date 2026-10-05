@@ -306,6 +306,45 @@ func _draw_module_fallback(module: ShipModuleInstance, rect: Rect2) -> void:
 		Color("#101319")
 	)
 
+func _draw_module_preview(
+	definition: ShipModuleDefinition,
+	rect: Rect2,
+	rotation_quarters_value: int,
+	valid: bool
+) -> void:
+	if definition == null:
+		return
+
+	var preview_color := (
+		Color(0.35, 0.85, 0.55, 0.28)
+		if valid
+		else Color(0.95, 0.25, 0.25, 0.28)
+	)
+	var border_color := (
+		Color(0.35, 0.85, 0.55, 0.95)
+		if valid
+		else Color(0.95, 0.25, 0.25, 0.95)
+	)
+	var rotation_radians := float(rotation_quarters_value) * PI * 0.5
+
+	var base_texture := ModuleArtLibrary.get_base_texture(definition)
+	if base_texture != null:
+		var base_rotation := rotation_radians
+		if definition is WeaponModuleDefinition:
+			base_rotation = 0.0
+		_draw_module_texture(base_texture, rect, base_rotation)
+
+	if definition is WeaponModuleDefinition:
+		var turret_texture := ModuleArtLibrary.get_turret_texture(definition)
+		if turret_texture != null:
+			_draw_module_texture(turret_texture, rect, rotation_radians)
+		else:
+			_draw_weapon_turret_fallback(rect, rotation_radians)
+
+	draw_rect(rect.grow(-3.0), preview_color)
+	draw_rect(rect.grow(-3.0), border_color, false, 2.0)
+
+
 func _draw_preview() -> void:
 	if moving_selected and selected_module != null:
 		var temp := ShipModuleInstance.new(
@@ -319,20 +358,29 @@ func _draw_preview() -> void:
 			preview_cell,
 			selected_module.rotation_quarters
 		)
-		var move_color := Color(0.35, 0.85, 0.55, 0.36) if check["ok"] else Color(0.95, 0.25, 0.25, 0.36)
 		var move_rect := Rect2(
 			grid_to_screen(preview_cell),
 			Vector2(temp.get_rotated_size()) * CELL_SIZE
 		)
-		draw_rect(move_rect.grow(-4), move_color)
-		draw_rect(move_rect.grow(-4), Color(move_color.r, move_color.g, move_color.b, 0.9), false, 2.0)
+		_draw_module_preview(
+			selected_module.definition,
+			move_rect,
+			selected_module.rotation_quarters,
+			check["ok"]
+		)
 		return
 
 	if selected_module != null or selected_definition == null:
 		return
 	var temp := ShipModuleInstance.new(-1, selected_definition, preview_cell, rotation_quarters)
 	var check := ship.can_place(selected_definition, preview_cell, rotation_quarters)
-	var color := Color(0.35, 0.85, 0.55, 0.36) if check["ok"] else Color(0.95, 0.25, 0.25, 0.36)
-	var rect := Rect2(grid_to_screen(preview_cell), Vector2(temp.get_rotated_size()) * CELL_SIZE)
-	draw_rect(rect.grow(-4), color)
-	draw_rect(rect.grow(-4), Color(color.r, color.g, color.b, 0.9), false, 2.0)
+	var rect := Rect2(
+		grid_to_screen(preview_cell),
+		Vector2(temp.get_rotated_size()) * CELL_SIZE
+	)
+	_draw_module_preview(
+		selected_definition,
+		rect,
+		rotation_quarters,
+		check["ok"]
+	)
