@@ -120,7 +120,9 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 			weapon.fire_angle_tolerance_degrees = float(row["fire_angle_tolerance_degrees"])
 		"DEFENSE":
 			d = DefenseDef.new()
-			(d as DefenseModuleDefinition).protection = float(row["protection"])
+			var defense := d as DefenseModuleDefinition
+			defense.hp = float(row["hp"])
+			defense.protection = float(row["protection"])
 		"FUNCTION":
 			d = FunctionDef.new()
 		"CORE":
@@ -132,9 +134,7 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 	d.display_name = String(row["display_name"])
 	d.description = String(row["description"])
 	d.size = Vector2i(int(row["width"]), int(row["height"]))
-	d.mass = float(row["mass"])
 	d.energy_cost = float(row["energy_cost"])
-	d.hp = float(row["hp"])
 
 	var texture_path := String(row.get("texture_path", "")).strip_edges()
 	d.texture = _load_texture(texture_path)
