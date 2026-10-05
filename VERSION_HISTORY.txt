@@ -18,6 +18,40 @@
 
 
 ========================================
+v0.31.10
+========================================
+
+耐久结构：
+- ShipModuleDefinition 移除共通 hp；Energy / Propulsion / Weapon / Function / Core 不再拥有 hp 字段。
+- DefenseModuleDefinition 单独保留 hp，当前轻型装甲 hp = 20。
+- 单个区域的有效最大 HP 改为 ShipHullCell.max_hp + 覆盖该区域的 Defense.hp。
+- 多格 Defense 的 hp 按覆盖 Hull Cell 数量平均分配，保证一个 Defense 的总 hp 不会因尺寸扩大而倍增。
+- 区域当前 HP 使用 Hull Cell 健康度比例映射到有效最大 HP；Projectile 伤害按同一比例换算回 Hull Cell.current_hp，继续保持单一局部战损状态。
+- Defense.protection 继续保留原有减伤职责，与 Defense.hp 同时生效。
+
+移动：
+- Equipment 的 mass 字段完全移除；生成 .tres、ModuleDatabase、JSON cache 与编辑器均不再读取或显示模块质量。
+- RuntimeShip 改为纯推力移动：最高速度 = effective_thrust × speed_scale。
+- 加速度 = effective_thrust × acceleration_scale；松油减速度 = effective_thrust × deceleration_scale。
+- 当前参数调整为 speed_scale = 2.5、acceleration_scale = 1.0、deceleration_scale = 1.5，以保持现有基础双引擎飞船的速度量级接近此前版本。
+- ShipHullCell.mass 暂保留为 Hull 结构数据，但当前完全不参与速度、加速度或减速度计算。
+- 非推进 Equipment、Defense 和额外 Hull 不再降低速度；增加有效引擎推力会直接提高速度与加速度。
+
+数据：
+- Excel 模块源表正式移除 mass 列。
+- 只有 Defense Sheet 保留 hp；Energy / Propulsion / Weapon / Function / Core Sheet 移除 hp。
+- Python 导入器的 BASE_COLUMNS 同步移除 mass / hp，Defense 单独要求 hp > 0。
+- JSON cache 与 generated 模块资源同步清理 mass 和非 Defense hp。
+- Godot 数据导入插件只对 DefenseModuleDefinition 写入 hp。
+
+修复 / 验证：
+- AI 交火测试为玩家与敌舰创建独立 ShipData，避免 Hull current_hp 被两个 RuntimeShip 共享。
+- AI 测试初始距离调整到武器射程内，确保双向自动炮塔物理交火回归稳定。
+- ship_regression 新增 Defense hp + Hull hp、非推进设备不影响航速、增加引擎提高航速等检查。
+- Godot 4.6.1 Project checks 通过。
+
+
+========================================
 v0.31.9
 ========================================
 
