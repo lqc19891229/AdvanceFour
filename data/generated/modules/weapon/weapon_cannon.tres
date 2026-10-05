@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_goo5u")
 firepower = 5.0
+firing_arc_degrees = 180.0
 turret_texture = ExtResource("3_iy0da")
 id = &"weapon_cannon"
 display_name = "机炮"

@@ -37,12 +37,15 @@ fired 信号
 - 炮塔贴图以 WeaponRuntime 原点为旋转中心，默认朝向 Vector2.UP；当前 1×1 目标显示区域约 32×32 px。
 - 如果 turret PNG 尚未提供，WeaponRuntime 继续绘制原有白色圆心 + 炮管线作为 fallback。
 
-炮塔瞄准：
-- module.rotation_quarters 只作为炮塔进入战斗时的初始朝向。
-- 战斗中炮塔可以独立于 RuntimeShip 持续旋转。
+炮塔瞄准与射界：
+- module.rotation_quarters 定义武器安装朝向，同时作为 firing_arc_degrees 的射界中心。
+- 射界中心会随 RuntimeShip 的世界旋转同步变化；飞船转弯时射界一起转动。
+- WeaponRuntime 搜索目标时直接排除射界外目标，当前目标因飞船转向离开射界后也会立即失效。
+- 战斗中炮塔只能在安装朝向 ± firing_arc_degrees / 2 范围内旋转，不允许跨过射界边界追踪。
 - desired direction = 目标世界坐标 - 炮塔世界坐标。
 - 炮塔使用 turn_speed_degrees 逐步转向目标，不瞬间锁定。
-- 当炮口方向与目标方向误差小于 fire_angle_tolerance_degrees 时，视为瞄准完成。
+- 开火前再次校验目标仍位于射界内；当炮口方向与目标方向误差小于 fire_angle_tolerance_degrees 时，才视为瞄准完成。
+- 手动调试接口 fire_once() 同样不能绕过射界。
 
 自动开火：
 - WeaponRuntime 在物理帧更新。
@@ -61,11 +64,12 @@ fired 信号
 - fire_interval：两次开火之间的秒数。
 - turn_speed_degrees：炮塔旋转速度（度/秒）。
 - projectile_speed：弹丸飞行速度（px/s）。
+- firing_arc_degrees：炮塔围绕模块安装朝向允许覆盖的总射界角度，范围 0～360°。
 - fire_angle_tolerance_degrees：炮口与目标方向允许的开火角误差。
 
 这些参数全部来自 WeaponModuleDefinition，并由 Excel Weapon Sheet 经过 JSON cache / Godot 导入插件生成。
 WeaponRuntime 在 setup() 时读取当前模块自己的定义，所以不同武器可以拥有独立射程、射速、转速、弹速和开火角容差。
-当前 weapon_cannon 的数值为 firepower=5、attack_range=500、fire_interval=0.5、turn_speed_degrees=180、projectile_speed=700、fire_angle_tolerance_degrees=6。
+当前 weapon_cannon 的数值为 firepower=5、attack_range=500、fire_interval=0.5、turn_speed_degrees=180、projectile_speed=700、firing_arc_degrees=180、fire_angle_tolerance_degrees=6。
 
 手动发射：
 - RuntimeShip.request_fire() / WeaponRuntime.fire_once() 暂时保留为调试接口。

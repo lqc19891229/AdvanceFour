@@ -7,6 +7,7 @@ extends ShipModuleDefinition
 @export var fire_interval: float = 0.5
 @export var turn_speed_degrees: float = 180.0
 @export var projectile_speed: float = 700.0
+@export_range(0.0, 360.0, 1.0) var firing_arc_degrees: float = 360.0
 @export var fire_angle_tolerance_degrees: float = 6.0
 
 @export_group("武器美术")

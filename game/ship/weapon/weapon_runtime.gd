@@ -12,6 +12,7 @@ var attack_range := 500.0
 var fire_interval := 0.5
 var turn_speed_degrees := 180.0
 var projectile_speed := 700.0
+var firing_arc_degrees := 360.0
 var fire_angle_tolerance_degrees := 6.0
 var target_group: StringName = &"enemy_targets"
 
@@ -20,6 +21,7 @@ var module_instance: ShipModuleInstance
 var weapon_definition: WeaponModuleDefinition
 var target: Node2D
 var turret_visual: Sprite2D
+var mount_local_rotation := 0.0
 var cooldown_remaining := 0.0
 var operational := true
 var powered := true
@@ -39,11 +41,13 @@ func setup(
 		fire_interval = weapon_definition.fire_interval
 		turn_speed_degrees = weapon_definition.turn_speed_degrees
 		projectile_speed = weapon_definition.projectile_speed
+		firing_arc_degrees = weapon_definition.firing_arc_degrees
 		fire_angle_tolerance_degrees = weapon_definition.fire_angle_tolerance_degrees
 	position = local_position
 	z_index = 30
 	target_group = p_target_group
-	rotation = deg_to_rad(float(module.rotation_quarters) * 90.0)
+	mount_local_rotation = deg_to_rad(float(module.rotation_quarters) * 90.0)
+	rotation = mount_local_rotation
 	target = null
 	cooldown_remaining = 0.0
 	operational = true
@@ -154,8 +158,11 @@ func _find_nearest_target() -> Node2D:
 			continue
 
 		var aim_point := _get_target_aim_point(node)
-		var distance_squared := global_position.distance_squared_to(aim_point)
+		var to_target := aim_point - global_position
+		var distance_squared := to_target.length_squared()
 		if distance_squared > max_distance_squared:
+			continue
+		if not is_world_direction_inside_firing_arc(to_target):
 			continue
 		if distance_squared < best_distance_squared:
 			best_distance_squared = distance_squared
@@ -177,7 +184,36 @@ func _is_target_valid(candidate) -> bool:
 		return false
 
 	var aim_point := _get_target_aim_point(candidate)
-	return global_position.distance_squared_to(aim_point) <= attack_range * attack_range
+	var to_target := aim_point - global_position
+	return (
+		to_target.length_squared() <= attack_range * attack_range
+		and is_world_direction_inside_firing_arc(to_target)
+	)
+
+func get_firing_arc_center_global_rotation() -> float:
+	if owner_ship == null or not is_instance_valid(owner_ship):
+		return mount_local_rotation
+	return owner_ship.global_rotation + mount_local_rotation
+
+func is_world_direction_inside_firing_arc(world_direction: Vector2) -> bool:
+	if world_direction.is_zero_approx():
+		return true
+	var arc := clampf(firing_arc_degrees, 0.0, 360.0)
+	if arc >= 359.999:
+		return true
+	var direction_rotation := Vector2.UP.angle_to(world_direction.normalized())
+	var center_rotation := get_firing_arc_center_global_rotation()
+	var difference := absf(wrapf(direction_rotation - center_rotation, -PI, PI))
+	return difference <= deg_to_rad(arc * 0.5) + 0.000001
+
+func _clamp_global_rotation_to_firing_arc(desired_global_rotation: float) -> float:
+	var arc := clampf(firing_arc_degrees, 0.0, 360.0)
+	if arc >= 359.999:
+		return desired_global_rotation
+	var center_rotation := get_firing_arc_center_global_rotation()
+	var relative_rotation := wrapf(desired_global_rotation - center_rotation, -PI, PI)
+	var half_arc := deg_to_rad(arc * 0.5)
+	return center_rotation + clampf(relative_rotation, -half_arc, half_arc)
 
 func _aim_at_target(delta: float) -> void:
 	var aim_point := _get_target_aim_point(target)
@@ -186,8 +222,9 @@ func _aim_at_target(delta: float) -> void:
 		return
 
 	var desired_global_rotation := Vector2.UP.angle_to(to_target.normalized())
+	var allowed_global_rotation := _clamp_global_rotation_to_firing_arc(desired_global_rotation)
 	var max_step := deg_to_rad(turn_speed_degrees * efficiency) * delta
-	global_rotation = rotate_toward(global_rotation, desired_global_rotation, max_step)
+	global_rotation = rotate_toward(global_rotation, allowed_global_rotation, max_step)
 
 func _is_aimed_at_target() -> bool:
 	if target == null:
@@ -197,6 +234,9 @@ func _is_aimed_at_target() -> bool:
 	var to_target := aim_point - global_position
 	if to_target.is_zero_approx():
 		return true
+
+	if not is_world_direction_inside_firing_arc(to_target):
+		return false
 
 	var desired_global_rotation := Vector2.UP.angle_to(to_target.normalized())
 	var difference := absf(wrapf(desired_global_rotation - global_rotation, -PI, PI))
@@ -215,6 +255,7 @@ func _can_fire() -> bool:
 		and module_instance != null
 		and weapon_definition != null
 		and cooldown_remaining <= 0.0
+		and is_world_direction_inside_firing_arc(Vector2.UP.rotated(global_rotation))
 	)
 
 func _emit_fire() -> void:

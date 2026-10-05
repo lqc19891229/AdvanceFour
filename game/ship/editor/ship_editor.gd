@@ -60,6 +60,7 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 		lines.append("射击间隔：%.2f 秒" % weapon.fire_interval)
 		lines.append("炮塔转速：%.1f°/秒" % weapon.turn_speed_degrees)
 		lines.append("弹速：%.1f px/s" % weapon.projectile_speed)
+		lines.append("射界：%.1f°" % weapon.firing_arc_degrees)
 		lines.append("开火角容差：%.1f°" % weapon.fire_angle_tolerance_degrees)
 	elif definition is DefenseModuleDefinition:
 		var defense := definition as DefenseModuleDefinition
@@ -159,6 +160,7 @@ func _build_installed_module_details(module: ShipModuleInstance) -> String:
 		lines.append("理论 DPS：%.2f" % (weapon.firepower / weapon.fire_interval))
 		lines.append("炮塔转速：%.1f°/秒" % weapon.turn_speed_degrees)
 		lines.append("弹速：%.1f px/s" % weapon.projectile_speed)
+		lines.append("射界：%.1f°" % weapon.firing_arc_degrees)
 		lines.append("开火角容差：%.1f°" % weapon.fire_angle_tolerance_degrees)
 	elif definition is DefenseModuleDefinition:
 		var defense := definition as DefenseModuleDefinition

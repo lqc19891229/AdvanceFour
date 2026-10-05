@@ -63,6 +63,7 @@ WEAPON_FIELDS = [
     "turn_speed_degrees",
     "projectile_speed",
     "fire_angle_tolerance_degrees",
+    "firing_arc_degrees",
 ]
 WEAPON_TEXTURE_FIELD = "turret_texture_path"
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -281,6 +282,10 @@ def parse_sheet(
                 value = as_float(get(field), field, sheet_name, row_idx, errors)
                 if value <= 0:
                     errors.append(f"{sheet_name}!第 {row_idx} 行：WEAPON 模块必须填写 {field} > 0")
+                if field == "firing_arc_degrees" and value > 360:
+                    errors.append(
+                        f"{sheet_name}!第 {row_idx} 行：firing_arc_degrees 不能大于 360"
+                    )
                 weapon_values[field] = value
             turret_texture_path = str(get(WEAPON_TEXTURE_FIELD) or "").strip()
             if not turret_texture_path:
@@ -307,6 +312,7 @@ def parse_sheet(
             "turn_speed_degrees": 0.0,
             "projectile_speed": 0.0,
             "fire_angle_tolerance_degrees": 0.0,
+            "firing_arc_degrees": 0.0,
         }
         if module_type == "DEFENSE":
             module["hp"] = hp

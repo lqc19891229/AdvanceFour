@@ -29,7 +29,8 @@
       "fire_interval": 0,
       "turn_speed_degrees": 0,
       "projectile_speed": 0,
-      "fire_angle_tolerance_degrees": 0
+      "fire_angle_tolerance_degrees": 0,
+      "firing_arc_degrees": 0
     },
     {
       "id": "propulsion_smallengine",
@@ -49,7 +50,8 @@
       "fire_interval": 0,
       "turn_speed_degrees": 0,
       "projectile_speed": 0,
-      "fire_angle_tolerance_degrees": 0
+      "fire_angle_tolerance_degrees": 0,
+      "firing_arc_degrees": 0
     },
     {
       "id": "weapon_cannon",
@@ -69,7 +71,8 @@
       "fire_interval": 0.5,
       "turn_speed_degrees": 180,
       "projectile_speed": 700,
-      "fire_angle_tolerance_degrees": 6
+      "fire_angle_tolerance_degrees": 6,
+      "firing_arc_degrees": 180
     },
     {
       "id": "defense_lightarmor",
@@ -90,7 +93,8 @@
       "fire_interval": 0,
       "turn_speed_degrees": 0,
       "projectile_speed": 0,
-      "fire_angle_tolerance_degrees": 0
+      "fire_angle_tolerance_degrees": 0,
+      "firing_arc_degrees": 0
     },
     {
       "id": "function_radar",
@@ -110,7 +114,8 @@
       "fire_interval": 0,
       "turn_speed_degrees": 0,
       "projectile_speed": 0,
-      "fire_angle_tolerance_degrees": 0
+      "fire_angle_tolerance_degrees": 0,
+      "firing_arc_degrees": 0
     },
     {
       "id": "core_bridge",
@@ -130,7 +135,8 @@
       "fire_interval": 0,
       "turn_speed_degrees": 0,
       "projectile_speed": 0,
-      "fire_angle_tolerance_degrees": 0
+      "fire_angle_tolerance_degrees": 0,
+      "firing_arc_degrees": 0
     }
   ]
 }

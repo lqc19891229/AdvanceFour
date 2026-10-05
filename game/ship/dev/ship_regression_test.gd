@@ -231,6 +231,7 @@ func _test_projectile_range() -> void:
 		and is_equal_approx(weapon_definition.fire_interval, 0.5)
 		and is_equal_approx(weapon_definition.turn_speed_degrees, 180.0)
 		and is_equal_approx(weapon_definition.projectile_speed, 700.0)
+		and is_equal_approx(weapon_definition.firing_arc_degrees, 180.0)
 		and is_equal_approx(weapon_definition.fire_angle_tolerance_degrees, 6.0),
 		"Weapon combat stats must come from generated weapon data"
 	)
@@ -239,17 +240,37 @@ func _test_projectile_range() -> void:
 		and is_equal_approx(weapon.fire_interval, weapon_definition.fire_interval)
 		and is_equal_approx(weapon.turn_speed_degrees, weapon_definition.turn_speed_degrees)
 		and is_equal_approx(weapon.projectile_speed, weapon_definition.projectile_speed)
+		and is_equal_approx(weapon.firing_arc_degrees, weapon_definition.firing_arc_degrees)
 		and is_equal_approx(weapon.fire_angle_tolerance_degrees, weapon_definition.fire_angle_tolerance_degrees),
 		"WeaponRuntime must load its own definition stats during setup"
 	)
 	weapon.set_physics_process(false)
-	weapon.global_rotation = PI / 2.0
 	weapon.attack_range = 1600.0
+	_check(
+		weapon.is_world_direction_inside_firing_arc(Vector2.UP)
+		and weapon.is_world_direction_inside_firing_arc(Vector2.RIGHT)
+		and not weapon.is_world_direction_inside_firing_arc(Vector2.DOWN),
+		"A 180-degree forward weapon must include its side boundary and reject targets behind the mount"
+	)
+	owner.rotation = PI / 2.0
+	_check(
+		weapon.is_world_direction_inside_firing_arc(Vector2.RIGHT)
+		and not weapon.is_world_direction_inside_firing_arc(Vector2.LEFT),
+		"Weapon firing arc must rotate with the owning ship"
+	)
+	owner.rotation = 0.0
 	var shots: Array[ProjectileRuntime] = []
 	owner.projectile_spawned.connect(func(shot: ProjectileRuntime) -> void:
 		shot.set_physics_process(false)
 		shots.append(shot)
 	)
+	weapon.global_rotation = PI
+	owner.request_fire()
+	_check(
+		shots.is_empty(),
+		"Manual firing must not bypass the weapon firing arc"
+	)
+	weapon.global_rotation = PI / 2.0
 	owner.request_fire()
 	_check(
 		shots.size() == 1
@@ -437,7 +458,8 @@ func _test_saved_design_and_editor() -> void:
 		editor.stats_label.text.contains("已选模块：机炮")
 		and editor.stats_label.text.contains("射程：500.0")
 		and editor.stats_label.text.contains("射击间隔：0.50 秒")
-		and editor.stats_label.text.contains("弹速：700.0 px/s"),
+		and editor.stats_label.text.contains("弹速：700.0 px/s")
+		and editor.stats_label.text.contains("射界：180.0°"),
 		"Selecting an installed weapon must show its complete combat details"
 	)
 	editable_design.add_hull_cell(Vector2i(4, -1))
