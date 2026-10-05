@@ -228,7 +228,7 @@ func _test_friendly_fire() -> void:
 		await physics_frame
 	_check(_core_cell(ally).current_hp == hp_before, "Enemy shots must pass through allied Hull without friendly damage")
 	weapon = battle.player.weapon_runtimes[0]
-	weapon.global_position = _core(ally).global_position + Vector2(18.0, -100.0)
+	weapon.global_position = _core_runtime(ally).global_position + Vector2(18.0, -100.0)
 	weapon.global_rotation = PI
 	battle.player.request_fire()
 	_check(await _wait_until(func(): return _core_cell(ally).current_hp < hp_before), "Player shots must hit the same opposing Hull through battle masks")
