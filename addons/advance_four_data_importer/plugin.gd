@@ -108,7 +108,25 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 	d.mass = float(row["mass"])
 	d.energy_cost = float(row["energy_cost"])
 	d.hp = float(row["hp"])
+
+	var texture_path := String(row.get("texture_path", "")).strip_edges()
+	d.texture = _load_texture(texture_path)
+	if d.texture == null:
+		push_error("模块贴图不存在或无法加载：%s -> %s" % [d.id, texture_path])
+		return null
+
+	if d is WeaponModuleDefinition:
+		var turret_texture_path := String(row.get("turret_texture_path", "")).strip_edges()
+		(d as WeaponModuleDefinition).turret_texture = _load_texture(turret_texture_path)
+		if (d as WeaponModuleDefinition).turret_texture == null:
+			push_error("武器炮塔贴图不存在或无法加载：%s -> %s" % [d.id, turret_texture_path])
+			return null
 	return d
+
+func _load_texture(path: String) -> Texture2D:
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return null
+	return load(path) as Texture2D
 
 func _run_excel_parser() -> Dictionary:
 	var python := _find_python()

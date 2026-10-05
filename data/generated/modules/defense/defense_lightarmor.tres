@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="DefenseModuleDefinition" format=3 uid="uid://d3cgij15dxy60"]
 
 [ext_resource type="Script" uid="uid://dw8g3d8ctmge3" path="res://game/ship/definitions/defense_module_definition.gd" id="1_q0vbv"]
+[ext_resource type="Texture2D" path="res://game/ship/art/modules/defense_lightarmor.png" id="2_texture"]
 
 [resource]
 script = ExtResource("1_q0vbv")
+texture = ExtResource("2_texture")
 protection = 10.0
 id = &"defense_lightarmor"
 display_name = "轻型装甲"

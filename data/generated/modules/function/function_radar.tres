@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="FunctionModuleDefinition" format=3 uid="uid://c508upumj0tfq"]
 
 [ext_resource type="Script" uid="uid://vt1mdpchd5pw" path="res://game/ship/definitions/function_module_definition.gd" id="1_ca0wo"]
+[ext_resource type="Texture2D" path="res://game/ship/art/modules/function_radar.png" id="2_texture"]
 
 [resource]
 script = ExtResource("1_ca0wo")
+texture = ExtResource("2_texture")
 id = &"function_radar"
 display_name = "雷达"
 description = "基础功能模块。现阶段暂无额外参数。"

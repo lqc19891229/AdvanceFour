@@ -20,6 +20,9 @@ enum ModuleType {
 @export var energy_cost: float = 0.0
 @export var hp: float = 20.0
 
+@export_group("美术资源")
+@export var texture: Texture2D
+
 func get_type_name() -> String:
 	match module_type:
 		ModuleType.ENERGY:

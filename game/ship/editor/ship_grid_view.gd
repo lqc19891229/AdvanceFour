@@ -248,7 +248,7 @@ func _draw_module(module: ShipModuleInstance) -> void:
 	)
 
 	var base_drawn := false
-	if module.definition != null and module.definition.size == Vector2i.ONE:
+	if module.definition != null:
 		var base_texture := ModuleArtLibrary.get_base_texture(module.definition)
 		if base_texture != null:
 			var base_rotation := 0.0
@@ -260,10 +260,7 @@ func _draw_module(module: ShipModuleInstance) -> void:
 	if not base_drawn:
 		_draw_module_fallback(module, rect)
 
-	if (
-		module.definition is WeaponModuleDefinition
-		and module.definition.size == Vector2i.ONE
-	):
+	if module.definition is WeaponModuleDefinition:
 		var turret_rotation := float(module.rotation_quarters) * PI * 0.5
 		var turret_texture := ModuleArtLibrary.get_turret_texture(module.definition)
 		if turret_texture != null:

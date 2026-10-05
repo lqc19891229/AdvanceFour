@@ -54,7 +54,7 @@ SHEET_SCHEMAS = {
 
 BASE_COLUMNS = [
     "id", "display_name", "description",
-    "width", "height", "mass", "energy_cost", "hp",
+    "width", "height", "mass", "energy_cost", "hp", "texture_path",
 ]
 TYPE_FIELDS = ["energy_output", "thrust", "firepower", "protection"]
 WEAPON_FIELDS = [
@@ -64,6 +64,7 @@ WEAPON_FIELDS = [
     "projectile_speed",
     "fire_angle_tolerance_degrees",
 ]
+WEAPON_TEXTURE_FIELD = "turret_texture_path"
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
@@ -203,6 +204,7 @@ def parse_sheet(
         required_columns.append(type_field)
     if module_type == "WEAPON":
         required_columns.extend(WEAPON_FIELDS)
+        required_columns.append(WEAPON_TEXTURE_FIELD)
 
     if not rows:
         errors.append(f"{sheet_name} 工作表为空")
@@ -241,6 +243,7 @@ def parse_sheet(
         mass = as_float(get("mass"), "mass", sheet_name, row_idx, errors)
         energy_cost = as_float(get("energy_cost"), "energy_cost", sheet_name, row_idx, errors)
         hp = as_float(get("hp"), "hp", sheet_name, row_idx, errors)
+        texture_path = str(get("texture_path") or "").strip()
 
         if not ID_PATTERN.match(raw_id):
             errors.append(f"{sheet_name}!第 {row_idx} 行：id '{raw_id}' 只能使用小写英文、数字和下划线，并以字母开头")
@@ -255,6 +258,10 @@ def parse_sheet(
             errors.append(f"{sheet_name}!第 {row_idx} 行：mass 和 energy_cost 不能为负数")
         if hp <= 0:
             errors.append(f"{sheet_name}!第 {row_idx} 行：hp 必须 > 0")
+        if not texture_path:
+            errors.append(f"{sheet_name}!第 {row_idx} 行：texture_path 不能为空")
+        elif not texture_path.startswith("res://"):
+            errors.append(f"{sheet_name}!第 {row_idx} 行：texture_path 必须使用 res:// 路径")
 
         type_value = 0.0
         if type_field:
@@ -263,12 +270,18 @@ def parse_sheet(
                 errors.append(f"{sheet_name}!第 {row_idx} 行：{module_type} 模块必须填写 {type_field} > 0")
 
         weapon_values: dict[str, float] = {}
+        turret_texture_path = ""
         if module_type == "WEAPON":
             for field in WEAPON_FIELDS:
                 value = as_float(get(field), field, sheet_name, row_idx, errors)
                 if value <= 0:
                     errors.append(f"{sheet_name}!第 {row_idx} 行：WEAPON 模块必须填写 {field} > 0")
                 weapon_values[field] = value
+            turret_texture_path = str(get(WEAPON_TEXTURE_FIELD) or "").strip()
+            if not turret_texture_path:
+                errors.append(f"{sheet_name}!第 {row_idx} 行：{WEAPON_TEXTURE_FIELD} 不能为空")
+            elif not turret_texture_path.startswith("res://"):
+                errors.append(f"{sheet_name}!第 {row_idx} 行：{WEAPON_TEXTURE_FIELD} 必须使用 res:// 路径")
 
         module = {
             "id": raw_id,
@@ -280,6 +293,8 @@ def parse_sheet(
             "mass": mass,
             "energy_cost": energy_cost,
             "hp": hp,
+            "texture_path": texture_path,
+            "turret_texture_path": turret_texture_path,
             "energy_output": 0.0,
             "thrust": 0.0,
             "firepower": 0.0,

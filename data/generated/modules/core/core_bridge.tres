@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="CoreModuleDefinition" format=3 uid="uid://cvyytwixan6ed"]
 
 [ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://game/ship/definitions/core_module_definition.gd" id="1_0m841"]
+[ext_resource type="Texture2D" path="res://game/ship/art/modules/core_bridge.png" id="2_texture"]
 
 [resource]
 script = ExtResource("1_0m841")
+texture = ExtResource("2_texture")
 id = &"core_bridge"
 display_name = "舰桥"
 module_type = 5

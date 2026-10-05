@@ -44,9 +44,6 @@ func setup(
 func _build_visual(pixel_size: Vector2) -> void:
 	if module_instance == null or module_instance.definition == null:
 		return
-	if module_instance.definition.size != Vector2i.ONE:
-		return
-
 	var texture := ModuleArtLibrary.get_base_texture(module_instance.definition)
 	if texture == null:
 		return

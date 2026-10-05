@@ -9,5 +9,8 @@ extends ShipModuleDefinition
 @export var projectile_speed: float = 700.0
 @export var fire_angle_tolerance_degrees: float = 6.0
 
+@export_group("武器美术")
+@export var turret_texture: Texture2D
+
 func _init() -> void:
 	module_type = ModuleType.WEAPON

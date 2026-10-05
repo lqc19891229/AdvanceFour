@@ -7,25 +7,23 @@
 - source/game_data.xlsx
   策划数据唯一真源。模块数据维护在六个 Sheet：
   Energy / Propulsion / Weapon / Defense / Function / Core。
+  六类模块共同包含 texture_path；Weapon 额外包含 turret_texture_path。
+  路径使用 Godot res:// 格式。
 
 - import_excel.py
-  读取 Excel、校验字段、根据 Sheet 判断模块类型，并生成 JSON cache；所有模块基础字段都包含 hp，要求 hp > 0。
-  Weapon Sheet 额外要求 firepower、attack_range、fire_interval、turn_speed_degrees、projectile_speed、fire_angle_tolerance_degrees 均 > 0。
+  读取 Excel、校验字段、根据 Sheet 判断模块类型，并生成 JSON cache。
+  所有模块基础字段包含 hp、texture_path；Weapon 额外要求 turret_texture_path。
 
 - cache/modules.json
-  Excel 解析后的中间数据，仅用于导入流程。
-  可以删除，重新导入时会再次生成。
+  Excel 解析后的中间数据，包含贴图路径，仅用于导入流程。
 
 使用流程：
-1. 修改 source/game_data.xlsx。
+1. 修改 source/game_data.xlsx，包括模块数值和 PNG 的 res:// 路径。
 2. 在 Godot 顶部菜单执行“前进四：验证模块数据”。
 3. 验证通过后执行“前进四：导入模块数据”。
-4. 插件读取 cache/modules.json；验证通过后清理 res://data/generated/modules/ 六类目录中的旧 .tres，再生成当前 Excel 对应的 .tres。
+4. 插件加载 texture_path / turret_texture_path 指向的 Texture2D。
+5. 重新生成带 Texture2D 引用的 .tres。
 
 规则：
-- 不要手动修改 cache/modules.json。
-- 不要把运行时 .tres 放在本目录。
-- 重新导入时，Excel 中已经删除或改名的模块，其旧 .tres 会自动清理；README.txt 等非 .tres 文件不会被删除。
-- 新的数据导入脚本、源表和缓存文件统一放在这里管理。
-- hp 属于六类模块共同基础字段；运行时模块最大 HP 直接来自导入后的 definition.hp。
-- 武器战斗参数属于 WeaponModuleDefinition；不同武器通过 Weapon Sheet 的独立行配置，不在 WeaponRuntime 中维护另一套静态数值。
+- PNG 路径由 Excel 决定，不再依赖 module_id 自动拼接。
+- 不要手动修改 cache/modules.json 或 generated 目录中的 .tres。
