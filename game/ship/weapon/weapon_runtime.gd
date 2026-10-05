@@ -41,6 +41,7 @@ func setup(
 		projectile_speed = weapon_definition.projectile_speed
 		fire_angle_tolerance_degrees = weapon_definition.fire_angle_tolerance_degrees
 	position = local_position
+	z_index = 30
 	target_group = p_target_group
 	rotation = deg_to_rad(float(module.rotation_quarters) * 90.0)
 	target = null
