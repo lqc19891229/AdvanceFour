@@ -242,12 +242,54 @@ func _draw() -> void:
 	_draw_preview()
 
 func _draw_module(module: ShipModuleInstance) -> void:
-	var rect := Rect2(grid_to_screen(module.grid_position), Vector2(module.get_rotated_size()) * CELL_SIZE)
+	var rect := Rect2(
+		grid_to_screen(module.grid_position),
+		Vector2(module.get_rotated_size()) * CELL_SIZE
+	)
+	var used_texture := false
+	if module.definition != null and module.definition.size == Vector2i.ONE:
+		var base_texture := ModuleArtLibrary.get_base_texture(module.definition)
+		if base_texture != null:
+			var base_rotation := 0.0
+			if not (module.definition is WeaponModuleDefinition):
+				base_rotation = float(module.rotation_quarters) * PI * 0.5
+			_draw_module_texture(base_texture, rect, base_rotation)
+			used_texture = true
+
+		if module.definition is WeaponModuleDefinition:
+			var turret_texture := ModuleArtLibrary.get_turret_texture(module.definition)
+			if turret_texture != null:
+				_draw_module_texture(
+					turret_texture,
+					rect,
+					float(module.rotation_quarters) * PI * 0.5
+				)
+				used_texture = true
+
+	if not used_texture:
+		_draw_module_fallback(module, rect)
+
+	if module == selected_module:
+		draw_rect(rect.grow(-1), Color.WHITE, false, 3.0)
+
+func _draw_module_texture(
+	texture: Texture2D,
+	rect: Rect2,
+	rotation_radians: float
+) -> void:
+	var target_rect := rect.grow(-3.0)
+	draw_set_transform(target_rect.get_center(), rotation_radians, Vector2.ONE)
+	draw_texture_rect(
+		texture,
+		Rect2(-target_rect.size * 0.5, target_rect.size),
+		false
+	)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_module_fallback(module: ShipModuleInstance, rect: Rect2) -> void:
 	var color: Color = type_colors[module.definition.module_type]
 	draw_rect(rect.grow(-3), color)
 	draw_rect(rect.grow(-3), color.lightened(0.22), false, 2.0)
-	if module == selected_module:
-		draw_rect(rect.grow(-1), Color.WHITE, false, 3.0)
 	var font := ThemeDB.fallback_font
 	draw_string(
 		font,
