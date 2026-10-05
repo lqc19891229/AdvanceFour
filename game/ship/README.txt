@@ -35,6 +35,10 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 - RuntimeShip 负责执行移动，不读取玩家键盘。
 - PlayerShipController 负责读取玩家输入并调用 RuntimeShip.set_control_input()。
 - AIShipController 复用同一 RuntimeShip 控制接口，移动仍受模块有效推力及供电状态影响。
+- 最高速度、加速度、松油减速度都由运行时有效推重比计算：effective_thrust / 总质量 × 对应 scale。
+- 当前参数：speed_scale = 500、acceleration_scale = 200、deceleration_scale = 300；倒车推力系数 reverse_thrust_ratio = 0.5。
+- 移动保留惯性方向；转向只改变舰首方向。速度超过当前 get_max_speed() 时直接限制，不再依赖 drag 形成稳态极速。
+- 动力模块被摧毁或失去供电会同步降低最高速度、加速度和减速度。
 
 
 武器运行时规则：
