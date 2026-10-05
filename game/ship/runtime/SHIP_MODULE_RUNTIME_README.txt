@@ -1,50 +1,47 @@
-《前进四》ShipModuleRuntime 说明
+《前进四》HullCellRuntime / ShipModuleRuntime 说明
 
-定位：
-- ShipModuleRuntime 是 ShipData 中单个 ShipModuleInstance 进入战斗后的运行时受击对象。
-- 它不复制模块静态数据，只引用已有 ShipModuleInstance。
-- 每个已安装模块都拥有自己的碰撞区域与 DamageReceiver。
+当前职责已经从“模块自己承伤”调整为：
 
-为什么使用“每模块独立碰撞体”：
-- 飞船模块允许分开放置，不要求相邻或连通。
-- 不能假设飞船是连续舰体，也不能用整块包围盒代表真实可命中区域。
-- 每个模块独立 Area2D 可以直接把 Projectile 命中对象解析为对应 ShipModuleInstance。
-- 空格天然不会产生碰撞体，因此弹丸可以从模块之间的空隙穿过。
-
-当前运行链：
 ProjectileRuntime
   ↓ swept collision
-ShipModuleRuntime
-  ↓ apply_projectile_damage(remaining_damage)
-DamageReceiver
+HullCellRuntime
   ↓
-module_damaged / module_destroyed
+ShipHullCell.current_hp
+  ↓
+RuntimeShip 重新计算 Equipment efficiency
+  ↓
+ShipModuleRuntime / WeaponRuntime 更新功能表现
 
-当前 Prototype HP：
-- 所有模块的最大 HP 直接读取 ShipModuleDefinition.hp，数值来自 Excel → JSON → .tres 数据链。
-- DefenseModuleDefinition.protection 不再增加 max HP，而是该防护模块每次被 Projectile 命中时使用的百分比减伤值。
-- 当前公式：protection_percent = clamp(protection, 0, 100)；damage_after_protection = incoming_damage * (1 - protection_percent / 100)。
-- protection 不会被消耗；只要该 Defense 模块仍存活，每次命中都会重新应用同一个百分比减伤值。protection = 5 即减伤 5%。
-- hp 与 DefenseModuleDefinition.protection 都来自现有静态数据链；hp 表示模块耐久，protection 只表示 Defense 百分比减伤。
+HullCellRuntime：
+- 对应 ShipData 中一个 ShipHullCell。
+- 每个 Hull Cell 有独立碰撞体与独立 HP。
+- Projectile 命中时通过 RuntimeShip.apply_hull_projectile_damage() 扣该格 HP。
+- HP 归零后该 Hull Cell 的碰撞体失效。
+- overkill 伤害会继续沿弹道穿透后方 Hull Cell。
 
-当前范围：
-- 每模块独立碰撞体。
-- 每模块独立 HP。
-- Projectile 命中时可直接知道具体 ShipModuleInstance。
-- 模块 HP 归零后禁用该模块碰撞体，并发出 destroyed。
-- 防护模块的保护是空间性的：只保护实际位于其后方、且弹道会先穿过该装甲位置的模块。
-- 某块装甲 destroyed 后，只开放该块碰撞区域对应的局部缺口；其他装甲继续保持独立碰撞与独立 HP。
-- ShipModuleRuntime.apply_projectile_damage(amount) 先对 Defense 模块应用百分比 protection：damage_after_protection = incoming_damage * (1 - clamp(protection, 0, 100) / 100)。
-- 如果 damage_after_protection <= 0，则 HP 不变，Projectile 在该模块处结束。
-- 之后模块最多吸收自己当前 HP；如果本次伤害将模块摧毁，则返回 damage_after_protection - hp_before。
-- ProjectileRuntime 收到 remaining_damage > 0 后会继续沿同一弹道向内查询，因此高伤害弹丸仍可连续击穿多个低血量模块。
-- 非 Defense 模块 protection = 0，直接按 incoming_damage 扣 HP。
-- RuntimeShip 会转发 module_damaged / module_destroyed。
+ShipModuleRuntime：
+- 对应一个 ShipModuleInstance / Equipment。
+- 只负责 Equipment 基础视觉，不再拥有 DamageReceiver 或独立 HP。
+- Equipment 的损伤状态来自 RuntimeShip.get_module_efficiency()。
+- efficiency 越低，设备视觉越暗；efficiency = 0 表示设备失效。
 
-暂不包含：
-- 模块摧毁后从 ShipData 删除。
-- 动力模块失效后降低推力。
-- 武器模块失效后停止射击。
-- 能量模块失效后的供能变化。
-- 核心模块击毁后整船沉没。
-- 模块爆炸、残骸或视觉破坏效果。
+Equipment efficiency：
+- 单格设备：直接使用该 Hull Cell 的 current_hp / max_hp。
+- 多格设备：取覆盖 Hull Cell health ratio 的平均值。
+- Hull Cell 不存在时 efficiency = 0。
+
+当前功能影响：
+- Energy 输出按 efficiency 缩放。
+- Propulsion 推力按 efficiency 缩放。
+- Defense protection 按 efficiency 缩放。
+- Weapon 火力、炮塔转速和射速按 efficiency 缩放。
+- Core efficiency = 0 时整船退出战斗。
+
+设计目的：
+- Hull Layout 负责“船体结构、局部 HP、可命中区域”。
+- Equipment 负责“Power、Damage、Thrust、Defense、Function”。
+- 防护与功能构筑不再要求每个 Equipment 自己维护一套 HP。
+- 后续可以在 Hull 层增加轻型 / 重型 / 装甲 / 特殊船体，而不改 Equipment 定义。
+
+兼容说明：
+- ModuleDefinition.hp 暂时保留在 Excel / generated 资源中，但当前运行时不读取。
