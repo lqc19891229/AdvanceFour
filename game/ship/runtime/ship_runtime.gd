@@ -7,15 +7,18 @@ signal weapon_fired(
 	world_position: Vector2,
 	world_direction: Vector2
 )
-
 signal projectile_spawned(projectile: ProjectileRuntime)
 signal projectile_hit(target: Node2D, firepower: float)
-signal module_damaged(
-	module_instance: ShipModuleInstance,
+signal hull_cell_damaged(
+	hull_cell: ShipHullCell,
 	amount: float,
 	current_hp: float
 )
-signal module_destroyed(module_instance: ShipModuleInstance)
+signal hull_cell_destroyed(hull_cell: ShipHullCell)
+signal equipment_efficiency_changed(
+	module_instance: ShipModuleInstance,
+	efficiency: float
+)
 signal energy_state_changed(
 	energy_output: float,
 	energy_cost: float,
@@ -40,10 +43,13 @@ var throttle_input := 0.0
 var turn_input := 0.0
 var local_origin_offset := Vector2.ZERO
 var core_origin_valid := false
-var weapon_runtimes: Array[WeaponRuntime] = []
-var weapon_runtime_by_uid: Dictionary = {}
+
+var hull_runtimes: Array[HullCellRuntime] = []
+var hull_runtime_by_position: Dictionary = {}
 var module_runtimes: Array[ShipModuleRuntime] = []
 var module_runtime_by_uid: Dictionary = {}
+var weapon_runtimes: Array[WeaponRuntime] = []
+var weapon_runtime_by_uid: Dictionary = {}
 var module_powered_by_uid: Dictionary = {}
 var energy_sufficient := true
 var removed_from_battle := false
@@ -51,6 +57,7 @@ var removed_from_battle := false
 func setup(data: ShipData) -> void:
 	_clear_weapon_runtimes()
 	_clear_module_runtimes()
+	_clear_hull_runtimes()
 	ship_data = data
 	removed_from_battle = false
 	velocity = Vector2.ZERO
@@ -58,10 +65,11 @@ func setup(data: ShipData) -> void:
 	turn_input = 0.0
 	rotation = 0.0
 	local_origin_offset = _calculate_core_origin_offset()
+	_build_hull_runtimes()
 	_build_module_runtimes()
 	_build_weapon_runtimes()
 	module_powered_by_uid.clear()
-	_refresh_energy_state()
+	_refresh_equipment_state()
 	queue_redraw()
 
 func set_control_input(throttle: float, turn: float) -> void:
@@ -102,68 +110,95 @@ func get_module_runtime(module: ShipModuleInstance) -> ShipModuleRuntime:
 		return null
 	return module_runtime_by_uid.get(module.uid, null) as ShipModuleRuntime
 
-func get_module_max_hp(module: ShipModuleInstance) -> float:
-	if module == null or module.definition == null:
+func get_hull_runtime(cell: ShipHullCell) -> HullCellRuntime:
+	if cell == null:
+		return null
+	return hull_runtime_by_position.get(cell.grid_position, null) as HullCellRuntime
+
+func get_module_efficiency(module: ShipModuleInstance) -> float:
+	if ship_data == null or module == null or module.definition == null:
 		return 0.0
-	return maxf(module.definition.hp, 0.0)
+	var cells := module.get_cells()
+	if cells.is_empty():
+		return 0.0
+
+	var total := 0.0
+	for position in cells:
+		var hull := ship_data.get_hull_cell_at(position)
+		if hull == null:
+			return 0.0
+		total += hull.get_health_ratio()
+	return clampf(total / float(cells.size()), 0.0, 1.0)
 
 func has_operational_modules() -> bool:
-	if removed_from_battle:
+	if removed_from_battle or ship_data == null:
 		return false
-	for module_runtime in module_runtimes:
-		if is_instance_valid(module_runtime) and not module_runtime.is_destroyed():
+	for cell in ship_data.get_hull_cells():
+		if not cell.is_destroyed():
 			return true
 	return false
 
 func get_aim_point(from_world_position: Vector2) -> Vector2:
 	var best_point := global_position
 	var best_distance_squared := INF
-
-	for module_runtime in module_runtimes:
-		if not is_instance_valid(module_runtime) or module_runtime.is_destroyed():
+	for hull_runtime in hull_runtimes:
+		if not is_instance_valid(hull_runtime) or hull_runtime.is_destroyed():
 			continue
-		var point := module_runtime.global_position
+		var point := hull_runtime.global_position
 		var distance_squared := from_world_position.distance_squared_to(point)
 		if distance_squared < best_distance_squared:
 			best_distance_squared = distance_squared
 			best_point = point
-
 	return best_point
+
+func get_current_hull_hp() -> float:
+	return 0.0 if ship_data == null else ship_data.get_total_hull_hp()
+
+func get_max_hull_hp() -> float:
+	return 0.0 if ship_data == null else ship_data.get_total_hull_max_hp()
 
 func get_effective_energy_output() -> float:
 	if ship_data == null:
 		return 0.0
-
 	var total := 0.0
 	for module in ship_data.modules:
-		if not (module.definition is EnergyModuleDefinition):
-			continue
-		if not _is_module_operational(module):
-			continue
-		total += (module.definition as EnergyModuleDefinition).energy_output
+		if module.definition is EnergyModuleDefinition:
+			total += (
+				module.definition as EnergyModuleDefinition
+			).energy_output * get_module_efficiency(module)
 	return total
 
 func get_effective_energy_cost() -> float:
 	if ship_data == null:
 		return 0.0
-
 	var total := 0.0
 	for module in ship_data.modules:
-		if not _is_module_operational(module):
-			continue
-		total += module.definition.energy_cost
+		if _is_module_operational(module):
+			total += module.definition.energy_cost
 	return total
 
 func get_powered_energy_cost() -> float:
 	if ship_data == null:
 		return 0.0
-
 	var total := 0.0
 	for module in ship_data.modules:
-		if not is_module_powered(module):
-			continue
-		total += module.definition.energy_cost
+		if is_module_powered(module):
+			total += module.definition.energy_cost
 	return total
+
+func get_effective_protection() -> float:
+	if ship_data == null:
+		return 0.0
+	var total := 0.0
+	for module in ship_data.modules:
+		if not (module.definition is DefenseModuleDefinition):
+			continue
+		if not _is_module_operational(module) or not is_module_powered(module):
+			continue
+		total += (
+			module.definition as DefenseModuleDefinition
+		).protection * get_module_efficiency(module)
+	return clampf(total, 0.0, 100.0)
 
 func is_energy_sufficient() -> bool:
 	return energy_sufficient
@@ -176,7 +211,6 @@ func is_module_powered(module: ShipModuleInstance) -> bool:
 func get_powered_module_count() -> int:
 	if ship_data == null:
 		return 0
-
 	var count := 0
 	for module in ship_data.modules:
 		if is_module_powered(module):
@@ -186,14 +220,15 @@ func get_powered_module_count() -> int:
 func get_effective_thrust() -> float:
 	if ship_data == null:
 		return 0.0
-
 	var total := 0.0
 	for module in ship_data.modules:
 		if not (module.definition is PropulsionModuleDefinition):
 			continue
 		if not _is_module_operational(module) or not is_module_powered(module):
 			continue
-		total += (module.definition as PropulsionModuleDefinition).thrust
+		total += (
+			module.definition as PropulsionModuleDefinition
+		).thrust * get_module_efficiency(module)
 	return total
 
 func get_effective_acceleration_score() -> float:
@@ -218,7 +253,6 @@ func get_deceleration() -> float:
 	return get_effective_acceleration_score() * deceleration_scale
 
 func estimate_design_top_speed(design: ShipData) -> float:
-	# Full-power, undamaged design.
 	return design.get_acceleration_score() * speed_scale
 
 func get_heading_degrees() -> float:
@@ -229,6 +263,38 @@ func get_local_origin_offset() -> Vector2:
 
 func has_core_origin() -> bool:
 	return core_origin_valid
+
+func apply_hull_projectile_damage(hull_cell: ShipHullCell, amount: float) -> float:
+	if removed_from_battle or hull_cell == null or ship_data == null:
+		return maxf(amount, 0.0)
+	if ship_data.get_hull_cell_at(hull_cell.grid_position) != hull_cell:
+		return maxf(amount, 0.0)
+
+	var incoming := maxf(amount, 0.0)
+	if incoming <= 0.0:
+		return 0.0
+
+	var protection := get_effective_protection()
+	var damage_after_protection := incoming * (1.0 - protection / 100.0)
+	var hp_before := hull_cell.current_hp
+	var leftover := hull_cell.apply_damage(damage_after_protection)
+	var actual_damage := maxf(hp_before - hull_cell.current_hp, 0.0)
+
+	var runtime := get_hull_runtime(hull_cell)
+	if runtime != null:
+		runtime.notify_damage(actual_damage)
+	hull_cell_damaged.emit(hull_cell, actual_damage, hull_cell.current_hp)
+
+	_refresh_equipment_state()
+	queue_redraw()
+
+	if hull_cell.is_destroyed():
+		hull_cell_destroyed.emit(hull_cell)
+		var core := _get_core_module()
+		if core != null and get_module_efficiency(core) <= 0.0:
+			_remove_from_battle()
+
+	return leftover
 
 func _physics_process(delta: float) -> void:
 	if removed_from_battle or ship_data == null:
@@ -256,103 +322,116 @@ func _draw() -> void:
 	if ship_data == null:
 		return
 
+	for cell in ship_data.get_hull_cells():
+		var rect := Rect2(
+			Vector2(cell.grid_position) * cell_size - local_origin_offset,
+			Vector2.ONE * cell_size
+		)
+		var health := cell.get_health_ratio()
+		var fill := Color(0.16, 0.20, 0.26, 1.0).lerp(
+			Color(0.08, 0.08, 0.08, 1.0),
+			1.0 - health
+		)
+		draw_rect(rect.grow(-1.5), fill)
+		var edge := Color(0.56, 0.64, 0.72, 1.0).lerp(
+			Color(0.45, 0.18, 0.16, 1.0),
+			1.0 - health
+		)
+		draw_rect(rect.grow(-1.5), edge, false, 1.5)
+
 	for module in ship_data.modules:
-		if (
-			module.definition != null
-			and module.definition.size == Vector2i.ONE
-			and ModuleArtLibrary.get_base_texture(module.definition) != null
-		):
+		if ModuleArtLibrary.get_base_texture(module.definition) != null:
 			continue
-		var size := module.get_rotated_size()
 		var rect := Rect2(
 			Vector2(module.grid_position) * cell_size - local_origin_offset,
-			Vector2(size) * cell_size
+			Vector2(module.get_rotated_size()) * cell_size
 		)
-		var module_runtime := get_module_runtime(module)
 		var fill_color := _get_module_color(module.definition.module_type)
-		if module_runtime != null and module_runtime.is_destroyed():
-			fill_color = Color("#3a3a3a")
-		draw_rect(rect.grow(-2.0), fill_color)
-		draw_rect(rect.grow(-2.0), Color.WHITE, false, 1.0)
+		fill_color.a = 0.72
+		draw_rect(rect.grow(-6.0), fill_color)
+
+func _build_hull_runtimes() -> void:
+	if ship_data == null:
+		return
+	for cell in ship_data.get_hull_cells():
+		var runtime := HullCellRuntime.new()
+		add_child(runtime)
+		runtime.setup(
+			cell,
+			self,
+			(Vector2(cell.grid_position) + Vector2(0.5, 0.5)) * cell_size - local_origin_offset,
+			Vector2.ONE * cell_size
+		)
+		hull_runtimes.append(runtime)
+		hull_runtime_by_position[cell.grid_position] = runtime
+
+func _clear_hull_runtimes() -> void:
+	for runtime in hull_runtimes:
+		if is_instance_valid(runtime):
+			runtime.queue_free()
+	hull_runtimes.clear()
+	hull_runtime_by_position.clear()
 
 func _build_module_runtimes() -> void:
 	if ship_data == null:
 		return
-
 	for module in ship_data.modules:
-		var module_runtime := ShipModuleRuntime.new()
-		add_child(module_runtime)
-		module_runtime.setup(
+		var runtime := ShipModuleRuntime.new()
+		add_child(runtime)
+		runtime.setup(
 			module,
 			_get_module_local_center(module),
-			Vector2(module.get_rotated_size()) * cell_size,
-			get_module_max_hp(module)
+			Vector2(module.get_rotated_size()) * cell_size
 		)
-		module_runtime.damaged.connect(_on_module_runtime_damaged)
-		module_runtime.destroyed.connect(_on_module_runtime_destroyed)
-		module_runtimes.append(module_runtime)
-		module_runtime_by_uid[module.uid] = module_runtime
+		module_runtimes.append(runtime)
+		module_runtime_by_uid[module.uid] = runtime
 
 func _clear_module_runtimes() -> void:
-	for module_runtime in module_runtimes:
-		if is_instance_valid(module_runtime):
-			module_runtime.queue_free()
+	for runtime in module_runtimes:
+		if is_instance_valid(runtime):
+			runtime.queue_free()
 	module_runtimes.clear()
 	module_runtime_by_uid.clear()
 
 func _build_weapon_runtimes() -> void:
 	if ship_data == null:
 		return
-
 	for module in ship_data.modules:
 		if not (module.definition is WeaponModuleDefinition):
 			continue
-
-		var weapon_runtime := WEAPON_RUNTIME_SCENE.instantiate() as WeaponRuntime
-		add_child(weapon_runtime)
-		weapon_runtime.setup(self, module, _get_module_local_center(module), weapon_target_group)
-		weapon_runtime.fired.connect(_on_weapon_runtime_fired)
-		weapon_runtimes.append(weapon_runtime)
-		weapon_runtime_by_uid[module.uid] = weapon_runtime
+		var runtime := WEAPON_RUNTIME_SCENE.instantiate() as WeaponRuntime
+		add_child(runtime)
+		runtime.setup(self, module, _get_module_local_center(module), weapon_target_group)
+		runtime.fired.connect(_on_weapon_runtime_fired)
+		weapon_runtimes.append(runtime)
+		weapon_runtime_by_uid[module.uid] = runtime
 
 func _clear_weapon_runtimes() -> void:
-	for weapon_runtime in weapon_runtimes:
-		if is_instance_valid(weapon_runtime):
-			weapon_runtime.queue_free()
+	for runtime in weapon_runtimes:
+		if is_instance_valid(runtime):
+			runtime.queue_free()
 	weapon_runtimes.clear()
 	weapon_runtime_by_uid.clear()
 
 func _get_module_local_center(module: ShipModuleInstance) -> Vector2:
 	var size := module.get_rotated_size()
 	return (
-		Vector2(module.grid_position)
-		+ Vector2(size) * 0.5
+		Vector2(module.grid_position) + Vector2(size) * 0.5
 	) * cell_size - local_origin_offset
 
-func _on_module_runtime_damaged(
-	module_instance: ShipModuleInstance,
-	amount: float,
-	current_hp: float
-) -> void:
-	module_damaged.emit(module_instance, amount, current_hp)
-
-func _on_module_runtime_destroyed(module_instance: ShipModuleInstance) -> void:
-	if module_instance == null or module_instance.definition == null:
+func _refresh_equipment_state() -> void:
+	if ship_data == null:
 		return
-
-	if module_instance.definition is WeaponModuleDefinition:
-		var weapon_runtime := weapon_runtime_by_uid.get(module_instance.uid, null) as WeaponRuntime
-		if weapon_runtime != null and is_instance_valid(weapon_runtime):
-			weapon_runtime.set_operational(false)
-
+	for module in ship_data.modules:
+		var efficiency := get_module_efficiency(module)
+		var runtime := get_module_runtime(module)
+		if runtime != null:
+			runtime.set_efficiency(efficiency)
+		var weapon := weapon_runtime_by_uid.get(module.uid, null) as WeaponRuntime
+		if weapon != null and is_instance_valid(weapon):
+			weapon.set_efficiency(efficiency)
+		equipment_efficiency_changed.emit(module, efficiency)
 	_refresh_energy_state()
-	module_destroyed.emit(module_instance)
-
-	if module_instance.definition is CoreModuleDefinition:
-		_remove_from_battle()
-		return
-
-	queue_redraw()
 
 func _refresh_energy_state() -> void:
 	var energy_output := get_effective_energy_output()
@@ -368,7 +447,6 @@ func _refresh_energy_state() -> void:
 				candidates.append(module)
 
 	candidates.sort_custom(_compare_power_priority)
-
 	for module in candidates:
 		var cost := maxf(module.definition.energy_cost, 0.0)
 		var powered := cost <= remaining_energy
@@ -381,11 +459,7 @@ func _refresh_energy_state() -> void:
 			continue
 		weapon_runtime.set_powered(is_module_powered(weapon_runtime.module_instance))
 
-	energy_state_changed.emit(
-		energy_output,
-		energy_cost,
-		energy_sufficient
-	)
+	energy_state_changed.emit(energy_output, energy_cost, energy_sufficient)
 
 func _compare_power_priority(a: ShipModuleInstance, b: ShipModuleInstance) -> bool:
 	var a_priority := _get_power_priority(a)
@@ -397,7 +471,6 @@ func _compare_power_priority(a: ShipModuleInstance, b: ShipModuleInstance) -> bo
 func _get_power_priority(module: ShipModuleInstance) -> int:
 	if module == null or module.definition == null:
 		return 999
-
 	match module.definition.module_type:
 		ShipModuleDefinition.ModuleType.CORE:
 			return 0
@@ -416,16 +489,13 @@ func _get_power_priority(module: ShipModuleInstance) -> int:
 func _remove_from_battle() -> void:
 	if removed_from_battle:
 		return
-
 	removed_from_battle = true
 	throttle_input = 0.0
 	turn_input = 0.0
 	velocity = Vector2.ZERO
-
 	for weapon_runtime in weapon_runtimes:
 		if is_instance_valid(weapon_runtime):
 			weapon_runtime.set_operational(false)
-
 	destroyed.emit()
 	queue_free()
 
@@ -438,16 +508,16 @@ func _on_weapon_runtime_fired(
 	var weapon := weapon_runtime_by_uid.get(module_instance.uid) as WeaponRuntime
 	if not is_instance_valid(weapon):
 		return
-	# Snapshot the firing weapon's projectile parameters before notifying observers.
 	var projectile_range := maxf(weapon.attack_range, 0.0)
 	var projectile_speed := maxf(weapon.projectile_speed, 0.0)
-	weapon_fired.emit(
-		module_instance,
-		firepower,
+	weapon_fired.emit(module_instance, firepower, world_position, world_direction)
+	_spawn_projectile(
 		world_position,
-		world_direction
+		world_direction,
+		firepower,
+		projectile_range,
+		projectile_speed
 	)
-	_spawn_projectile(world_position, world_direction, firepower, projectile_range, projectile_speed)
 
 func _spawn_projectile(
 	world_position: Vector2,
@@ -459,10 +529,16 @@ func _spawn_projectile(
 	var projectile_parent := get_parent()
 	if projectile_parent == null:
 		return
-
 	var projectile := PROJECTILE_RUNTIME_SCENE.instantiate() as ProjectileRuntime
 	projectile_parent.add_child(projectile)
-	projectile.setup(world_position, world_direction, firepower, self, projectile_range, projectile_speed)
+	projectile.setup(
+		world_position,
+		world_direction,
+		firepower,
+		self,
+		projectile_range,
+		projectile_speed
+	)
 	projectile.hit.connect(_on_projectile_hit)
 	projectile_spawned.emit(projectile)
 
@@ -470,24 +546,28 @@ func _on_projectile_hit(target: Node2D, firepower: float) -> void:
 	projectile_hit.emit(target, firepower)
 
 func _is_module_operational(module: ShipModuleInstance) -> bool:
-	var module_runtime := get_module_runtime(module)
-	return module_runtime != null and is_instance_valid(module_runtime) and not module_runtime.is_destroyed()
+	return get_module_efficiency(module) > 0.0
+
+func _get_core_module() -> ShipModuleInstance:
+	if ship_data == null:
+		return null
+	for module in ship_data.modules:
+		if module.definition is CoreModuleDefinition:
+			return module
+	return null
 
 func _calculate_core_origin_offset() -> Vector2:
 	core_origin_valid = false
 	if ship_data == null:
 		return Vector2.ZERO
-
-	for module in ship_data.modules:
-		if module.definition is CoreModuleDefinition:
-			core_origin_valid = true
-			var size := module.get_rotated_size()
-			return (
-				Vector2(module.grid_position)
-				+ Vector2(size) * 0.5
-			) * cell_size
-
-	return Vector2.ZERO
+	var core := _get_core_module()
+	if core == null:
+		return Vector2.ZERO
+	core_origin_valid = true
+	var size := core.get_rotated_size()
+	return (
+		Vector2(core.grid_position) + Vector2(size) * 0.5
+	) * cell_size
 
 func _get_module_color(module_type: ShipModuleDefinition.ModuleType) -> Color:
 	match module_type:
