@@ -54,7 +54,7 @@ SHEET_SCHEMAS = {
 
 BASE_COLUMNS = [
     "id", "display_name", "description",
-    "width", "height", "mass", "energy_cost", "hp", "texture_path",
+    "width", "height", "energy_cost", "texture_path",
 ]
 TYPE_FIELDS = ["energy_output", "thrust", "firepower", "protection"]
 WEAPON_FIELDS = [
@@ -200,6 +200,8 @@ def parse_sheet(
 ) -> list[dict[str, Any]]:
     rows = read_sheet_rows(xlsx, sheet_name)
     required_columns = list(BASE_COLUMNS)
+    if module_type == "DEFENSE":
+        required_columns.append("hp")
     if type_field:
         required_columns.append(type_field)
     if module_type == "WEAPON":
@@ -240,9 +242,12 @@ def parse_sheet(
         description = str(get("description") or "").strip()
         width = as_int(get("width"), "width", sheet_name, row_idx, errors)
         height = as_int(get("height"), "height", sheet_name, row_idx, errors)
-        mass = as_float(get("mass"), "mass", sheet_name, row_idx, errors)
         energy_cost = as_float(get("energy_cost"), "energy_cost", sheet_name, row_idx, errors)
-        hp = as_float(get("hp"), "hp", sheet_name, row_idx, errors)
+        hp = (
+            as_float(get("hp"), "hp", sheet_name, row_idx, errors)
+            if module_type == "DEFENSE"
+            else 0.0
+        )
         texture_path = str(get("texture_path") or "").strip()
 
         if not ID_PATTERN.match(raw_id):
@@ -254,10 +259,10 @@ def parse_sheet(
             errors.append(f"{sheet_name}!第 {row_idx} 行：display_name 不能为空")
         if width <= 0 or height <= 0:
             errors.append(f"{sheet_name}!第 {row_idx} 行：width 和 height 必须 > 0")
-        if mass < 0 or energy_cost < 0:
-            errors.append(f"{sheet_name}!第 {row_idx} 行：mass 和 energy_cost 不能为负数")
-        if hp <= 0:
-            errors.append(f"{sheet_name}!第 {row_idx} 行：hp 必须 > 0")
+        if energy_cost < 0:
+            errors.append(f"{sheet_name}!第 {row_idx} 行：energy_cost 不能为负数")
+        if module_type == "DEFENSE" and hp <= 0:
+            errors.append(f"{sheet_name}!第 {row_idx} 行：DEFENSE 模块 hp 必须 > 0")
         if not texture_path:
             errors.append(f"{sheet_name}!第 {row_idx} 行：texture_path 不能为空")
         elif not texture_path.startswith("res://"):
@@ -290,9 +295,7 @@ def parse_sheet(
             "description": description,
             "width": width,
             "height": height,
-            "mass": mass,
             "energy_cost": energy_cost,
-            "hp": hp,
             "texture_path": texture_path,
             "turret_texture_path": turret_texture_path,
             "energy_output": 0.0,
@@ -305,6 +308,8 @@ def parse_sheet(
             "projectile_speed": 0.0,
             "fire_angle_tolerance_degrees": 0.0,
         }
+        if module_type == "DEFENSE":
+            module["hp"] = hp
         if type_field:
             module[type_field] = type_value
         if module_type == "WEAPON":
