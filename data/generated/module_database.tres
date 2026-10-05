@@ -23,7 +23,7 @@ id = &"energy_smallreactor"
 display_name = "小型反应堆"
 module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
-mass = 10.0
+
 texture = ExtResource("3_banwa")
 
 [sub_resource type="Resource" id="Resource_348ht"]
@@ -33,7 +33,7 @@ id = &"propulsion_smallengine"
 display_name = "小型引擎"
 module_type = 1
 description = "基础动力模块，为飞船提供主要推进力。"
-mass = 10.0
+
 energy_cost = 5.0
 texture = ExtResource("5_a2lp8")
 
@@ -45,18 +45,19 @@ id = &"weapon_cannon"
 display_name = "机炮"
 module_type = 2
 description = "基础武器模块，提供稳定的常规火力。"
-mass = 5.0
+
 energy_cost = 5.0
 texture = ExtResource("7_tkhon")
 
 [sub_resource type="Resource" id="Resource_tk3hm"]
 script = ExtResource("5_3kk2a")
+hp = 20.0
 protection = 10.0
 id = &"defense_lightarmor"
 display_name = "轻型装甲"
 module_type = 3
 description = "基础防护模块，为飞船提供结构防护。"
-mass = 5.0
+
 texture = ExtResource("10_h4yc2")
 
 [sub_resource type="Resource" id="Resource_64afu"]
@@ -64,7 +65,7 @@ script = ExtResource("6_51is1")
 id = &"function_radar"
 display_name = "雷达"
 description = "基础功能模块。现阶段暂无额外参数。"
-mass = 5.0
+
 energy_cost = 10.0
 texture = ExtResource("12_wkwuo")
 
@@ -75,7 +76,7 @@ display_name = "舰桥"
 module_type = 5
 description = "飞船核心区域。核心模块被击毁时，飞船判定为沉没。"
 size = Vector2i(2, 2)
-mass = 40.0
+
 energy_cost = 20.0
 texture = ExtResource("14_8q15v")
 
