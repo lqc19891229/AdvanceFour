@@ -18,6 +18,33 @@
 
 
 ========================================
+v0.31.11
+========================================
+
+外观层：
+- 新增 game/ship/appearance/，建立战斗专用 Appearance Layer，不修改 ShipData、Excel 或 ShipSerializer。
+- 新增 ShipAppearanceRenderer，根据 Hull Layout 的上下左右四方向邻接自动绘制连续舰体外壳。
+- 相邻 Hull Cell 仅保留轻微内部接缝；暴露边使用更粗外壳边缘，外角增加盖板，降低纯网格拼块感。
+- Hull health ratio 会直接影响外壳颜色；Hull = 0 第一版仍保留破损壳体显示，不改变战斗碰撞与数据状态。
+
+Equipment 战斗显示：
+- Core、Weapon、Propulsion 保持外露。
+- Energy、Defense、Function 在战斗中隐藏，视为被舰体外壳包覆。
+- Weapon base / turret 延续原有分层，且明确绘制在 Appearance shell 之上。
+- 新增 EquipmentAppearancePolicy，集中维护战斗中哪些 Equipment 外露以及显示层级。
+
+职责边界：
+- 编辑器完全保持 Hull + Equipment 工程视图，不使用 Appearance shell。
+- HullCellRuntime 继续只负责碰撞与局部 HP。
+- ShipModuleRuntime 只为允许外露的 Equipment 创建视觉节点。
+- Appearance Layer 不改变 HP、命中、供电、推力、火力、Defense 或存档规则。
+
+验证：
+- ship_regression 新增 Appearance Renderer 建立、Hull 邻接 mask、内部 Equipment 隐藏、Core / Propulsion / Weapon 外露及武器层级检查。
+- Godot 4.6.1 Project checks 通过。
+
+
+========================================
 v0.31.10
 ========================================
 
