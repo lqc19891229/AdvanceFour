@@ -46,6 +46,7 @@ func _run() -> void:
 	# Preserve any existing design even when this runner is launched outside an isolated user directory.
 	var previous_save := FileAccess.get_file_as_bytes(SAVE_PATH) if FileAccess.file_exists(SAVE_PATH) else PackedByteArray()
 	var had_save := FileAccess.file_exists(SAVE_PATH)
+	await _test_module_art_data()
 	await _test_ai_and_damage()
 	await _test_projectile_range()
 	if had_save:
@@ -60,6 +61,37 @@ func _run() -> void:
 		DirAccess.remove_absolute(SAVE_PATH)
 	print("Ship regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
+
+func _test_module_art_data() -> void:
+	for definition in DATABASE.modules:
+		_check(
+			definition != null and ModuleArtLibrary.get_base_texture(definition) != null,
+			"Every generated module definition must carry its Excel-driven base texture"
+		)
+		if definition is WeaponModuleDefinition:
+			_check(
+				ModuleArtLibrary.get_turret_texture(definition) != null,
+				"Generated weapon definitions must carry their Excel-driven turret texture"
+			)
+
+	var world := Node2D.new()
+	root.add_child(world)
+	var runtime := _spawn(world, Vector2.ZERO)
+	runtime.set_physics_process(false)
+	var core_instance := runtime.ship_data.get_module_at(Vector2i.ZERO)
+	var core_runtime := runtime.get_module_runtime(core_instance)
+	_check(
+		core_runtime != null and core_runtime.visual != null and core_runtime.visual.texture != null,
+		"Runtime modules must build visuals from generated Texture2D data"
+	)
+	var weapon := runtime.weapon_runtime_by_uid.values()[0] as WeaponRuntime
+	_check(
+		weapon != null and weapon.turret_visual != null and weapon.turret_visual.texture != null,
+		"WeaponRuntime must build its turret visual from generated Texture2D data"
+	)
+	world.queue_free()
+	await process_frame
+
 
 func _range_target(world: Node2D, location: Vector2, hp: float) -> ShipModuleRuntime:
 	var module := ShipModuleInstance.new(1, DATABASE.get_by_id(&"function_radar"), Vector2i.ZERO)
@@ -302,6 +334,21 @@ func _test_saved_design_and_editor() -> void:
 	var editable_design := _design()
 	editor.get_node("MainLayout/Center/Grid").set_ship(editable_design)
 	var editor_grid := editor.grid as ShipGridView
+	var weapon_preview := editor_grid.get_preview_textures(DATABASE.get_by_id(&"weapon_cannon"))
+	_check(
+		weapon_preview["base"] != null and weapon_preview["turret"] != null,
+		"Editor placement preview must expose both weapon base and turret textures"
+	)
+	var core_preview := editor_grid.get_preview_textures(DATABASE.get_by_id(&"core_bridge"))
+	_check(
+		core_preview["base"] != null and core_preview["turret"] == null,
+		"Editor placement preview must expose the base texture for non-weapon modules"
+	)
+	_check(
+		editable_design.can_place(DATABASE.get_by_id(&"function_radar"), Vector2i(8, 8), 0)["ok"]
+		and not editable_design.can_place(DATABASE.get_by_id(&"function_radar"), Vector2i.ZERO, 0)["ok"],
+		"Textured placement preview must preserve valid-green and invalid-red placement decisions"
+	)
 	var installed_weapon := editable_design.get_module_at(Vector2i(0, -1))
 	var installed_weapon_uid := installed_weapon.uid
 	editor_grid.select_installed_module(installed_weapon)
