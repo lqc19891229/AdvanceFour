@@ -22,32 +22,37 @@ v0.31.7
 ========================================
 
 新增：
-- 新增 game/ship/art/module_art_library.gd，建立 1×1 模块统一贴图加载入口。
-- 新增 game/ship/art/README.txt，定义首批模块美术资源命名和职责边界。
-- 普通 1×1 模块按 res://game/ship/art/modules/{module_id}.png 自动加载。
-- 武器 1×1 模块从现在开始正式拆为两层：{module_id}_base.png + {module_id}_turret.png。
+- 新增 game/ship/art/module_art_library.gd，统一访问模块基础贴图与武器炮塔贴图。
+- 新增 game/ship/art/README.txt，明确模块美术资源职责、武器分层与数据规则。
+- 首批模块 PNG 已加入仓库：energy_smallreactor.png、propulsion_smallengine.png、defense_lightarmor.png、function_radar.png、core_bridge.png。
+- weapon_cannon 使用独立的 weapon_cannon_base.png 与 weapon_cannon_turret.png。
+
+数据 / 结构：
+- 六类模块 Excel Sheet 新增 texture_path；Weapon Sheet 额外新增 turret_texture_path。
+- Python 导入器将贴图路径写入 JSON cache，并校验路径非空且使用 res://。
+- ShipModuleDefinition 新增 Texture2D texture；WeaponModuleDefinition 新增 Texture2D turret_texture。
+- Godot 导入插件按 Excel 路径加载 Texture2D，并写入生成的模块 .tres 与 module_database.tres。
+- ModuleArtLibrary 不再根据 module_id 拼接固定文件名，只负责从 ModuleDefinition 读取 Texture2D 与计算缩放。
+- PNG 文件名与目录不再与模块 ID 强绑定；只要 Excel 中的 res:// 路径正确即可。
+- 重新导入模块资源后，ModuleDatabase 已同步持有所有基础贴图与武器炮塔贴图引用。
 
 调整：
-- ShipModuleRuntime 可创建 Sprite2D 显示普通模块贴图或武器底座；普通模块按 rotation_quarters 旋转，武器底座不参与独立炮塔瞄准旋转。
-- WeaponRuntime 新增独立 turret Sprite2D；炮塔节点沿用现有 rotation / global_rotation 自动瞄准逻辑，因此视觉朝向与实际炮塔瞄准保持一致。
-- ShipGridView 在编辑器中支持 1×1 模块贴图；武器同时绘制 base 与 turret，turret 使用 rotation_quarters 表示设计初始朝向。
-- RuntimeShip 在已有贴图时不再重复绘制对应纯色模块块；无贴图模块继续沿用旧绘制。
-- 模块 destroyed 时，有贴图的 ShipModuleRuntime 使用程序灰化；无需额外 destroyed PNG。
-- 武器 base / turret 各自独立 fallback：缺底座图仍显示旧模块色块，缺炮塔图仍显示白色圆心 + 炮管线。
-
-资源约定：
-- 首批目标资源：energy_smallreactor.png、propulsion_smallengine.png、defense_lightarmor.png、function_radar.png、core_bridge.png。
-- weapon_cannon 使用 weapon_cannon_base.png 与 weapon_cannon_turret.png。
-- 当前仓库仅完成代码与目录约定，PNG 美术资源尚未加入。
+- ShipModuleRuntime 创建 Sprite2D 显示普通模块贴图或武器底座；普通模块按 rotation_quarters 旋转，武器底座不参与独立炮塔瞄准旋转。
+- WeaponRuntime 使用独立 turret Sprite2D，并沿用现有 rotation / global_rotation 自动瞄准逻辑。
+- ShipGridView 在编辑器中从 ModuleDefinition 读取贴图；武器同时绘制 base 与 turret。
+- 模块贴图显示不再限制为 1×1；2×2 core_bridge 等模块可按当前占格尺寸显示基础贴图。
+- 模块 destroyed 时继续使用程序灰化，无需额外 destroyed PNG。
+- 删除 Excel 临时锁文件 tools/data_import/source/~$game_data.xlsx，并在 .gitignore 中加入 ~$*.xlsx。
 
 兼容性：
-- 不新增 Excel / JSON / .tres 贴图字段。
 - 不修改 ShipSerializer 或设计存档格式。
 - 不改变模块占格、碰撞、HP、供电、武器数值、自动瞄准和弹丸逻辑。
-- 当前只启用 1×1 模块贴图；1×2 / 2×2 后续沿用同一 ModuleArtLibrary 结构继续扩展。
+- Excel 继续作为模块策划数据唯一真源；generated 目录中的 .tres 与 module_database.tres 由导入流程生成。
 
 验证：
-- 编辑器贴图 / 武器分层、Runtime 贴图优先与 fallback、WeaponRuntime 炮塔分层相关提交均通过现有 GitHub Actions Project checks。
+- 当前 JSON cache 已包含 texture_path / turret_texture_path。
+- 重新导入后，六个模块 .tres 与 module_database.tres 均已确认持有对应 Texture2D 引用。
+- Godot 运行级回归仍通过 tools/verify_project.py 在本地 Godot 4.6.1 环境执行。
 
 
 ========================================
