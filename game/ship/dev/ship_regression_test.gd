@@ -95,16 +95,66 @@ func _test_module_art_data() -> void:
 	root.add_child(world)
 	var runtime := _spawn(world, Vector2.ZERO)
 	runtime.set_physics_process(false)
+	_check(
+		runtime.appearance_renderer != null
+		and runtime.appearance_renderer.ship_data == runtime.ship_data,
+		"Battle RuntimeShip must build an Appearance layer from the same ShipData"
+	)
+	_check(
+		EquipmentAppearancePolicy.should_show(DATABASE.get_by_id(&"core_bridge"))
+		and EquipmentAppearancePolicy.should_show(DATABASE.get_by_id(&"weapon_cannon"))
+		and EquipmentAppearancePolicy.should_show(DATABASE.get_by_id(&"propulsion_smallengine"))
+		and not EquipmentAppearancePolicy.should_show(DATABASE.get_by_id(&"energy_smallreactor"))
+		and not EquipmentAppearancePolicy.should_show(DATABASE.get_by_id(&"defense_lightarmor"))
+		and not EquipmentAppearancePolicy.should_show(DATABASE.get_by_id(&"function_radar")),
+		"Battle appearance must expose Core, Weapon and Propulsion while hiding internal Equipment"
+	)
 	var core_instance := runtime.ship_data.get_module_at(Vector2i.ZERO)
 	var core_runtime := runtime.get_module_runtime(core_instance)
 	_check(
 		core_runtime != null and core_runtime.visual != null and core_runtime.visual.texture != null,
-		"Runtime modules must build visuals from generated Texture2D data"
+		"Exposed Core Equipment must retain its generated Texture2D visual"
+	)
+	var energy_instance := runtime.ship_data.get_module_at(Vector2i(-1, 1))
+	var energy_runtime := runtime.get_module_runtime(energy_instance)
+	_check(
+		energy_runtime != null and energy_runtime.visual == null,
+		"Internal Energy Equipment must be hidden behind the Appearance shell in battle"
+	)
+	var propulsion_instance := runtime.ship_data.get_module_at(Vector2i(0, 2))
+	var propulsion_runtime := runtime.get_module_runtime(propulsion_instance)
+	_check(
+		propulsion_runtime != null and propulsion_runtime.visual != null,
+		"Propulsion must remain externally visible in the first Appearance pass"
+	)
+	var weapon_base_instance := runtime.ship_data.get_module_at(Vector2i(0, -1))
+	var weapon_base_runtime := runtime.get_module_runtime(weapon_base_instance)
+	_check(
+		weapon_base_runtime != null
+		and weapon_base_runtime.visual != null
+		and weapon_base_runtime.z_index > runtime.appearance_renderer.z_index,
+		"Weapon base must render above the hull Appearance shell"
 	)
 	var weapon := runtime.weapon_runtime_by_uid.values()[0] as WeaponRuntime
 	_check(
-		weapon != null and weapon.turret_visual != null and weapon.turret_visual.texture != null,
-		"WeaponRuntime must build its turret visual from generated Texture2D data"
+		weapon != null
+		and weapon.turret_visual != null
+		and weapon.turret_visual.texture != null
+		and weapon.z_index > weapon_base_runtime.z_index,
+		"Weapon turret must keep its generated Texture2D visual above the Appearance shell and base"
+	)
+
+	var appearance_data := ShipData.new()
+	appearance_data.add_hull_cell(Vector2i.ZERO)
+	appearance_data.add_hull_cell(Vector2i.RIGHT)
+	var appearance := ShipAppearanceRenderer.new()
+	world.add_child(appearance)
+	appearance.setup(appearance_data, 36.0, Vector2.ZERO)
+	_check(
+		appearance.get_neighbor_mask(Vector2i.ZERO) == 2
+		and appearance.get_neighbor_mask(Vector2i.RIGHT) == 8
+		and appearance.is_exterior_cell(Vector2i.ZERO),
+		"Appearance hull adjacency must derive its outer shell from Hull Layout only"
 	)
 	world.queue_free()
 	await process_frame
