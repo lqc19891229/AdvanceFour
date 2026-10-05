@@ -11,6 +11,7 @@ signal destroyed(module_instance: ShipModuleInstance)
 var module_instance: ShipModuleInstance
 var damage_receiver: DamageReceiver
 var collision_shape: CollisionShape2D
+var visual: Sprite2D
 
 func setup(
 	module: ShipModuleInstance,
@@ -37,6 +38,29 @@ func setup(
 	damage_receiver.setup(max_hp)
 	damage_receiver.damaged.connect(_on_damage_receiver_damaged)
 	damage_receiver.destroyed.connect(_on_damage_receiver_destroyed)
+
+	_build_visual(pixel_size)
+
+func _build_visual(pixel_size: Vector2) -> void:
+	if module_instance == null or module_instance.definition == null:
+		return
+	if module_instance.definition.size != Vector2i.ONE:
+		return
+
+	var texture := ModuleArtLibrary.get_base_texture(module_instance.definition)
+	if texture == null:
+		return
+
+	visual = Sprite2D.new()
+	visual.texture = texture
+	visual.centered = true
+	visual.scale = ModuleArtLibrary.get_texture_scale(
+		texture,
+		pixel_size - Vector2(4.0, 4.0)
+	)
+	if not (module_instance.definition is WeaponModuleDefinition):
+		visual.rotation = float(module_instance.rotation_quarters) * PI * 0.5
+	add_child(visual)
 
 func apply_damage(amount: float) -> void:
 	if damage_receiver != null:
@@ -91,4 +115,6 @@ func _on_damage_receiver_damaged(amount: float, current_hp: float) -> void:
 func _on_damage_receiver_destroyed() -> void:
 	if collision_shape != null:
 		collision_shape.set_deferred("disabled", true)
+	if visual != null:
+		visual.modulate = Color(0.32, 0.32, 0.32, 1.0)
 	destroyed.emit(module_instance)
