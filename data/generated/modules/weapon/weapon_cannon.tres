@@ -12,6 +12,6 @@ id = &"weapon_cannon"
 display_name = "机炮"
 module_type = 2
 description = "基础武器模块，提供稳定的常规火力。"
-mass = 5.0
+
 energy_cost = 5.0
 texture = ExtResource("2_nwnyw")
