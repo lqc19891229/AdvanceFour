@@ -74,12 +74,20 @@ func _ready() -> void:
 
 static func build_starter_design() -> ShipData:
 	var design := ShipData.new()
-	design.place(DATABASE.get_by_id(&"core_bridge"), Vector2i.ZERO, 0)
-	design.place(DATABASE.get_by_id(&"energy_smallreactor"), Vector2i(-1, 1), 0)
-	design.place(DATABASE.get_by_id(&"energy_smallreactor"), Vector2i(2, 1), 0)
-	design.place(DATABASE.get_by_id(&"propulsion_smallengine"), Vector2i(0, 2), 0)
-	design.place(DATABASE.get_by_id(&"propulsion_smallengine"), Vector2i(1, 2), 0)
-	design.place(DATABASE.get_by_id(&"weapon_cannon"), Vector2i(0, -1), 0)
+	var placements := [
+		[&"core_bridge", Vector2i.ZERO, 0],
+		[&"energy_smallreactor", Vector2i(-1, 1), 0],
+		[&"energy_smallreactor", Vector2i(2, 1), 0],
+		[&"propulsion_smallengine", Vector2i(0, 2), 0],
+		[&"propulsion_smallengine", Vector2i(1, 2), 0],
+		[&"weapon_cannon", Vector2i(0, -1), 0]
+	]
+	for placement in placements:
+		var definition := DATABASE.get_by_id(placement[0])
+		var position: Vector2i = placement[1]
+		var rotation: int = placement[2]
+		design.ensure_hull_for_equipment(definition, position, rotation)
+		design.place(definition, position, rotation)
 	return design
 
 func _spawn_ship(design: ShipData, location: Vector2, is_player: bool) -> ShipRuntime:
@@ -89,8 +97,8 @@ func _spawn_ship(design: ShipData, location: Vector2, is_player: bool) -> ShipRu
 	ship.weapon_target_group = &"enemy_targets" if is_player else &"player_targets"
 	ship.add_to_group(&"player_targets" if is_player else &"enemy_targets")
 	ship.setup(design)
-	for module_runtime in ship.module_runtimes:
-		module_runtime.collision_layer = PLAYER_LAYER if is_player else ENEMY_LAYER
+	for hull_runtime in ship.hull_runtimes:
+		hull_runtime.collision_layer = PLAYER_LAYER if is_player else ENEMY_LAYER
 	ship.projectile_spawned.connect(_configure_projectile.bind(is_player))
 	return ship
 
@@ -175,7 +183,7 @@ func _finish_battle(victory: bool) -> void:
 	result_title.text = "战斗胜利" if victory else "战斗失败"
 	result_summary.text = "击毁敌舰：%d\n到达波次：%d / %d\n战斗时间：%.1f 秒\n\n%s" % [
 		defeated_enemies, maxi(wave_index + 1, 0), wave_enemy_counts.size(), elapsed_seconds,
-		"全部波次已清除。" if victory else "舰桥核心被摧毁。"
+		"全部波次已清除。" if victory else "核心承载船体被摧毁。"
 	]
 	result_overlay.show()
 	_update_hud()
@@ -197,9 +205,10 @@ func _process(_delta: float) -> void:
 	_update_hud()
 
 func _update_hud() -> void:
-	var core_hp := 0.0
-	var core_max_hp := 0.0
-	var active_modules := 0
+	var hull_hp := 0.0
+	var hull_max_hp := 0.0
+	var core_efficiency := 0.0
+	var active_equipment := 0
 	var weapons := 0
 	var energy_output := 0.0
 	var energy_cost := 0.0
@@ -207,12 +216,12 @@ func _update_hud() -> void:
 	var speed := 0.0
 	var location := camera.global_position
 	if _player_alive():
-		for module in player.module_runtimes:
-			if not module.is_destroyed():
-				active_modules += 1
-			if module.module_instance.definition is CoreModuleDefinition:
-				core_hp = module.get_hp()
-				core_max_hp = module.get_max_hp()
+		hull_hp = player.get_current_hull_hp()
+		hull_max_hp = player.get_max_hull_hp()
+		core_efficiency = player.get_core_efficiency()
+		for module in player.ship_data.modules:
+			if player.get_module_efficiency(module) > 0.0:
+				active_equipment += 1
 		weapons = player.get_active_weapon_count()
 		energy_output = player.get_effective_energy_output()
 		energy_cost = player.get_effective_energy_cost()
@@ -237,13 +246,14 @@ func _update_hud() -> void:
 	hud.text = """前进四｜%s
 %s  波次 %d / %d
 场上敌舰：%d  本波待生成：%d  击毁：%d
-舰桥 HP：%.0f / %.0f  存活模块：%d
+Hull HP：%.0f / %.0f  核心效率：%.0f%%  可用设备：%d
 可用武器：%d  供能 / 需求：%.0f / %.0f  有效推力：%.0f
 速度：%.1f px/s  坐标：(%.1f, %.1f)
 W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % [
 		design_source, status, maxi(wave_index + 1, 0), wave_enemy_counts.size(),
 		enemies.size(), remaining, defeated_enemies,
-		core_hp, core_max_hp, active_modules, weapons, energy_output, energy_cost, thrust,
+		hull_hp, hull_max_hp, core_efficiency * 100.0, active_equipment,
+		weapons, energy_output, energy_cost, thrust,
 		speed, location.x, location.y
 	]
 
