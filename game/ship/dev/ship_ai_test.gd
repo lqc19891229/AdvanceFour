@@ -46,7 +46,7 @@ func _ready() -> void:
 		_show_load_error(enemy_copy_result["error"])
 		return
 	var enemy_design := enemy_copy_result["ship"] as ShipData
-	enemy = _spawn_ship(enemy_design, Vector2(560.0, -120.0), &"enemy_targets", &"player_targets")
+	enemy = _spawn_ship(enemy_design, Vector2(420.0, -120.0), &"enemy_targets", &"player_targets")
 	ai = AIShipController.new()
 	enemy.add_child(ai)
 	ai.setup(enemy)
