@@ -257,6 +257,12 @@ func _draw() -> void:
 		return
 
 	for module in ship_data.modules:
+		if (
+			module.definition != null
+			and module.definition.size == Vector2i.ONE
+			and ModuleArtLibrary.get_base_texture(module.definition) != null
+		):
+			continue
 		var size := module.get_rotated_size()
 		var rect := Rect2(
 			Vector2(module.grid_position) * cell_size - local_origin_offset,
