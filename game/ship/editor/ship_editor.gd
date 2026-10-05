@@ -144,7 +144,6 @@ func _build_installed_module_details(module: ShipModuleInstance) -> String:
 	lines.append("位置：(%d, %d)" % [module.grid_position.x, module.grid_position.y])
 	lines.append("旋转：%d°" % (module.rotation_quarters * 90))
 	lines.append("尺寸：%d×%d" % [module.get_rotated_size().x, module.get_rotated_size().y])
-	lines.append("质量：%.1f" % definition.mass)
 	lines.append("耗能：%.1f" % definition.energy_cost)
 
 	if definition is EnergyModuleDefinition:
