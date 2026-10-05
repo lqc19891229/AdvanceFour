@@ -44,6 +44,7 @@ var turn_input := 0.0
 var local_origin_offset := Vector2.ZERO
 var core_origin_valid := false
 
+var appearance_renderer: ShipAppearanceRenderer
 var hull_runtimes: Array[HullCellRuntime] = []
 var hull_runtime_by_position: Dictionary = {}
 var module_runtimes: Array[ShipModuleRuntime] = []
@@ -57,6 +58,7 @@ var removed_from_battle := false
 func setup(data: ShipData) -> void:
 	_clear_weapon_runtimes()
 	_clear_module_runtimes()
+	_clear_appearance_renderer()
 	_clear_hull_runtimes()
 	ship_data = data
 	removed_from_battle = false
@@ -66,11 +68,11 @@ func setup(data: ShipData) -> void:
 	rotation = 0.0
 	local_origin_offset = _calculate_core_origin_offset()
 	_build_hull_runtimes()
+	_build_appearance_renderer()
 	_build_module_runtimes()
 	_build_weapon_runtimes()
 	module_powered_by_uid.clear()
 	_refresh_equipment_state()
-	queue_redraw()
 
 func set_control_input(throttle: float, turn: float) -> void:
 	if removed_from_battle:
@@ -298,7 +300,8 @@ func apply_hull_projectile_damage(hull_cell: ShipHullCell, amount: float) -> flo
 	hull_cell_damaged.emit(hull_cell, actual_damage, effective_hp_after)
 
 	_refresh_equipment_state()
-	queue_redraw()
+	if appearance_renderer != null:
+		appearance_renderer.refresh()
 
 	if hull_cell.is_destroyed():
 		hull_cell_destroyed.emit(hull_cell)
@@ -330,37 +333,17 @@ func _physics_process(delta: float) -> void:
 
 	position += velocity * delta
 
-func _draw() -> void:
+func _build_appearance_renderer() -> void:
 	if ship_data == null:
 		return
+	appearance_renderer = ShipAppearanceRenderer.new()
+	add_child(appearance_renderer)
+	appearance_renderer.setup(ship_data, cell_size, local_origin_offset)
 
-	for cell in ship_data.get_hull_cells():
-		var rect := Rect2(
-			Vector2(cell.grid_position) * cell_size - local_origin_offset,
-			Vector2.ONE * cell_size
-		)
-		var health := cell.get_health_ratio()
-		var fill := Color(0.16, 0.20, 0.26, 1.0).lerp(
-			Color(0.08, 0.08, 0.08, 1.0),
-			1.0 - health
-		)
-		draw_rect(rect.grow(-1.5), fill)
-		var edge := Color(0.56, 0.64, 0.72, 1.0).lerp(
-			Color(0.45, 0.18, 0.16, 1.0),
-			1.0 - health
-		)
-		draw_rect(rect.grow(-1.5), edge, false, 1.5)
-
-	for module in ship_data.modules:
-		if ModuleArtLibrary.get_base_texture(module.definition) != null:
-			continue
-		var rect := Rect2(
-			Vector2(module.grid_position) * cell_size - local_origin_offset,
-			Vector2(module.get_rotated_size()) * cell_size
-		)
-		var fill_color := _get_module_color(module.definition.module_type)
-		fill_color.a = 0.72
-		draw_rect(rect.grow(-6.0), fill_color)
+func _clear_appearance_renderer() -> void:
+	if appearance_renderer != null and is_instance_valid(appearance_renderer):
+		appearance_renderer.queue_free()
+	appearance_renderer = null
 
 func _build_hull_runtimes() -> void:
 	if ship_data == null:
@@ -580,19 +563,3 @@ func _calculate_core_origin_offset() -> Vector2:
 	return (
 		Vector2(core.grid_position) + Vector2(size) * 0.5
 	) * cell_size
-
-func _get_module_color(module_type: ShipModuleDefinition.ModuleType) -> Color:
-	match module_type:
-		ShipModuleDefinition.ModuleType.ENERGY:
-			return Color("#d9b84c")
-		ShipModuleDefinition.ModuleType.PROPULSION:
-			return Color("#5aa3d8")
-		ShipModuleDefinition.ModuleType.WEAPON:
-			return Color("#d65f5f")
-		ShipModuleDefinition.ModuleType.DEFENSE:
-			return Color("#65aa78")
-		ShipModuleDefinition.ModuleType.FUNCTION:
-			return Color("#9a79ca")
-		ShipModuleDefinition.ModuleType.CORE:
-			return Color("#d98c4a")
-	return Color.GRAY
