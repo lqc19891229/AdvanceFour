@@ -113,15 +113,14 @@ D / →：右转
 
 右上方飞船：Hull 命中测试目标
 玩家武器会自动搜索 enemy_targets，并向目标飞船开火。
-目标飞船的每个 Hull Cell 都有独立碰撞体和独立 HP；Equipment 本身没有 HP。
+目标飞船的每个 Hull Cell 都有独立碰撞体；区域 HP = ShipHullCell HP + 覆盖 Defense HP。
 
 控制器：PlayerShipController（只负责移动）
 玩家模块：%d
 玩家武器：%d
-质量：%.1f
 推力：%.1f
 火力：%.1f
-推重比：%.3f
+推进评分：%.1f
 最高速度：%.1f
 当前加速度：%.1f
 当前减速度：%.1f
@@ -138,7 +137,7 @@ D / →：右转
 目标能源状态：%s
 目标战斗状态：%s
 整船移除事件：%d
-Hull HP：来自每个 ShipHullCell；设备效率取覆盖 Hull 健康度平均值
+区域 HP：ShipHullCell + Defense.hp；设备效率取覆盖 Hull 健康度平均值
 武器触发事件：%d
 弹丸生成事件：%d
 弹丸命中事件：%d
@@ -152,7 +151,7 @@ Hull 摧毁事件：%d
 最近发射方向：(%.2f, %.2f)
 
 当前阶段：Projectile 使用 swept ray 命中具体 Hull Cell。
-Defense Equipment 作为主动防御系统，protection 会按对应 Hull 健康度缩放后作用于整船受击减伤。
+Defense Equipment 的 hp 会平均附加到其覆盖的 Hull 区域；protection 仍按对应 Hull 健康度缩放后作用于整船受击减伤。
 命中先计算 damage_after_protection，再扣具体 Hull Cell HP。
 如果 Hull Cell 被击穿，则把剩余伤害交回 Projectile 继续穿透。
 Projectile 会携带 leftover 在同一弹道继续向内查询，因此同一发高伤害弹丸仍可连续击穿低血量模块。
@@ -166,7 +165,6 @@ Hull 受损会线性降低其覆盖 Equipment 效率；武器火力/射速、动
 结构规则：Hull Layout 决定结构与碰撞；Equipment 必须完整安装在 Hull 上。""" % [
 		ship.modules.size(),
 		runtime_ship.get_weapon_count(),
-		ship.get_mass(),
 		ship.get_thrust(),
 		ship.get_firepower(),
 		ship.get_acceleration_score(),
@@ -256,6 +254,6 @@ func _update_last_hull_info(hull_cell: ShipHullCell) -> void:
 	last_effective_protection = 0.0
 	if not _has_target_runtime_ship() or hull_cell == null:
 		return
-	last_hull_max_hp = hull_cell.max_hp
+	last_hull_max_hp = target_runtime_ship.ship_data.get_hull_cell_effective_max_hp(hull_cell)
 	last_effective_protection = target_runtime_ship.get_effective_protection()
 
