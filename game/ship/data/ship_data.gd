@@ -173,16 +173,38 @@ func get_design_invalid_reason() -> String:
 		return "能量不足：耗能 %.1f，高于供能 %.1f" % [get_energy_cost(), get_energy_output()]
 	return ""
 
+func get_defense_hp_bonus_at(cell_position: Vector2i) -> float:
+	var total := 0.0
+	for module in modules:
+		if not (module.definition is DefenseModuleDefinition):
+			continue
+		var covered_cells := module.get_cells()
+		if covered_cells.is_empty() or not covered_cells.has(cell_position):
+			continue
+		var defense := module.definition as DefenseModuleDefinition
+		total += maxf(defense.hp, 0.0) / float(covered_cells.size())
+	return total
+
+func get_hull_cell_effective_max_hp(cell: ShipHullCell) -> float:
+	if cell == null:
+		return 0.0
+	return maxf(cell.max_hp, 0.0) + get_defense_hp_bonus_at(cell.grid_position)
+
+func get_hull_cell_effective_hp(cell: ShipHullCell) -> float:
+	if cell == null:
+		return 0.0
+	return get_hull_cell_effective_max_hp(cell) * cell.get_health_ratio()
+
 func get_total_hull_hp() -> float:
 	var total := 0.0
 	for cell in get_hull_cells():
-		total += cell.current_hp
+		total += get_hull_cell_effective_hp(cell)
 	return total
 
 func get_total_hull_max_hp() -> float:
 	var total := 0.0
 	for cell in get_hull_cells():
-		total += cell.max_hp
+		total += get_hull_cell_effective_max_hp(cell)
 	return total
 
 func get_hull_mass() -> float:
@@ -190,15 +212,6 @@ func get_hull_mass() -> float:
 	for cell in get_hull_cells():
 		total += cell.mass
 	return total
-
-func get_equipment_mass() -> float:
-	var total := 0.0
-	for module in modules:
-		total += module.definition.mass
-	return total
-
-func get_mass() -> float:
-	return get_hull_mass() + get_equipment_mass()
 
 func get_energy_output() -> float:
 	var total := 0.0
@@ -235,4 +248,5 @@ func get_protection() -> float:
 	return total
 
 func get_acceleration_score() -> float:
-	return 0.0 if get_mass() <= 0.0 else get_thrust() / get_mass()
+	# Legacy API name kept for callers; movement now depends only on propulsion thrust.
+	return get_thrust()
