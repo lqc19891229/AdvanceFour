@@ -10,6 +10,6 @@ id = &"propulsion_smallengine"
 display_name = "小型引擎"
 module_type = 1
 description = "基础动力模块，为飞船提供主要推进力。"
-mass = 10.0
+
 energy_cost = 5.0
 texture = ExtResource("2_nwuqa")
