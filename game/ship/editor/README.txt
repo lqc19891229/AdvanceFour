@@ -4,36 +4,46 @@
 - ship_editor.tscn：飞船设计器主场景。
 
 脚本：
-- ship_editor.gd：编辑器 UI、模块选择、属性显示、保存/加载等控制逻辑。
-- ship_grid_view.gd：网格绘制、鼠标放置/删除/旋转模块及 1×1 模块贴图 / 武器分层预览。
+- ship_editor.gd：编辑器 UI、Hull / Equipment 选择、属性显示、保存 / 加载等控制逻辑。
+- ship_grid_view.gd：网格绘制、Hull 放置、Equipment 安装 / 删除 / 移动 / 旋转及贴图预览。
+
+当前结构：
+- Hull Layout：决定船体形状、可安装范围、局部 HP 与 Hull 质量。
+- Equipment：安装在 Hull 上，负责 Power / Damage / Thrust / Defense / Function 等功能。
 
 当前操作：
-- 出航战斗：校验并保存当前设计后进入 game/combat/battle.tscn，完成有限波次与胜负结算。
-- 左键空格：放置当前待放置模块。
-- 左键已安装模块：选中该模块，并在右侧显示完整模块详情。
-- “移动已选模块”：进入移动模式，再左键目标格完成移动；目标格冲突时保留原位置。
-- R / “旋转模块”：有已选安装模块时旋转该模块；否则旋转待放置模块。
-- 右键：删除模块；移动模式中右键取消移动。
+- 左侧“船体｜基础船体格”：进入 Hull 放置模式。
+- 左键空格（Hull 模式）：添加 basic_hull。
+- 左键空格（Equipment 模式）：安装当前设备；设备必须完整落在 Hull Layout 内。
+- 左键已安装 Equipment：选中设备，并在右侧显示详情。
+- “移动已选模块”：移动当前 Equipment；目标位置仍需完整覆盖 Hull 且不能与其他 Equipment 重叠。
+- R / “旋转模块”：旋转待安装或已安装 Equipment。
+- 右键 Equipment：拆除 Equipment。
+- 右键空 Hull：拆除 Hull Cell。
+- 已有 Equipment 覆盖的 Hull Cell 不能直接拆除，需先拆设备。
 - 中键拖动：平移编辑区。
-- 保存设计：保存到 user://ships/test_ship.json。
-- 加载设计：从 user://ships/test_ship.json 恢复。
-- 敌舰 AI 测试：先检查核心、模块及供能合法性，保存当前设计后进入 ship_ai_test.tscn。
-- 从交火测试按 Esc 返回后自动恢复该设计；战斗中的模块损伤不会改写设计存档。
-- 飞船属性顶部固定显示预计最高速度（px/s），无需滚动；放置、删除、清空或加载设计时实时更新。
-- 速度按完整耐久、供能充足时的设计推重比 × ShipRuntime.speed_scale 估算；供能不足时显示提示。
-- 属性区域可滚动，顶部优先显示已选安装模块详情，随后显示整船汇总，避免长说明挤出操作按钮。
-- 已选武器详情包含火力、射程、射击间隔、理论射速 / DPS、炮塔转速、弹速和开火角容差。
-- 移动 / 旋转直接修改对应 ShipModuleInstance 的 grid_position / rotation_quarters，保留原 uid。
+- 保存 / 加载：使用 ShipSerializer v2，同时保存 hull_cells 与 modules。
+- 出航战斗：合法性检查通过后进入 battle.tscn。
+- 敌舰 AI 测试：使用相同 Hull / Equipment 设计进入测试场景。
 
-规则：
-- 模块不能重叠。
-- 模块之间不要求相邻或连通。
-- 网格不要求全部填满。
-- 编辑过程中允许临时能量不足；最终设计合法性再检查能源和核心模块。
-- 模块按钮 tooltip 会显示该 ModuleDefinition 的 hp；hp 来自 Excel 数据链。
+预览：
+- Equipment 待放置 / 移动预览继续使用绿色 / 红色表示合法性。
+- 绿色：目标 Hull 完整、无 Equipment 重叠、核心规则合法。
+- 红色：超出 Hull、与 Equipment 重叠或违反核心规则。
+- 预览同时绘制真实 Equipment 贴图；Weapon 显示 base + turret。
+- Hull 放置模式同样使用红 / 绿预览。
 
+属性面板：
+- 显示 Hull 格数量。
+- 显示 Hull 当前 HP / 最大 HP。
+- 分别显示 Hull 质量与 Equipment 质量。
+- Equipment 详情显示自身功能参数，不再显示 ModuleDefinition.hp 作为战斗耐久。
+- 预计最高速度使用 Hull + Equipment 总质量与设计推力计算。
 
-1×1 模块贴图：
-- 编辑器通过 ModuleArtLibrary 按 module_id 读取贴图；普通模块使用 {id}.png。
-- 武器使用 {id}_base.png + {id}_turret.png；底座固定，炮塔按 rotation_quarters 显示设计初始朝向。
-- 任一贴图缺失时对应层独立回退到 Prototype 色块 / 白色炮塔线，不影响编辑与存档。
+设计规则：
+- Hull Layout 当前允许空格、分离区域，不要求相邻或连通。
+- Equipment 只能安装在已有 Hull Cell 上。
+- Equipment 之间不能重叠。
+- Core Equipment 当前仍限制每艘飞船一个。
+- 编辑阶段允许临时供能不足；出航时要求总耗能不高于设计供能。
+- 第一版 basic_hull 固定 max_hp = 20、mass = 2。
