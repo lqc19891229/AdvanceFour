@@ -19,6 +19,7 @@ var owner_ship: Node2D
 var module_instance: ShipModuleInstance
 var weapon_definition: WeaponModuleDefinition
 var target: Node2D
+var turret_visual: Sprite2D
 var cooldown_remaining := 0.0
 var operational := true
 var powered := true
@@ -46,7 +47,29 @@ func setup(
 	operational = true
 	powered = true
 	visible = true
+	_build_turret_visual()
 	queue_redraw()
+
+func _build_turret_visual() -> void:
+	if turret_visual != null and is_instance_valid(turret_visual):
+		turret_visual.queue_free()
+	turret_visual = null
+
+	if weapon_definition == null or weapon_definition.size != Vector2i.ONE:
+		return
+
+	var texture := ModuleArtLibrary.get_turret_texture(weapon_definition)
+	if texture == null:
+		return
+
+	turret_visual = Sprite2D.new()
+	turret_visual.texture = texture
+	turret_visual.centered = true
+	turret_visual.scale = ModuleArtLibrary.get_texture_scale(
+		texture,
+		Vector2(32.0, 32.0)
+	)
+	add_child(turret_visual)
 
 func set_operational(value: bool) -> void:
 	operational = value
@@ -190,5 +213,7 @@ func _emit_fire() -> void:
 	)
 
 func _draw() -> void:
+	if turret_visual != null and is_instance_valid(turret_visual):
+		return
 	draw_circle(Vector2.ZERO, 4.0, Color.WHITE, false, 1.0)
 	draw_line(Vector2.ZERO, Vector2.UP * 16.0, Color.WHITE, 2.0)
