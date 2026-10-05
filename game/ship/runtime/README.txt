@@ -1,115 +1,75 @@
 《前进四》game/ship/runtime 目录说明
 
 用途：
-- 存放进入实际游戏世界后运行的飞船实体。
-- RuntimeShip 是 ShipData 在场景中的运行时表现，不重复保存另一套飞船结构数据。
+- 存放 ShipData 进入战斗世界后的运行表现。
+- 当前飞船结构已拆为 Hull Layout + Equipment。
 
 当前文件：
-- ship_runtime.tscn：运行时飞船场景。
-- ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向、推进、创建 WeaponRuntime / ProjectileRuntime，并为每个模块创建 ShipModuleRuntime。
-- ship_module_runtime.gd：单个 ShipModuleInstance 的运行时对象，包含独立碰撞体、DamageReceiver，以及可选的 1×1 模块基础贴图。
-- SHIP_MODULE_RUNTIME_README.txt：模块运行时受击结构说明。
+- ship_runtime.tscn / ship_runtime.gd：整艘飞船运行逻辑。
+- hull_cell_runtime.gd：单个 ShipHullCell 的运行时碰撞与受击对象。
+- ship_module_runtime.gd：Equipment 的运行时视觉对象；不再持有独立 HP。
+- SHIP_MODULE_RUNTIME_README.txt：Hull / Equipment 受击职责说明。
 
 核心关系：
-ShipData = 飞船结构与静态属性数据。
-ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
+ShipData
+├─ hull_cells -> HullCellRuntime
+└─ modules    -> ShipModuleRuntime / WeaponRuntime
 
-使用方式：
-1. 从存档、预设或其他来源得到 ShipData。
-2. 实例化 ship_runtime.tscn。
-3. 调用 setup(ship_data)。
-4. 控制器通过 set_control_input(throttle, turn) 提供推进与转向输入；玩家控制可使用 game/ship/controller/player_ship_controller.tscn。
+Hull 运行时：
+- RuntimeShip 为每个 ShipHullCell 创建一个 HullCellRuntime。
+- 每个 Hull Cell 使用独立 Area2D / CollisionShape2D。
+- Projectile swept ray 命中 HullCellRuntime 后调用 RuntimeShip.apply_hull_projectile_damage()。
+- damage_after_protection 先扣当前 Hull Cell HP；若伤害超过该格剩余 HP，leftover 继续由 Projectile 沿原弹道穿透。
+- Hull Cell HP = 0 后对应碰撞体失效，空出的射线可继续命中后方 Hull。
+- get_aim_point() 从仍存活的 Hull Cell 中选择距离攻击者最近的位置。
 
-职责边界：
-- RuntimeShip 不读取 JSON，不负责存档。
-- RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
-- RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前包含模块绘制、移动、自动炮塔、Projectile，以及每模块独立碰撞 / HP / damaged / destroyed 事件；1×1 模块优先使用 ModuleArtLibrary 贴图，缺图时回退为旧色块。
-- 当前武器模块 destroyed 会停用对应 WeaponRuntime；动力模块 destroyed 会从运行时有效推力中移除；能源模块 destroyed 会降低运行时有效供能；核心模块 destroyed 会让整个 RuntimeShip 从战斗场景移除。
+Equipment 运行时：
+- ShipModuleRuntime 只负责 Equipment 基础贴图和受损亮度表现。
+- Equipment 没有独立 DamageReceiver / HP。
+- RuntimeShip.get_module_efficiency(module) 读取该 Equipment 覆盖的全部 Hull Cell。
+- efficiency = 覆盖 Hull health ratio 的平均值，范围 0~1。
+- efficiency = 0 表示承载该 Equipment 的 Hull 全部损毁，Equipment 失效。
+- 多格 Equipment 会随着不同 Hull Cell 受损逐步降低效率。
 
-飞船结构原则：
-- 模块允许分开放置。
-- 模块不要求相邻或连通。
-- 网格不要求全部填满。
-- RuntimeShip 按 ShipData 中保存的实际网格位置直接显示，不自动压缩或补齐空格。
+当前效率影响：
+- Energy：energy_output × efficiency。
+- Propulsion：thrust × efficiency。
+- Defense：protection × efficiency；当前作为整船主动防御系统计算。
+- Weapon：
+  - firepower × efficiency；
+  - turret turn speed × efficiency；
+  - fire interval / efficiency，因此效率下降会降低射速。
+- Equipment 的 energy_cost 在其仍 operational 时保持定义值；完全失效后不再计入有效耗能。
 
+供电：
+- 有效能源输出先考虑 Energy Equipment 的 Hull efficiency。
+- 供能不足时继续使用 Prototype 优先级：
+  核心 > 能源 > 动力 > 防护 > 功能 > 武器。
+- 未供电动力不贡献推力；未供电武器停止工作。
 
-移动规则：
-- RuntimeShip 的 0° 舰首方向定义为屏幕上方 Vector2.UP。
-- throttle > 0 时沿舰首方向推进。
-- throttle < 0 时沿舰尾方向倒车，当前倒车推力为前进推力的 50%。
-- 当前保留惯性方向：转向只改变舰首方向，不会自动把现有 velocity 旋转到舰首。
-- 最高速度 = effective_thrust / 总质量 × speed_scale，当前 speed_scale = 500.0。
-- 加速度 = effective_thrust / 总质量 × acceleration_scale，当前 acceleration_scale = 200.0。
-- 松开推进输入后，减速度 = effective_thrust / 总质量 × deceleration_scale，当前 deceleration_scale = 300.0。
-- drag 不再负责形成稳定极速；velocity 超过当前 get_max_speed() 时直接限制到该速度。
-- 动力模块损坏或断电会降低 effective_thrust，因此最高速度、加速度和减速度都会随之下降。
-- turn < 0 左转，turn > 0 右转。
-- 当前转向速度为基础运行参数，尚未由具体转向模块或质量分布计算。
+核心 / 沉没：
+- Core 仍属于 Equipment。
+- Core 本身没有独立 HP。
+- Core 覆盖 Hull Cell 全部损毁，使 Core efficiency = 0。
+- 此时 RuntimeShip 发出 destroyed 并退出当前战斗。
 
+移动：
+- 总质量 = Hull mass + Equipment mass。
+- 最高速度 = effective_thrust / 总质量 × speed_scale。
+- 加速度 = effective_thrust / 总质量 × acceleration_scale。
+- 松油减速度 = effective_thrust / 总质量 × deceleration_scale。
+- 当前 speed_scale = 500、acceleration_scale = 200、deceleration_scale = 300。
+- reverse_thrust_ratio = 0.5。
+- Hull 战损通过降低 Propulsion efficiency 间接降低最高速度和加减速能力。
 
-运行时原点 / 旋转中心：
-- RuntimeShip 的局部坐标原点固定使用核心模块（舰桥核心）的几何中心。
-- setup(ship_data) 时根据核心模块 grid_position 与旋转后的尺寸计算 local_origin_offset。
-- 所有模块绘制位置只在 RuntimeShip 中减去 local_origin_offset；ShipData.grid_position 不做任何修改。
-- 因此 RuntimeShip.position 表示舰桥核心中心的世界坐标，RuntimeShip.rotation 也围绕舰桥核心中心旋转。
-- has_core_origin() 用于确认当前 ShipData 是否成功找到核心模块。
-- 模块即使彼此分离、存在空格，也不会改变这个原点规则。
-- 如果传入的 ShipData 没有核心模块，Prototype 会回退到 Vector2.ZERO；正式可出航设计仍要求存在核心模块。
-- 该中心是逻辑 / 运行时基准点，不等同于未来可能计算的物理质量中心。
+运行时原点：
+- 仍以 Core Equipment 几何中心作为 RuntimeShip 局部原点。
+- Hull Layout 与 Equipment 的 grid_position 均不因运行时原点而改写。
 
+视觉：
+- RuntimeShip 先绘制 Hull Cell 底板，再由 ShipModuleRuntime 绘制 Equipment。
+- Weapon base 属于 ShipModuleRuntime；turret 属于 WeaponRuntime。
+- Hull 健康度下降时底板颜色向破损色变化，Equipment 视觉按 efficiency 变暗。
 
-武器运行时：
-- 1×1 武器视觉拆为两层：ShipModuleRuntime 显示 {module_id}_base.png 底座，WeaponRuntime 显示 {module_id}_turret.png 炮塔。
-- 底座不参与独立瞄准旋转；炮塔节点沿用 WeaponRuntime 自身 rotation，因此会从 rotation_quarters 初始朝向开始自动转向目标。
-- 任一武器贴图缺失时该层独立回退，不影响武器逻辑。
-- setup(ship_data) 时会扫描 ShipData.modules，为每个 WeaponModuleDefinition 对应的模块创建一个 WeaponRuntime。
-- WeaponRuntime 的局部位置取该模块几何中心，并使用与舰桥核心相同的 local_origin_offset 坐标换算。
-- RuntimeShip.weapon_target_group 指定该飞船武器要搜索的目标组，默认 enemy_targets。
-- WeaponRuntime 会独立搜索范围内最近目标、旋转炮塔并自动开火。
-- request_fire() 继续保留为调试接口，可让当前所有 WeaponRuntime 各执行一次 fire_once()。
-- ShipRuntime 通过 weapon_fired 信号向上转发单个武器的发射事件。
-- get_weapon_count() 返回当前创建的 WeaponRuntime 总数量。
-- get_operational_weapon_count() 只统计结构上仍存活、is_operational() == true 的武器，不考虑当前是否有电。
-- get_active_weapon_count() 统计当前真正可工作的武器，即 is_active() == operational && powered。
-- WeaponRuntime fired 后，RuntimeShip 会实例化 ProjectileRuntime，并传入该武器开火时的 attack_range 作为最大飞行距离；不同武器、不同发射时刻分别记录。
-- ProjectileRuntime 会加入 RuntimeShip 的父节点，而不是成为 RuntimeShip 子节点，因此发射后不会继续跟随飞船自身平移或旋转。
-- RuntimeShip 提供 projectile_spawned 信号，用于观察弹丸生成。
-- ProjectileRuntime 使用本帧 swept ray 选择弹道上最近碰撞；命中 ShipModuleRuntime 时调用 apply_projectile_damage()。任意模块被本次伤害摧毁且有 leftover 时，Projectile 会继续沿原弹道向后传播。
-- RuntimeShip 仍通过 projectile_hit(target, firepower) 向上转发命中事件，但该转发只用于观察 / 调试，不再负责实际扣血。
-- RuntimeShip 创建 Projectile 时会把 self 作为 source_owner 传入；Projectile swept ray 会预先排除 source_owner 整棵节点树中的 CollisionObject2D，避免大型飞船自身模块消耗穿透查询次数。
-- 因为伤害由 ProjectileRuntime 自身处理，发射者 RuntimeShip 即使已因核心摧毁而 queue_free()，已经发射出去的 Projectile 仍可正常命中并造成伤害。
-
-模块运行时：
-- setup(ship_data) 时，RuntimeShip 会为每个 ShipModuleInstance 创建一个 ShipModuleRuntime。
-- ShipModuleRuntime 的位置使用与模块绘制完全相同的核心原点坐标换算。
-- 碰撞矩形大小等于模块旋转后的网格尺寸 × cell_size。
-- 每个模块都有独立 DamageReceiver 和独立 HP。
-- RuntimeShip.get_module_max_hp(module) 直接读取 module.definition.hp；DefenseModuleDefinition.protection 不增加最大 HP。
-- 模块之间允许空格；空格不会生成碰撞体。
-- 模块 destroyed 后碰撞体会 deferred 禁用；有 Sprite2D 贴图的模块会程序灰化，无贴图模块继续使用深灰色 fallback。
-- 防护模块采用“实体掩体 + 百分比减伤”语义：Projectile 先撞到弹道上的前方装甲，先执行 protection_percent = clamp(protection, 0, 100)，再计算 damage_after_protection = incoming_damage * (1 - protection_percent / 100)。
-- protection 是每次命中该 Defense 模块时生效的百分比减伤值；例如 protection = 5 表示减伤 5%。它不是额外 HP，也不会因承受伤害而消耗。
-- 对所有 ShipModuleRuntime，实际进入 HP 的伤害都是 damage_after_protection；非 Defense 模块 protection = 0，因此等于原始 incoming_damage。protection 运行时按 0%~100% clamp。
-- 若本次伤害将模块摧毁，则 leftover = damage_after_protection - hp_before 返回给 Projectile；Projectile 会携带 leftover 在同一弹道继续向内查询。
-- 如果当前模块未被摧毁、伤害被 protection 完全抵消，或刚好把模块 HP 吃完，则 Projectile 在该模块处结束。
-- 某一块装甲 destroyed 后，它自己的碰撞体失效；其他装甲仍保持独立保护。
-- RuntimeShip 通过 module_damaged / module_destroyed 向上转发模块受击状态。
-- 模块最大 HP 已进入 Excel / ModuleDefinition 数据链；RuntimeShip 不再维护 prototype_module_hp。
-- destroyed 不删除 ShipData.modules；运行时通过模块存活状态计算有效推力，并通过 UID 映射停用对应 WeaponRuntime。
-- get_effective_energy_output() 只统计未 destroyed 的 EnergyModuleDefinition.energy_output。
-- get_effective_energy_cost() 只统计未 destroyed 模块的 energy_cost。
-- is_energy_sufficient() 表示当前有效供能是否足以覆盖全部存活模块耗能；供能不足并不再代表整船全部断电。
-- module_powered_by_uid 保存每个存活模块当前是否获得供电。
-- 当前 Prototype 固定供电优先级：核心 > 能源 > 动力 > 防护 > 功能 > 武器；同类型按 module.uid 升序稳定分配。
-- RuntimeShip 会按优先级逐个尝试支付 module.definition.energy_cost；剩余能源不足以支付某个模块时，该模块 powered=false，但后续更低优先级、耗能更小的模块仍可能获得供电。
-- get_powered_energy_cost() 返回当前实际已分配给 powered 模块的耗能；get_powered_module_count() 返回当前已供电模块数量。
-- WeaponRuntime powered 状态来自其对应模块的 is_module_powered()，因此能源不足时只关闭未获供电的武器，而不是全部武器统一断电。
-- get_effective_thrust() 只统计“未 destroyed 且已供电”的动力模块；get_effective_acceleration_score() = effective_thrust / 总质量。
-- get_max_speed() = get_effective_acceleration_score() × speed_scale；get_acceleration() 与 get_deceleration() 分别使用 acceleration_scale / deceleration_scale。
-- estimate_design_top_speed(design) 使用完整、未损坏设计的 get_acceleration_score() × speed_scale，供编辑器显示预计最高速度。
-- get_aim_point(from_world_position) 会从未 destroyed 的 ShipModuleRuntime 中选择距离炮塔最近的模块中心作为瞄准点。
-- has_operational_modules() 用于让 WeaponRuntime 判断目标飞船是否还有可攻击模块。
-- 核心模块 destroyed 时，RuntimeShip 会先发出 module_destroyed，再进入 removed_from_battle 状态；造成该次核心摧毁的 Projectile 检测到 removed_from_battle 后立即结束，不再继续穿透该船其他模块。
-- removed_from_battle 后会清零控制输入和速度、停用全部 WeaponRuntime、发出 destroyed 信号，并 queue_free() 从战斗场景移除。
-- is_removed_from_battle() 可读取该状态；进入该状态后 has_operational_modules() 固定返回 false。
+兼容：
+- ModuleDefinition.hp 当前仍存在于旧数据链，但 RuntimeShip 不再读取它作为战斗 HP。
