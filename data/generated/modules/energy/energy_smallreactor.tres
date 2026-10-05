@@ -10,5 +10,5 @@ id = &"energy_smallreactor"
 display_name = "小型反应堆"
 module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
-mass = 10.0
+
 texture = ExtResource("2_bvuiq")
