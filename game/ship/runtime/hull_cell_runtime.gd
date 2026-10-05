@@ -38,10 +38,18 @@ func apply_projectile_damage(amount: float) -> float:
 	return owner_ship.apply_hull_projectile_damage(hull_cell, amount)
 
 func get_hp() -> float:
-	return 0.0 if hull_cell == null else hull_cell.current_hp
+	if hull_cell == null:
+		return 0.0
+	if owner_ship == null or not is_instance_valid(owner_ship) or owner_ship.ship_data == null:
+		return hull_cell.current_hp
+	return owner_ship.ship_data.get_hull_cell_effective_hp(hull_cell)
 
 func get_max_hp() -> float:
-	return 0.0 if hull_cell == null else hull_cell.max_hp
+	if hull_cell == null:
+		return 0.0
+	if owner_ship == null or not is_instance_valid(owner_ship) or owner_ship.ship_data == null:
+		return hull_cell.max_hp
+	return owner_ship.ship_data.get_hull_cell_effective_max_hp(hull_cell)
 
 func is_destroyed() -> bool:
 	return hull_cell == null or hull_cell.is_destroyed()
@@ -49,7 +57,7 @@ func is_destroyed() -> bool:
 func notify_damage(amount: float) -> void:
 	if hull_cell == null:
 		return
-	damaged.emit(hull_cell, amount, hull_cell.current_hp)
+	damaged.emit(hull_cell, amount, get_hp())
 	if hull_cell.is_destroyed():
 		if collision_shape != null:
 			collision_shape.set_deferred("disabled", true)
