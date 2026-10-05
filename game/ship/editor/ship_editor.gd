@@ -18,7 +18,7 @@ func _ready() -> void:
 	grid.status_message.connect(_show_status)
 	_refresh_selected_label()
 	_refresh_stats()
-	_show_status("左键空格放置｜左键模块选中｜右键删除｜R 旋转｜中键拖动画布")
+	_show_status("先铺船体再安装设备｜左键放置/选中｜右键拆除｜R 旋转｜中键拖动画布")
 	if get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
@@ -27,6 +27,13 @@ func _ready() -> void:
 func _build_module_buttons() -> void:
 	for child in module_buttons.get_children():
 		child.queue_free()
+
+	var hull_button := Button.new()
+	hull_button.custom_minimum_size = Vector2(0, 44)
+	hull_button.text = "船体｜基础船体格"
+	hull_button.tooltip_text = "Hull Layout：每格独立 20 HP、质量 2。设备必须完整安装在船体格上。"
+	hull_button.pressed.connect(_select_hull)
+	module_buttons.add_child(hull_button)
 
 	for definition in grid.get_all_definitions():
 		var button := Button.new()
@@ -42,7 +49,6 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	lines.append("尺寸：%d×%d" % [definition.size.x, definition.size.y])
 	lines.append("质量：%.1f" % definition.mass)
 	lines.append("耗能：%.1f" % definition.energy_cost)
-	lines.append("HP：%.1f" % definition.hp)
 
 	if definition is EnergyModuleDefinition:
 		lines.append("供能：%.1f" % (definition as EnergyModuleDefinition).energy_output)
@@ -111,11 +117,17 @@ func _select(id: String) -> void:
 	grid.select_definition(id)
 	_refresh_selected_label()
 
+func _select_hull() -> void:
+	grid.select_hull()
+	_refresh_selected_label()
+
 func _refresh_selected_label() -> void:
-	if grid.selected_definition == null:
+	if grid.placing_hull:
+		selected_label.text = "待放置：基础船体格"
+	elif grid.selected_definition == null:
 		selected_label.text = "待放置：未选择"
 	else:
-		selected_label.text = "待放置：%s" % grid.selected_definition.display_name
+		selected_label.text = "待安装：%s" % grid.selected_definition.display_name
 
 func _on_selected_module_changed(_module: ShipModuleInstance) -> void:
 	_refresh_stats()
@@ -133,7 +145,6 @@ func _build_installed_module_details(module: ShipModuleInstance) -> String:
 	lines.append("尺寸：%d×%d" % [module.get_rotated_size().x, module.get_rotated_size().y])
 	lines.append("质量：%.1f" % definition.mass)
 	lines.append("耗能：%.1f" % definition.energy_cost)
-	lines.append("HP：%.1f" % definition.hp)
 
 	if definition is EnergyModuleDefinition:
 		lines.append("供能：%.1f" % (definition as EnergyModuleDefinition).energy_output)
@@ -154,7 +165,7 @@ func _build_installed_module_details(module: ShipModuleInstance) -> String:
 	elif definition is FunctionModuleDefinition:
 		lines.append("功能：暂无额外参数")
 	elif definition is CoreModuleDefinition:
-		lines.append("核心规则：被击毁时整船沉没")
+		lines.append("核心规则：承载核心的船体格全部损毁时整船沉没")
 
 	lines.append("")
 	lines.append("操作：移动已选模块 / R 旋转 / 右键删除")
@@ -165,13 +176,12 @@ func _refresh_stats() -> void:
 	var design_status := "可出航" if s.is_design_valid() else "不可出航：%s" % s.get_design_invalid_reason()
 	var speed_text := "—（供能不足）"
 	if s.is_energy_valid():
-		# Read the runtime scene's actual tuning instead of maintaining editor copies.
 		var runtime := RUNTIME_SCENE.instantiate() as ShipRuntime
 		var speed := runtime.estimate_design_top_speed(s)
 		runtime.free()
 		speed_text = "%.1f px/s" % speed
 	speed_label.text = "预计最高速度：%s" % speed_text
-	speed_label.tooltip_text = "完整耐久、供能充足时，最高速度 = 推重比 × speed_scale。\n战损或断电会降低有效推力，从而降低最高速度和加速度。"
+	speed_label.tooltip_text = "完整船体、供能充足时，最高速度 = 有效推重比 × speed_scale。\nHull 受损会降低对应设备效率。"
 
 	var selected_details := _build_installed_module_details(grid.selected_module)
 	stats_label.text = """%s
@@ -180,32 +190,43 @@ func _refresh_stats() -> void:
 
 飞船汇总
 
-模块数量：%d
+Hull 格：%d
+Hull HP：%.0f / %.0f
+Equipment：%d
 
 质量：%.1f
+  船体质量：%.1f
+  设备质量：%.1f
 
 能量：%.1f / %.1f
 动力：%.1f
 推重比：%.2f
 
 火力：%.1f
-防护：%.1f
+防御系统：%.1f
 
 核心：%s
-沉没判定：%s
+沉没判定：核心覆盖 Hull 全部损毁
 
 设计状态：%s
 
 结构规则：
-模块可分开放置；
-不要求相邻、连通或填满格子。
+Hull Layout 决定船体形状与局部 HP；
+Equipment 必须完整安装在 Hull 上；
+Equipment 不拥有独立 HP；
+Hull 受损会降低对应 Equipment 效率。
 
 能量规则：
 编辑时允许临时超额耗能；
 出航时总耗能必须 ≤ 总供能。""" % [
 		selected_details,
+		s.hull_cells.size(),
+		s.get_total_hull_hp(),
+		s.get_total_hull_max_hp(),
 		s.modules.size(),
 		s.get_mass(),
+		s.get_hull_mass(),
+		s.get_equipment_mass(),
 		s.get_energy_cost(),
 		s.get_energy_output(),
 		s.get_thrust(),
@@ -213,7 +234,6 @@ func _refresh_stats() -> void:
 		s.get_firepower(),
 		s.get_protection(),
 		"已安装" if s.has_core() else "未安装",
-		"核心被击毁 → 沉没" if s.has_core() else "需要核心模块",
 		design_status
 	]
 
