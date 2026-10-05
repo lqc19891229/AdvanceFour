@@ -47,7 +47,6 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	var lines: Array[String] = []
 	lines.append(definition.description)
 	lines.append("尺寸：%d×%d" % [definition.size.x, definition.size.y])
-	lines.append("质量：%.1f" % definition.mass)
 	lines.append("耗能：%.1f" % definition.energy_cost)
 
 	if definition is EnergyModuleDefinition:
@@ -63,7 +62,9 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 		lines.append("弹速：%.1f px/s" % weapon.projectile_speed)
 		lines.append("开火角容差：%.1f°" % weapon.fire_angle_tolerance_degrees)
 	elif definition is DefenseModuleDefinition:
-		lines.append("防护：%.1f" % (definition as DefenseModuleDefinition).protection)
+		var defense := definition as DefenseModuleDefinition
+		lines.append("装甲 HP：%.1f" % defense.hp)
+		lines.append("防护：%.1f" % defense.protection)
 	elif definition is FunctionModuleDefinition:
 		lines.append("功能模块：暂无额外参数")
 	elif definition is CoreModuleDefinition:
@@ -161,7 +162,9 @@ func _build_installed_module_details(module: ShipModuleInstance) -> String:
 		lines.append("弹速：%.1f px/s" % weapon.projectile_speed)
 		lines.append("开火角容差：%.1f°" % weapon.fire_angle_tolerance_degrees)
 	elif definition is DefenseModuleDefinition:
-		lines.append("防护：%.1f%%" % (definition as DefenseModuleDefinition).protection)
+		var defense := definition as DefenseModuleDefinition
+		lines.append("装甲 HP：%.1f" % defense.hp)
+		lines.append("防护：%.1f%%" % defense.protection)
 	elif definition is FunctionModuleDefinition:
 		lines.append("功能：暂无额外参数")
 	elif definition is CoreModuleDefinition:
@@ -181,7 +184,7 @@ func _refresh_stats() -> void:
 		runtime.free()
 		speed_text = "%.1f px/s" % speed
 	speed_label.text = "预计最高速度：%s" % speed_text
-	speed_label.tooltip_text = "完整船体、供能充足时，最高速度 = 有效推重比 × speed_scale。\nHull 受损会降低对应设备效率。"
+	speed_label.tooltip_text = "完整船体、供能充足时，最高速度只由有效引擎推力 × speed_scale 决定。\nHull 受损会降低对应引擎效率，从而降低速度与加速度。"
 
 	var selected_details := _build_installed_module_details(grid.selected_module)
 	stats_label.text = """%s
@@ -194,13 +197,9 @@ Hull 格：%d
 Hull HP：%.0f / %.0f
 Equipment：%d
 
-质量：%.1f
-  船体质量：%.1f
-  设备质量：%.1f
-
 能量：%.1f / %.1f
 动力：%.1f
-推重比：%.2f
+推进评分：%.1f
 
 火力：%.1f
 防御系统：%.1f
@@ -213,7 +212,9 @@ Equipment：%d
 结构规则：
 Hull Layout 决定船体形状与局部 HP；
 Equipment 必须完整安装在 Hull 上；
-Equipment 不拥有独立 HP；
+除 Defense 外 Equipment 不拥有 HP；
+Defense.hp 会平均附加到其覆盖的 Hull 区域；
+区域 HP = ShipHullCell HP + Defense HP；
 Hull 受损会降低对应 Equipment 效率。
 
 能量规则：
@@ -224,9 +225,6 @@ Hull 受损会降低对应 Equipment 效率。
 		s.get_total_hull_hp(),
 		s.get_total_hull_max_hp(),
 		s.modules.size(),
-		s.get_mass(),
-		s.get_hull_mass(),
-		s.get_equipment_mass(),
 		s.get_energy_cost(),
 		s.get_energy_output(),
 		s.get_thrust(),
