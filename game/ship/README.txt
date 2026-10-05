@@ -5,6 +5,7 @@
 
 子目录：
 - art/：Equipment 贴图、武器底座 / 炮塔资源与统一加载规则。
+- appearance/：战斗专用 Appearance Layer，根据 Hull Layout 生成最终舰体外观并决定哪些 Equipment 外露。
 - definitions/：Equipment Definition Resource 类。
 - data/：ShipHullCell、ShipData、ShipModuleInstance、ModuleDatabase、ShipSerializer。
 - editor/：Hull Layout + Equipment 编辑器。
@@ -32,9 +33,9 @@ ShipData
       └─ rotation_quarters
 
 职责：
-- Hull Layout 决定飞船实际结构、可命中区域、局部 HP、船体质量和 Equipment 可安装区域。
-- Equipment 决定 Power、Damage、Thrust、Defense 与其他功能。
-- Equipment 不拥有独立战斗 HP。
+- Hull Layout 决定飞船实际结构、可命中区域、局部 HP 与 Equipment 可安装区域。
+- Equipment 决定 Power、Damage、Thrust、Defense 与其他功能；除 Defense.hp 外不再提供独立耐久。
+- Appearance 只负责战斗外观，不进入数据与存档。
 - Equipment efficiency 由覆盖 Hull Cell 的健康度决定。
 
 当前 Hull 规则：
@@ -61,9 +62,7 @@ ShipData
 
 移动：
 - RuntimeShip 仍以 Core Equipment 几何中心作为局部原点。
-- 总质量 = Hull mass + Equipment mass。
-- 最高速度 = effective_thrust / 总质量 × speed_scale。
-- 加速度和松油减速度同样使用运行时有效推重比。
+- 当前速度、加速度与减速度只取决于有效 Propulsion thrust，不读取 Hull / Equipment 质量。
 - Propulsion 所在 Hull 受损会降低推力，因此同步降低机动性能。
 
 供电：
@@ -72,10 +71,15 @@ ShipData
 - 当前供电优先级：Core > Energy > Propulsion > Defense > Function > Weapon。
 - 未供电 Equipment 不提供需要供电的功能。
 
+战斗外观：
+- ShipAppearanceRenderer 根据 Hull 邻接关系生成连续舰体 shell。
+- Core / Weapon / Propulsion 外露。
+- Energy / Defense / Function 在战斗中隐藏，被 shell 包覆。
+- 编辑器仍完整显示 Hull + Equipment，不使用 Appearance shell。
+
 存档：
 - ShipSerializer 当前格式为 v2，同时保存 Hull Layout 与 Equipment。
 - 旧 v1 模块式存档加载时会按原模块占格自动生成 basic_hull。
-- ModuleDefinition.hp 暂留在旧 Excel / generated 数据中兼容，但当前运行时不再使用。
 
 验证：
 - tools/verify_project.py 会运行 Ship / Combat 回归。
