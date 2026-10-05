@@ -23,7 +23,10 @@
 3. 验证通过后执行“前进四：导入模块数据”。
 4. 插件加载 texture_path / turret_texture_path 指向的 Texture2D。
 5. 重新生成带 Texture2D 引用的 .tres。
+6. 导入器先在内存中构建并验证全部模块；只有全部通过后才替换 generated 资源。写入失败时会恢复导入前的模块 .tres 与 ModuleDatabase。
 
 规则：
 - PNG 路径由 Excel 决定，不再依赖 module_id 自动拼接。
+- 每次解析 Excel 前会先删除旧 cache/modules.json；本次 Python 解析必须生成新的缓存文件，避免失败时误读旧缓存。
+- generated 资源采用“全部准备成功后再替换 + 失败回滚”流程，避免半导入状态。
 - 不要手动修改 cache/modules.json 或 generated 目录中的 .tres。
