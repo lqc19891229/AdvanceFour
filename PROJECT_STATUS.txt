@@ -1,26 +1,26 @@
-《前进四》开发状态 v0.31.8
+《前进四》开发状态 v0.31.9
 
 当前阶段：模块化飞船战斗 Prototype，尚未形成完整 Roguelike 游戏。
 
 已完成：
-- 六类模块定义、自由分离布局、网格编辑器、设计保存与加载。
-- Excel → Python → JSON cache → Godot 插件 → .tres 数据链；模块独立 hp。
+- 飞船数据已拆为 Hull Layout + Equipment 两层；网格编辑器可独立铺设基础船体格并在其上安装/移动/旋转设备。
+- Excel → Python → JSON cache → Godot 插件 → .tres 继续负责 Equipment 定义；Hull Cell 独立保存位置、max_hp/current_hp、质量与 hull_type。
 - 玩家移动与转向、核心中心原点、独立炮塔自动选敌与射击。
 - 模块贴图已纳入正式数据链：Excel 各模块 Sheet 使用 texture_path，Weapon 额外使用 turret_texture_path；导入后写入 JSON cache、模块 .tres 与 ModuleDatabase，不再由代码按 module_id 固定拼接路径。
 - 首批模块 PNG 已提交并完成数据挂载；武器视觉拆为底座 + 炮塔：ShipModuleRuntime 显示 weapon base，WeaponRuntime 显示 turret 并继续独立旋转瞄准。
-- 弹丸 swept ray、独立模块碰撞、装甲减伤与 HP-overkill 穿透。
+- 弹丸 swept ray 改为命中独立 Hull Cell 碰撞体；每个 Hull Cell 独立承伤并支持 HP-overkill 穿透。
 - 武器火力、攻击范围、射击间隔、炮塔转速、弹速和开火角容差已进入 Excel → JSON → .tres 数据链；不同武器可使用独立数值。
 - 攻击范围同时用于自动选敌和弹丸最大飞行距离；弹丸记录开火时射程与弹速，走完后消失，最后一帧不越界命中。
-- 武器 / 动力 / 能源局部摧毁效果，模块供电分配，核心摧毁整船移除。
+- Equipment 不再拥有独立战斗 HP；其效率取覆盖 Hull Cell 健康度平均值。能源输出、推力、防御与武器性能会随局部 Hull 损伤下降；核心覆盖 Hull 全毁时整船移除。
 - 敌舰 AI：选择最近有效玩家目标、转向追踪、接近与倒车保持距离。
 - 编辑器 → 单敌舰交火测试 → 返回编辑器并恢复设计。
 - 飞船移动已改为显式推重比模型：最高速度 = 有效推力 / 总质量 × speed_scale，加速度与松油减速度分别使用独立 scale；保留惯性方向并直接限制最大速度，不再依赖 drag 形成极速。
 - 当前移动参数为 speed_scale = 500、acceleration_scale = 200、deceleration_scale = 300、reverse_thrust_ratio = 0.5；动力战损或断电会同步降低最高速度和加减速能力。
 - 飞船编辑器属性顶部显示预计最高速度，随模块布局变化更新，并提示供能不足。
-- 飞船编辑器支持点击选中已安装模块，显示完整模块详情，并可移动 / 旋转已安装模块；变换保留模块实例 uid 并检查占格冲突。
+- 飞船编辑器支持 Hull/Equipment 分层操作：Hull 格独立放置/拆除；Equipment 只能完整安装在 Hull 上，并支持选中、移动、旋转，保留实例 uid。
 - 战斗世界固定星点 / 网格参照，HUD 显示实时速度与坐标，明确前进 / 倒车 / 转向操作。
 - 单场战斗：有限波次、逐个生成敌舰、HUD、胜负结算、重开 / 返回编辑器。
-- 最终清场后等待空中弹丸结束；玩家核心被毁失败优先，结算后停止战斗。
+- 最终清场后等待空中弹丸结束；核心 Equipment 所覆盖 Hull 全部损毁时判定失败，失败优先于同帧胜利。
 - 自动检查源表完整性、源表与缓存一致性、generated 贴图引用以及 Godot 物理 / 场景回归；模块重新导入后 ModuleDatabase 已同步持有 Texture2D 引用。
 - v0.31.8 完成数据导入技术收口：Excel 解析前强制清理旧 cache，避免解析失败时误读历史 modules.json；全部模块先构建验证后再替换 generated 资源，写入失败会恢复导入前的模块 .tres 与 ModuleDatabase。
 - 飞船编辑器待放置/移动预览继续使用红绿合法性提示，同时显示模块真实贴图；新增回归覆盖模块贴图数据链、Runtime 视觉与编辑器 weapon base/turret 预览。
@@ -44,7 +44,9 @@
 - AI 距离与转向参数仍为 Prototype 参数；武器射程 / 射速 / 转速 / 弹速 / 开火角容差已进入 Excel。
 - 现有炮塔仍可全周旋转；正式射界、引擎喷射空间、全项目阵营数据尚未实现；本场碰撞层已避免己方误伤。
 - 单场胜负结算已实现；存档仍仅保存设计，同场战损跨波次保留，但不写回设计。
-- 继续保留模块可分离、不相邻、不连通和任意空格的规则。
+- Hull Layout 当前仍允许不相邻、不连通与任意空格；Equipment 必须完整覆盖在现有 Hull Cell 上。
+- 第一版 Hull Cell 固定使用 basic_hull：max_hp = 20、mass = 2；Hull 类型、装甲升级与船体扩展奖励尚未进入正式数据表。
+- ModuleDefinition.hp / Excel hp 字段暂保留用于旧数据兼容，但当前战斗耐久不再读取该字段。
 
 验证：
 python3 tools/verify_project.py --godot /path/to/godot
