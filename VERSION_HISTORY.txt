@@ -18,6 +18,39 @@
 
 
 ========================================
+v0.31.7
+========================================
+
+新增：
+- 新增 game/ship/art/module_art_library.gd，建立 1×1 模块统一贴图加载入口。
+- 新增 game/ship/art/README.txt，定义首批模块美术资源命名和职责边界。
+- 普通 1×1 模块按 res://game/ship/art/modules/{module_id}.png 自动加载。
+- 武器 1×1 模块从现在开始正式拆为两层：{module_id}_base.png + {module_id}_turret.png。
+
+调整：
+- ShipModuleRuntime 可创建 Sprite2D 显示普通模块贴图或武器底座；普通模块按 rotation_quarters 旋转，武器底座不参与独立炮塔瞄准旋转。
+- WeaponRuntime 新增独立 turret Sprite2D；炮塔节点沿用现有 rotation / global_rotation 自动瞄准逻辑，因此视觉朝向与实际炮塔瞄准保持一致。
+- ShipGridView 在编辑器中支持 1×1 模块贴图；武器同时绘制 base 与 turret，turret 使用 rotation_quarters 表示设计初始朝向。
+- RuntimeShip 在已有贴图时不再重复绘制对应纯色模块块；无贴图模块继续沿用旧绘制。
+- 模块 destroyed 时，有贴图的 ShipModuleRuntime 使用程序灰化；无需额外 destroyed PNG。
+- 武器 base / turret 各自独立 fallback：缺底座图仍显示旧模块色块，缺炮塔图仍显示白色圆心 + 炮管线。
+
+资源约定：
+- 首批目标资源：energy_smallreactor.png、propulsion_smallengine.png、defense_lightarmor.png、function_radar.png、core_bridge.png。
+- weapon_cannon 使用 weapon_cannon_base.png 与 weapon_cannon_turret.png。
+- 当前仓库仅完成代码与目录约定，PNG 美术资源尚未加入。
+
+兼容性：
+- 不新增 Excel / JSON / .tres 贴图字段。
+- 不修改 ShipSerializer 或设计存档格式。
+- 不改变模块占格、碰撞、HP、供电、武器数值、自动瞄准和弹丸逻辑。
+- 当前只启用 1×1 模块贴图；1×2 / 2×2 后续沿用同一 ModuleArtLibrary 结构继续扩展。
+
+验证：
+- 编辑器贴图 / 武器分层、Runtime 贴图优先与 fallback、WeaponRuntime 炮塔分层相关提交均通过现有 GitHub Actions Project checks。
+
+
+========================================
 v0.31.6
 ========================================
 
