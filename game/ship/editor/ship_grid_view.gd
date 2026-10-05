@@ -306,6 +306,15 @@ func _draw_module_fallback(module: ShipModuleInstance, rect: Rect2) -> void:
 		Color("#101319")
 	)
 
+func get_preview_textures(definition: ShipModuleDefinition) -> Dictionary:
+	if definition == null:
+		return {"base": null, "turret": null}
+	return {
+		"base": ModuleArtLibrary.get_base_texture(definition),
+		"turret": ModuleArtLibrary.get_turret_texture(definition)
+	}
+
+
 func _draw_module_preview(
 	definition: ShipModuleDefinition,
 	rect: Rect2,
@@ -326,8 +335,9 @@ func _draw_module_preview(
 		else Color(0.95, 0.25, 0.25, 0.95)
 	)
 	var rotation_radians := float(rotation_quarters_value) * PI * 0.5
+	var textures := get_preview_textures(definition)
 
-	var base_texture := ModuleArtLibrary.get_base_texture(definition)
+	var base_texture: Texture2D = textures["base"]
 	if base_texture != null:
 		var base_rotation := rotation_radians
 		if definition is WeaponModuleDefinition:
@@ -335,7 +345,7 @@ func _draw_module_preview(
 		_draw_module_texture(base_texture, rect, base_rotation)
 
 	if definition is WeaponModuleDefinition:
-		var turret_texture := ModuleArtLibrary.get_turret_texture(definition)
+		var turret_texture: Texture2D = textures["turret"]
 		if turret_texture != null:
 			_draw_module_texture(turret_texture, rect, rotation_radians)
 		else:
