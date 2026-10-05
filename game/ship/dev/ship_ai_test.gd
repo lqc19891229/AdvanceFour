@@ -37,8 +37,16 @@ func _ready() -> void:
 	player.destroyed.connect(_on_player_destroyed)
 	player.projectile_hit.connect(func(_target: Node2D, _damage: float): player_hits += 1)
 
-	# This opponent copies the layout for system testing; it is not a production enemy blueprint.
-	enemy = _spawn_ship(design, Vector2(560.0, -120.0), &"enemy_targets", &"player_targets")
+	# This opponent copies the layout for system testing, but must own independent Hull HP.
+	var enemy_copy_result := ShipSerializer.from_dictionary(
+		ShipSerializer.to_dictionary(design),
+		MODULE_DATABASE
+	)
+	if not enemy_copy_result["ok"]:
+		_show_load_error(enemy_copy_result["error"])
+		return
+	var enemy_design := enemy_copy_result["ship"] as ShipData
+	enemy = _spawn_ship(enemy_design, Vector2(560.0, -120.0), &"enemy_targets", &"player_targets")
 	ai = AIShipController.new()
 	enemy.add_child(ai)
 	ai.setup(enemy)
