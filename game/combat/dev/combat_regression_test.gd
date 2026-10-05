@@ -161,7 +161,7 @@ func _test_waves_and_victory() -> void:
 	_check(await _wait_until(func(): return battle.spawned_in_wave == 2), "Remaining enemy must spawn on schedule")
 	_silence(battle.enemies[0])
 	_check(is_equal_approx(_core_cell(battle.player).current_hp, 19.0), "Local Hull damage must persist across waves")
-	_check(battle.hud.text.contains("舰桥 HP") and battle.hud.text.contains("场上敌舰"), "HUD must expose local core HP and wave enemies")
+	_check(battle.hud.text.contains("Hull HP") and battle.hud.text.contains("场上敌舰"), "HUD must expose Hull durability and wave enemies")
 	# A real emitted projectile lives after its firing ship is killed.
 	var enemy := battle.enemies[0]
 	var weapon := enemy.weapon_runtimes[0]
@@ -195,10 +195,15 @@ func _test_late_projectile_and_failure() -> void:
 	await _wait_until(func(): return battle.enemies.size() == 1)
 	var enemy := battle.enemies[0]
 	_silence(enemy)
-	battle.player.apply_hull_projectile_damage(_core_cell(battle.player), 16.0)
+	var player_core_cells := _core_cells(battle.player)
+	for index in range(player_core_cells.size() - 1):
+		battle.player.apply_hull_projectile_damage(player_core_cells[index], 1000.0)
+	var final_core_cell := player_core_cells[player_core_cells.size() - 1]
+	battle.player.apply_hull_projectile_damage(final_core_cell, 16.0)
+	var final_core_runtime := battle.player.get_hull_runtime(final_core_cell)
 	var weapon := enemy.weapon_runtimes[0]
-	# Avoid the player's forward weapon: this ray hits its exposed core directly.
-	weapon.global_position = _core_runtime(battle.player).global_position + Vector2(18.0, -100.0)
+	# The last airborne shot destroys the final surviving Core-supporting Hull cell.
+	weapon.global_position = final_core_runtime.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = PI
 	enemy.request_fire()
 	_kill(enemy)
