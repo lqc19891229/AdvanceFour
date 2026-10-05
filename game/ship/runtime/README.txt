@@ -38,6 +38,12 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 的 0° 舰首方向定义为屏幕上方 Vector2.UP。
 - throttle > 0 时沿舰首方向推进。
 - throttle < 0 时沿舰尾方向倒车，当前倒车推力为前进推力的 50%。
+- 当前保留惯性方向：转向只改变舰首方向，不会自动把现有 velocity 旋转到舰首。
+- 最高速度 = effective_thrust / 总质量 × speed_scale，当前 speed_scale = 500.0。
+- 加速度 = effective_thrust / 总质量 × acceleration_scale，当前 acceleration_scale = 200.0。
+- 松开推进输入后，减速度 = effective_thrust / 总质量 × deceleration_scale，当前 deceleration_scale = 300.0。
+- drag 不再负责形成稳定极速；velocity 超过当前 get_max_speed() 时直接限制到该速度。
+- 动力模块损坏或断电会降低 effective_thrust，因此最高速度、加速度和减速度都会随之下降。
 - turn < 0 左转，turn > 0 右转。
 - 当前转向速度为基础运行参数，尚未由具体转向模块或质量分布计算。
 
@@ -97,6 +103,8 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - get_powered_energy_cost() 返回当前实际已分配给 powered 模块的耗能；get_powered_module_count() 返回当前已供电模块数量。
 - WeaponRuntime powered 状态来自其对应模块的 is_module_powered()，因此能源不足时只关闭未获供电的武器，而不是全部武器统一断电。
 - get_effective_thrust() 只统计“未 destroyed 且已供电”的动力模块；get_effective_acceleration_score() = effective_thrust / 总质量。
+- get_max_speed() = get_effective_acceleration_score() × speed_scale；get_acceleration() 与 get_deceleration() 分别使用 acceleration_scale / deceleration_scale。
+- estimate_design_top_speed(design) 使用完整、未损坏设计的 get_acceleration_score() × speed_scale，供编辑器显示预计最高速度。
 - get_aim_point(from_world_position) 会从未 destroyed 的 ShipModuleRuntime 中选择距离炮塔最近的模块中心作为瞄准点。
 - has_operational_modules() 用于让 WeaponRuntime 判断目标飞船是否还有可攻击模块。
 - 核心模块 destroyed 时，RuntimeShip 会先发出 module_destroyed，再进入 removed_from_battle 状态；造成该次核心摧毁的 Projectile 检测到 removed_from_battle 后立即结束，不再继续穿透该船其他模块。
