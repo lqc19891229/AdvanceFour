@@ -169,9 +169,9 @@ func _refresh_stats() -> void:
 		var runtime := RUNTIME_SCENE.instantiate() as ShipRuntime
 		var speed := runtime.estimate_design_top_speed(s)
 		runtime.free()
-		speed_text = "无上限（无阻力）" if is_inf(speed) else "%.1f px/s" % speed
+		speed_text = "%.1f px/s" % speed
 	speed_label.text = "预计最高速度：%s" % speed_text
-	speed_label.tooltip_text = "完整耐久、供能充足、持续直线全速推进时的稳定航速。\n战损、转向和倒车会影响实际速度。"
+	speed_label.tooltip_text = "完整耐久、供能充足时，最高速度 = 推重比 × speed_scale。\n战损或断电会降低有效推力，从而降低最高速度和加速度。"
 
 	var selected_details := _build_installed_module_details(grid.selected_module)
 	stats_label.text = """%s
