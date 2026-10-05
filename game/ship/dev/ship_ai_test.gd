@@ -61,12 +61,20 @@ func _spawn_ship(data: ShipData, spawn_position: Vector2, own_group: StringName,
 
 func _build_sample_design() -> ShipData:
 	var design := ShipData.new()
-	design.place(MODULE_DATABASE.get_by_id(&"core_bridge"), Vector2i.ZERO, 0)
-	design.place(MODULE_DATABASE.get_by_id(&"energy_smallreactor"), Vector2i(-1, 1), 0)
-	design.place(MODULE_DATABASE.get_by_id(&"energy_smallreactor"), Vector2i(2, 1), 0)
-	design.place(MODULE_DATABASE.get_by_id(&"propulsion_smallengine"), Vector2i(0, 2), 0)
-	design.place(MODULE_DATABASE.get_by_id(&"propulsion_smallengine"), Vector2i(1, 2), 0)
-	design.place(MODULE_DATABASE.get_by_id(&"weapon_cannon"), Vector2i(0, -1), 0)
+	var placements := [
+		[&"core_bridge", Vector2i.ZERO, 0],
+		[&"energy_smallreactor", Vector2i(-1, 1), 0],
+		[&"energy_smallreactor", Vector2i(2, 1), 0],
+		[&"propulsion_smallengine", Vector2i(0, 2), 0],
+		[&"propulsion_smallengine", Vector2i(1, 2), 0],
+		[&"weapon_cannon", Vector2i(0, -1), 0]
+	]
+	for placement in placements:
+		var definition := MODULE_DATABASE.get_by_id(placement[0])
+		var position: Vector2i = placement[1]
+		var rotation: int = placement[2]
+		design.ensure_hull_for_equipment(definition, position, rotation)
+		design.place(definition, position, rotation)
 	return design
 
 func _process(_delta: float) -> void:
@@ -109,7 +117,7 @@ R：重开测试   Esc：返回编辑器
 玩家命中：%d   敌舰命中：%d
 
 敌舰转向追踪玩家，接近后保持距离，过近时倒车。
-双方武器自动开火；模块损伤、能源分配与核心摧毁共用现有规则。
+双方武器自动开火；Hull 局部损伤会降低对应设备效率；能源分配与核心失效共用正式规则。
 本场是系统测试，不包含奖励、波次或正式阵营规则。""" % [
 		design_source, battle_status,
 		"存活" if player_alive else "已移除", "存活" if enemy_alive else "已移除",
