@@ -16,9 +16,7 @@ enum ModuleType {
 @export var module_type: ModuleType = ModuleType.FUNCTION
 @export_multiline var description: String = ""
 @export var size: Vector2i = Vector2i.ONE
-@export var mass: float = 0.0
 @export var energy_cost: float = 0.0
-@export var hp: float = 20.0
 
 @export_group("美术资源")
 @export var texture: Texture2D
