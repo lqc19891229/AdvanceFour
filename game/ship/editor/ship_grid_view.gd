@@ -246,7 +246,8 @@ func _draw_module(module: ShipModuleInstance) -> void:
 		grid_to_screen(module.grid_position),
 		Vector2(module.get_rotated_size()) * CELL_SIZE
 	)
-	var used_texture := false
+
+	var base_drawn := false
 	if module.definition != null and module.definition.size == Vector2i.ONE:
 		var base_texture := ModuleArtLibrary.get_base_texture(module.definition)
 		if base_texture != null:
@@ -254,20 +255,21 @@ func _draw_module(module: ShipModuleInstance) -> void:
 			if not (module.definition is WeaponModuleDefinition):
 				base_rotation = float(module.rotation_quarters) * PI * 0.5
 			_draw_module_texture(base_texture, rect, base_rotation)
-			used_texture = true
+			base_drawn = true
 
-		if module.definition is WeaponModuleDefinition:
-			var turret_texture := ModuleArtLibrary.get_turret_texture(module.definition)
-			if turret_texture != null:
-				_draw_module_texture(
-					turret_texture,
-					rect,
-					float(module.rotation_quarters) * PI * 0.5
-				)
-				used_texture = true
-
-	if not used_texture:
+	if not base_drawn:
 		_draw_module_fallback(module, rect)
+
+	if (
+		module.definition is WeaponModuleDefinition
+		and module.definition.size == Vector2i.ONE
+	):
+		var turret_rotation := float(module.rotation_quarters) * PI * 0.5
+		var turret_texture := ModuleArtLibrary.get_turret_texture(module.definition)
+		if turret_texture != null:
+			_draw_module_texture(turret_texture, rect, turret_rotation)
+		else:
+			_draw_weapon_turret_fallback(rect, turret_rotation)
 
 	if module == selected_module:
 		draw_rect(rect.grow(-1), Color.WHITE, false, 3.0)
@@ -284,6 +286,12 @@ func _draw_module_texture(
 		Rect2(-target_rect.size * 0.5, target_rect.size),
 		false
 	)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_weapon_turret_fallback(rect: Rect2, rotation_radians: float) -> void:
+	draw_set_transform(rect.get_center(), rotation_radians, Vector2.ONE)
+	draw_circle(Vector2.ZERO, 4.0, Color.WHITE, false, 1.0)
+	draw_line(Vector2.ZERO, Vector2.UP * 16.0, Color.WHITE, 2.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_module_fallback(module: ShipModuleInstance, rect: Rect2) -> void:
