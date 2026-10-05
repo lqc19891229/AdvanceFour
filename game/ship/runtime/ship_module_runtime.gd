@@ -12,11 +12,14 @@ func setup(
 ) -> void:
 	module_instance = module
 	position = local_position
+	z_index = EquipmentAppearancePolicy.get_layer(module.definition)
 	_build_visual(pixel_size)
 	set_efficiency(1.0)
 
 func _build_visual(pixel_size: Vector2) -> void:
 	if module_instance == null or module_instance.definition == null:
+		return
+	if not EquipmentAppearancePolicy.should_show(module_instance.definition):
 		return
 	var texture := ModuleArtLibrary.get_base_texture(module_instance.definition)
 	if texture == null:
