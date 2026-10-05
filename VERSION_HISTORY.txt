@@ -18,6 +18,43 @@
 
 
 ========================================
+v0.31.9
+========================================
+
+结构：
+- 飞船数据正式拆分为 Hull Layout + Equipment 两层。
+- 新增 ShipHullCell：每个船体格独立保存 grid_position、hull_type、max_hp、current_hp 与 mass。
+- ShipData 新增 hull_cells；Equipment 仍使用 ShipModuleInstance，但只能完整安装在已存在的 Hull Cell 上。
+- ShipSerializer 升级为格式 v2，同时保存 hull_cells 与 modules；读取旧 v1 存档时会按旧模块占格自动补齐 basic_hull，保持兼容。
+
+战斗：
+- 新增 HullCellRuntime，独立 Hull Cell 负责碰撞与承伤；ShipModuleRuntime 改为 Equipment 视觉节点，不再保存 DamageReceiver / 独立 HP。
+- Projectile swept ray 直接命中 HullCellRuntime，并继续保留 overkill 穿透。
+- Equipment 效率 = 所覆盖 Hull Cell 健康度百分比的平均值。
+- Energy 输出、Propulsion 推力、Defense protection 与 Weapon 性能会随 Equipment efficiency 下降。
+- Weapon 当前按 efficiency 缩放单发火力、炮塔转速与射速；Hull 全毁导致 efficiency = 0 后武器停止工作。
+- Core Equipment 覆盖的 Hull Cell 全部损毁后整船退出战斗。
+- 自动瞄准改为寻找距离炮塔最近的存活 Hull Cell，而不是模块碰撞体。
+- 第一版 basic_hull 固定 max_hp = 20、mass = 2；ModuleDefinition.hp 暂保留兼容，但不再参与战斗耐久计算。
+
+编辑器：
+- 左侧新增“船体｜基础船体格”，可独立铺设 Hull Layout。
+- Equipment 预览继续使用红 / 绿合法性提示；设备若超出 Hull Layout 会显示不可安装。
+- 右键优先拆 Equipment；空 Hull 格右键可拆船体，已有 Equipment 的 Hull 格不可直接拆除。
+- 飞船汇总新增 Hull 格数量、Hull HP、Hull 质量与 Equipment 质量。
+- Equipment tooltip / 详情不再把 ModuleDefinition.hp 当作实际战斗 HP。
+
+验证：
+- ship_regression 覆盖 Hull 独立承伤、Equipment efficiency、动力失效、Hull/Equipment 编辑限制与存档迁移后的运行行为。
+- combat_regression 改为验证 Core 多 Hull Cell 战损、友军碰撞过滤、迟到弹丸致败与重开恢复 Hull HP。
+- Godot 4.6.1 GitHub Actions Project checks 通过。
+
+兼容性：
+- Excel 与 generated ModuleDefinition 目前仍保留 hp 字段，作为旧数据兼容字段；运行时不再读取。
+- 武器、供电、移动、弹丸射程和贴图数据链保持原有来源。
+
+
+========================================
 v0.31.8
 ========================================
 
