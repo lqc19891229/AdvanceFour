@@ -30,9 +30,9 @@ const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tsc
 const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile_runtime.tscn")
 
 @export var cell_size := 36.0
-@export var speed_scale := 500.0
-@export var acceleration_scale := 200.0
-@export var deceleration_scale := 300.0
+@export var speed_scale := 2.5
+@export var acceleration_scale := 1.0
+@export var deceleration_scale := 1.5
 @export var turn_speed_degrees := 120.0
 @export var reverse_thrust_ratio := 0.5
 @export var weapon_target_group: StringName = &"enemy_targets"
@@ -236,10 +236,8 @@ func get_effective_thrust() -> float:
 	return total
 
 func get_effective_acceleration_score() -> float:
-	if ship_data == null:
-		return 0.0
-	var mass := ship_data.get_mass()
-	return 0.0 if mass <= 0.0 else get_effective_thrust() / mass
+	# Movement is intentionally thrust-only; Hull size and Equipment do not add movement mass.
+	return get_effective_thrust()
 
 func is_removed_from_battle() -> bool:
 	return removed_from_battle
@@ -257,7 +255,7 @@ func get_deceleration() -> float:
 	return get_effective_acceleration_score() * deceleration_scale
 
 func estimate_design_top_speed(design: ShipData) -> float:
-	return design.get_acceleration_score() * speed_scale
+	return 0.0 if design == null else design.get_thrust() * speed_scale
 
 func get_heading_degrees() -> float:
 	return wrapf(rad_to_deg(rotation), 0.0, 360.0)
@@ -280,14 +278,24 @@ func apply_hull_projectile_damage(hull_cell: ShipHullCell, amount: float) -> flo
 
 	var protection := get_effective_protection()
 	var damage_after_protection := incoming * (1.0 - protection / 100.0)
-	var hp_before := hull_cell.current_hp
-	var leftover := hull_cell.apply_damage(damage_after_protection)
-	var actual_damage := maxf(hp_before - hull_cell.current_hp, 0.0)
+	var effective_max_hp := ship_data.get_hull_cell_effective_max_hp(hull_cell)
+	var effective_hp_before := ship_data.get_hull_cell_effective_hp(hull_cell)
+	var base_max_hp := maxf(hull_cell.max_hp, 0.0)
+
+	var leftover := damage_after_protection
+	if effective_max_hp > 0.0 and base_max_hp > 0.0:
+		var hp_scale := effective_max_hp / base_max_hp
+		var base_damage := damage_after_protection / hp_scale
+		var base_leftover := hull_cell.apply_damage(base_damage)
+		leftover = base_leftover * hp_scale
+
+	var effective_hp_after := ship_data.get_hull_cell_effective_hp(hull_cell)
+	var actual_damage := maxf(effective_hp_before - effective_hp_after, 0.0)
 
 	var runtime := get_hull_runtime(hull_cell)
 	if runtime != null:
 		runtime.notify_damage(actual_damage)
-	hull_cell_damaged.emit(hull_cell, actual_damage, hull_cell.current_hp)
+	hull_cell_damaged.emit(hull_cell, actual_damage, effective_hp_after)
 
 	_refresh_equipment_state()
 	queue_redraw()
