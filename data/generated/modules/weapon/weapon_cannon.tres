@@ -1,23 +1,17 @@
 [gd_resource type="Resource" script_class="WeaponModuleDefinition" format=3 uid="uid://ot83omrw2h2b"]
 
-[ext_resource type="Script" uid="uid://cieg7176rd0wq" path="res://game/ship/definitions/weapon_module_definition.gd" id="1_ph2d0"]
-[ext_resource type="Texture2D" path="res://game/ship/art/modules/weapon_cannon_base.png" id="2_texture"]
-[ext_resource type="Texture2D" path="res://game/ship/art/modules/weapon_cannon_turret.png" id="3_turret_texture"]
+[ext_resource type="Script" uid="uid://cieg7176rd0wq" path="res://game/ship/definitions/weapon_module_definition.gd" id="1_goo5u"]
+[ext_resource type="Texture2D" uid="uid://c2yqqkm258euh" path="res://game/ship/art/modules/weapon_cannon_base.png" id="2_nwnyw"]
+[ext_resource type="Texture2D" uid="uid://c0m11ukfvmfhh" path="res://game/ship/art/modules/weapon_cannon_turret.png" id="3_iy0da"]
 
 [resource]
-script = ExtResource("1_ph2d0")
-texture = ExtResource("2_texture")
-turret_texture = ExtResource("3_turret_texture")
+script = ExtResource("1_goo5u")
 firepower = 5.0
-attack_range = 500.0
-fire_interval = 0.5
-turn_speed_degrees = 180.0
-projectile_speed = 700.0
-fire_angle_tolerance_degrees = 6.0
+turret_texture = ExtResource("3_iy0da")
 id = &"weapon_cannon"
 display_name = "机炮"
 module_type = 2
 description = "基础武器模块，提供稳定的常规火力。"
 mass = 5.0
 energy_cost = 5.0
-hp = 20.0
+texture = ExtResource("2_nwnyw")

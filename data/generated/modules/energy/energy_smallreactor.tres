@@ -1,15 +1,14 @@
 [gd_resource type="Resource" script_class="EnergyModuleDefinition" format=3 uid="uid://cmcvn2lj2g03n"]
 
-[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://game/ship/definitions/energy_module_definition.gd" id="1_1dcru"]
-[ext_resource type="Texture2D" path="res://game/ship/art/modules/energy_smallreactor.png" id="2_texture"]
+[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://game/ship/definitions/energy_module_definition.gd" id="1_qc0em"]
+[ext_resource type="Texture2D" uid="uid://dpfiyc0mafs0g" path="res://game/ship/art/modules/energy_smallreactor.png" id="2_bvuiq"]
 
 [resource]
-script = ExtResource("1_1dcru")
-texture = ExtResource("2_texture")
+script = ExtResource("1_qc0em")
 energy_output = 20.0
 id = &"energy_smallreactor"
 display_name = "小型反应堆"
 module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
 mass = 10.0
-hp = 20.0
+texture = ExtResource("2_bvuiq")
