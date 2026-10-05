@@ -7,7 +7,7 @@
 当前文件：
 - ship_runtime.tscn：运行时飞船场景。
 - ship_runtime.gd：运行时飞船逻辑，负责持有 ShipData、绘制模块、速度、朝向、转向、推进、创建 WeaponRuntime / ProjectileRuntime，并为每个模块创建 ShipModuleRuntime。
-- ship_module_runtime.gd：单个 ShipModuleInstance 的运行时受击对象，包含独立碰撞体和 DamageReceiver。
+- ship_module_runtime.gd：单个 ShipModuleInstance 的运行时对象，包含独立碰撞体、DamageReceiver，以及可选的 1×1 模块基础贴图。
 - SHIP_MODULE_RUNTIME_README.txt：模块运行时受击结构说明。
 
 核心关系：
@@ -24,7 +24,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - RuntimeShip 不读取 JSON，不负责存档。
 - RuntimeShip 不硬编码玩家按键；当前 PlayerShipController 已通过统一接口驱动 RuntimeShip，后续 AI 也可复用同一接口。
 - RuntimeShip 不复制 ShipData.modules；结构与模块属性始终以 ShipData 为数据来源。
-- 当前包含模块绘制、移动、自动炮塔、Projectile，以及每模块独立碰撞 / HP / damaged / destroyed 事件。
+- 当前包含模块绘制、移动、自动炮塔、Projectile，以及每模块独立碰撞 / HP / damaged / destroyed 事件；1×1 模块优先使用 ModuleArtLibrary 贴图，缺图时回退为旧色块。
 - 当前武器模块 destroyed 会停用对应 WeaponRuntime；动力模块 destroyed 会从运行时有效推力中移除；能源模块 destroyed 会降低运行时有效供能；核心模块 destroyed 会让整个 RuntimeShip 从战斗场景移除。
 
 飞船结构原则：
@@ -60,6 +60,9 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 
 
 武器运行时：
+- 1×1 武器视觉拆为两层：ShipModuleRuntime 显示 {module_id}_base.png 底座，WeaponRuntime 显示 {module_id}_turret.png 炮塔。
+- 底座不参与独立瞄准旋转；炮塔节点沿用 WeaponRuntime 自身 rotation，因此会从 rotation_quarters 初始朝向开始自动转向目标。
+- 任一武器贴图缺失时该层独立回退，不影响武器逻辑。
 - setup(ship_data) 时会扫描 ShipData.modules，为每个 WeaponModuleDefinition 对应的模块创建一个 WeaponRuntime。
 - WeaponRuntime 的局部位置取该模块几何中心，并使用与舰桥核心相同的 local_origin_offset 坐标换算。
 - RuntimeShip.weapon_target_group 指定该飞船武器要搜索的目标组，默认 enemy_targets。
@@ -84,7 +87,7 @@ ShipRuntime = 使用 ShipData 在游戏场景中实际运行的 Node2D。
 - 每个模块都有独立 DamageReceiver 和独立 HP。
 - RuntimeShip.get_module_max_hp(module) 直接读取 module.definition.hp；DefenseModuleDefinition.protection 不增加最大 HP。
 - 模块之间允许空格；空格不会生成碰撞体。
-- 模块 destroyed 后碰撞体会 deferred 禁用，RuntimeShip 将该模块绘制为深灰色。
+- 模块 destroyed 后碰撞体会 deferred 禁用；有 Sprite2D 贴图的模块会程序灰化，无贴图模块继续使用深灰色 fallback。
 - 防护模块采用“实体掩体 + 百分比减伤”语义：Projectile 先撞到弹道上的前方装甲，先执行 protection_percent = clamp(protection, 0, 100)，再计算 damage_after_protection = incoming_damage * (1 - protection_percent / 100)。
 - protection 是每次命中该 Defense 模块时生效的百分比减伤值；例如 protection = 5 表示减伤 5%。它不是额外 HP，也不会因承受伤害而消耗。
 - 对所有 ShipModuleRuntime，实际进入 HP 的伤害都是 damage_after_protection；非 Defense 模块 protection = 0，因此等于原始 incoming_damage。protection 运行时按 0%~100% clamp。
