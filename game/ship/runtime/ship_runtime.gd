@@ -154,6 +154,10 @@ func get_aim_point(from_world_position: Vector2) -> Vector2:
 func get_current_hull_hp() -> float:
 	return 0.0 if ship_data == null else ship_data.get_total_hull_hp()
 
+func get_core_efficiency() -> float:
+	var core := _get_core_module()
+	return 0.0 if core == null else get_module_efficiency(core)
+
 func get_max_hull_hp() -> float:
 	return 0.0 if ship_data == null else ship_data.get_total_hull_max_hp()
 
