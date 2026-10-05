@@ -3,6 +3,7 @@
 用途：所有“飞船”相关的核心代码。
 
 子目录：
+- art/：模块贴图、武器底座 / 炮塔分层资源及统一加载规则。
 - definitions/：模块定义 Resource 类，描述“某种模块是什么”。
 - data/：ShipData、ModuleInstance、ModuleDatabase 等运行数据结构。
 - editor/：玩家拼装飞船使用的编辑器场景与逻辑。
@@ -40,6 +41,12 @@ ShipModuleRuntime = 单个 ShipModuleInstance 的运行时碰撞与 HP 对象
 - 移动保留惯性方向；转向只改变舰首方向。速度超过当前 get_max_speed() 时直接限制，不再依赖 drag 形成稳态极速。
 - 动力模块被摧毁或失去供电会同步降低最高速度、加速度和减速度。
 
+
+模块视觉规则：
+- 首批 1×1 模块通过 ModuleArtLibrary 按 module_id 自动读取贴图，不修改 Excel / JSON / .tres / 存档格式。
+- 普通模块使用 {module_id}.png；武器固定拆为 {module_id}_base.png + {module_id}_turret.png。
+- Weapon base 属于 ShipModuleRuntime，turret 属于 WeaponRuntime；因此船体旋转与炮塔瞄准保持职责分离。
+- 贴图缺失时自动回退旧 Prototype 绘制，允许美术资源逐张补齐。
 
 武器运行时规则：
 - RuntimeShip 根据 ShipData 中的 WeaponModuleDefinition 自动创建 WeaponRuntime。
