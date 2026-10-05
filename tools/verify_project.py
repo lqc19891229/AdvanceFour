@@ -45,6 +45,28 @@ def main() -> int:
         if parsed != cached:
             raise RuntimeError("Excel source differs from modules.json; run the data importer")
         print("Workbook archive and source/cache parity: OK")
+
+        database_text = (ROOT / "data/generated/module_database.tres").read_text(encoding="utf-8")
+        for module in parsed["modules"]:
+            folder = module["module_type"].lower()
+            resource_path = ROOT / "data/generated/modules" / folder / f"{module['id']}.tres"
+            if not resource_path.exists():
+                raise RuntimeError(f"Generated module resource is missing: {resource_path.relative_to(ROOT)}")
+            resource_text = resource_path.read_text(encoding="utf-8")
+            texture_paths = [module["texture_path"]]
+            if module["module_type"] == "WEAPON":
+                texture_paths.append(module["turret_texture_path"])
+            for texture_path in texture_paths:
+                if texture_path not in resource_text:
+                    raise RuntimeError(
+                        f"Generated resource {resource_path.relative_to(ROOT)} does not reference {texture_path}"
+                    )
+                if texture_path not in database_text:
+                    raise RuntimeError(
+                        f"ModuleDatabase does not reference generated texture {texture_path}"
+                    )
+        print("Generated module texture references: OK")
+
         run([args.godot, "--headless", "--editor", "--path", str(ROOT), "--import"], environment)
         for label, script in [
             ("Ship", "game/ship/dev/ship_regression_test.gd"),
