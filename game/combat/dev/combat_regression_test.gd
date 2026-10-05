@@ -42,14 +42,35 @@ func _silence(ship: ShipRuntime) -> void:
 	for weapon in ship.weapon_runtimes:
 		weapon.set_physics_process(false)
 
-func _core(ship: ShipRuntime) -> ShipModuleRuntime:
-	for module in ship.module_runtimes:
-		if module.module_instance.definition is CoreModuleDefinition:
+func _core_module(ship: ShipRuntime) -> ShipModuleInstance:
+	for module in ship.ship_data.modules:
+		if module.definition is CoreModuleDefinition:
 			return module
 	return null
 
+func _core_cells(ship: ShipRuntime) -> Array[ShipHullCell]:
+	var result: Array[ShipHullCell] = []
+	var core := _core_module(ship)
+	if core == null:
+		return result
+	for position in core.get_cells():
+		var cell := ship.ship_data.get_hull_cell_at(position)
+		if cell != null:
+			result.append(cell)
+	return result
+
+func _core_cell(ship: ShipRuntime) -> ShipHullCell:
+	var cells := _core_cells(ship)
+	return null if cells.is_empty() else cells[0]
+
+func _core_runtime(ship: ShipRuntime) -> HullCellRuntime:
+	var cell := _core_cell(ship)
+	return null if cell == null else ship.get_hull_runtime(cell)
+
 func _kill(ship: ShipRuntime) -> void:
-	_core(ship).apply_damage(1000.0)
+	for cell in _core_cells(ship):
+		if is_instance_valid(ship):
+			ship.apply_hull_projectile_damage(cell, 1000.0)
 
 func _run() -> void:
 	var had_save := FileAccess.file_exists(SAVE_PATH)
@@ -128,7 +149,7 @@ func _test_waves_and_victory() -> void:
 	_check(battle.player.ship_data.is_design_valid(), "No-save battle must load a valid fallback")
 	_check(await _wait_until(func(): return battle.enemies.size() == 1), "First wave must spawn after the preparation timer")
 	_silence(battle.enemies[0])
-	_core(battle.player).apply_damage(1.0)
+	battle.player.apply_hull_projectile_damage(_core_cell(battle.player), 1.0)
 	_kill(battle.enemies[0])
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.INTERMISSION), "Cleared early wave must enter intermission")
 	_check(outcomes.is_empty() and battle.defeated_enemies == 1, "Intermediate clearance must not award victory")
@@ -139,7 +160,7 @@ func _test_waves_and_victory() -> void:
 	_check(battle.phase == Battle.Phase.FIGHTING and battle.spawned_in_wave == 1, "Queued enemies must prevent early wave completion")
 	_check(await _wait_until(func(): return battle.spawned_in_wave == 2), "Remaining enemy must spawn on schedule")
 	_silence(battle.enemies[0])
-	_check(is_equal_approx(_core(battle.player).get_hp(), 19.0), "Player module damage must persist across waves")
+	_check(is_equal_approx(_core_cell(battle.player).current_hp, 19.0), "Local Hull damage must persist across waves")
 	_check(battle.hud.text.contains("舰桥 HP") and battle.hud.text.contains("场上敌舰"), "HUD must expose local core HP and wave enemies")
 	# A real emitted projectile lives after its firing ship is killed.
 	var enemy := battle.enemies[0]
@@ -174,10 +195,10 @@ func _test_late_projectile_and_failure() -> void:
 	await _wait_until(func(): return battle.enemies.size() == 1)
 	var enemy := battle.enemies[0]
 	_silence(enemy)
-	_core(battle.player).apply_damage(16.0)
+	battle.player.apply_hull_projectile_damage(_core_cell(battle.player), 16.0)
 	var weapon := enemy.weapon_runtimes[0]
 	# Avoid the player's forward weapon: this ray hits its exposed core directly.
-	weapon.global_position = _core(battle.player).global_position + Vector2(18.0, -100.0)
+	weapon.global_position = _core_runtime(battle.player).global_position + Vector2(18.0, -100.0)
 	weapon.global_rotation = PI
 	enemy.request_fire()
 	_kill(enemy)
@@ -198,19 +219,19 @@ func _test_friendly_fire() -> void:
 	var ally := battle.enemies[1]
 	_silence(shooter)
 	_silence(ally)
-	var hp_before := _core(ally).get_hp()
+	var hp_before := _core_cell(ally).current_hp
 	var weapon := shooter.weapon_runtimes[0]
-	weapon.global_position = _core(ally).global_position + Vector2(18.0, -100.0)
+	weapon.global_position = _core_runtime(ally).global_position + Vector2(18.0, -100.0)
 	weapon.global_rotation = PI
 	shooter.request_fire()
 	for frame in range(20):
 		await physics_frame
-	_check(_core(ally).get_hp() == hp_before, "Enemy shots must pass through allied modules without friendly damage")
+	_check(_core_cell(ally).current_hp == hp_before, "Enemy shots must pass through allied Hull without friendly damage")
 	weapon = battle.player.weapon_runtimes[0]
 	weapon.global_position = _core(ally).global_position + Vector2(18.0, -100.0)
 	weapon.global_rotation = PI
 	battle.player.request_fire()
-	_check(await _wait_until(func(): return _core(ally).get_hp() < hp_before), "Player shots must hit the same opposing module through battle masks")
+	_check(await _wait_until(func(): return _core_cell(ally).current_hp < hp_before), "Player shots must hit the same opposing Hull through battle masks")
 	# Destroy both sides before resolution in one frame: failure takes precedence.
 	_kill(shooter)
 	_kill(ally)
@@ -250,7 +271,7 @@ func _test_editor_roundtrip() -> void:
 	battle.get_node(CONTENT + "Retry").pressed.emit()
 	await scene_changed
 	_check(current_scene is Battle and current_scene.phase == Battle.Phase.PREPARING, "Result retry button must start a fresh encounter")
-	_check(is_equal_approx(_core(current_scene.player).get_hp(), 20.0), "Retry must restore module HP from the saved design")
+	_check(is_equal_approx(_core_cell(current_scene.player).current_hp, 20.0), "Retry must restore Hull HP from the saved design")
 	_kill(current_scene.player)
 	current_scene.get_node(CONTENT + "Return").pressed.emit()
 	await scene_changed
