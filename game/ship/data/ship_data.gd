@@ -59,6 +59,18 @@ func remove_hull_cell(cell: Vector2i) -> bool:
 	hull_cells.erase(cell)
 	return true
 
+func ensure_hull_for_equipment(
+	definition: ShipModuleDefinition,
+	pos: Vector2i,
+	rotation: int
+) -> void:
+	if definition == null:
+		return
+	var temp := ShipModuleInstance.new(-1, definition, pos, rotation)
+	for cell in temp.get_cells():
+		if not hull_cells.has(cell):
+			add_hull_cell(cell)
+
 func get_module_at(cell: Vector2i) -> ShipModuleInstance:
 	return occupied_cells.get(cell, null)
 
