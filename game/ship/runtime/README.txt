@@ -69,9 +69,11 @@ Equipment 运行时：
 - Hull Layout 与 Equipment 的 grid_position 均不因运行时原点而改写。
 
 视觉：
-- RuntimeShip 先绘制 Hull Cell 底板，再由 ShipModuleRuntime 绘制 Equipment。
-- Weapon base 属于 ShipModuleRuntime；turret 属于 WeaponRuntime。
-- Hull 健康度下降时底板颜色向破损色变化，Equipment 视觉按 efficiency 变暗。
+- RuntimeShip 不再直接绘制 Hull 方格；战斗外观交给 ShipAppearanceRenderer。
+- ShipAppearanceRenderer 读取同一份 ShipData.hull_cells，以四方向邻接生成连续舰体 shell，并随 Hull health ratio 显示局部破损。
+- ShipModuleRuntime 只显示 Core / Weapon / Propulsion；Energy / Defense / Function 在战斗中被 shell 包覆。
+- Weapon base 属于 ShipModuleRuntime，turret 属于 WeaponRuntime，并使用更高 z_index。
+- 编辑器不使用该 Appearance Layer，仍显示完整 Hull + Equipment。
 
 数据规则：
 - ShipModuleDefinition 已移除 mass 与共通 hp。
