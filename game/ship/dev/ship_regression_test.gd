@@ -118,7 +118,10 @@ func _range_target(world: Node2D, location: Vector2, hp: float) -> HullCellRunti
 	owner.setup(data)
 	owner.set_physics_process(false)
 	owner.position = location - Vector2(owner.cell_size * 0.5, owner.cell_size * 0.5)
-	return owner.get_hull_runtime(cell)
+	var target := owner.get_hull_runtime(cell)
+	var shape := target.collision_shape.shape as RectangleShape2D
+	shape.size = Vector2(0.2, 2.0)
+	return target
 
 func _range_projectile(world: Node2D, location: Vector2, shot_range: float) -> ProjectileRuntime:
 	var projectile := PROJECTILE.instantiate() as ProjectileRuntime
@@ -413,6 +416,7 @@ func _test_saved_design_and_editor() -> void:
 		and root.get_visible_rect().encloses(launch_button.get_global_rect()),
 		"Installed-module editing controls and battle entry must remain visible in the default viewport"
 	)
+	editor.grid.set_ship(_design())
 	var flight_world := Node2D.new()
 	root.add_child(flight_world)
 	var runtime := _spawn(flight_world, Vector2.ZERO)
