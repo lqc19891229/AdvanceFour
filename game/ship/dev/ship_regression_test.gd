@@ -353,7 +353,7 @@ func _test_saved_design_and_editor() -> void:
 	var heavy := _design()
 	heavy.place(DATABASE.get_by_id(&"defense_lightarmor"), Vector2i(8, 8), 0)
 	editor.grid.set_ship(heavy)
-	_check(editor.speed_label.text.contains("预计最高速度：%.1f px/s" % runtime.estimate_design_top_speed(heavy)) and runtime.estimate_design_top_speed(heavy) < runtime.get_speed(), "Adding mass must immediately lower the editor's predicted speed")
+	_check(editor.speed_label.text.contains("预计最高速度：%.1f px/s" % runtime.estimate_design_top_speed(heavy)) and runtime.estimate_design_top_speed(heavy) < cruising_speed, "Adding mass must immediately lower the editor's predicted speed")
 	var underpowered := _design()
 	underpowered.place(DATABASE.get_by_id(&"function_radar"), Vector2i(8, 8), 0)
 	editor.grid.set_ship(underpowered)
