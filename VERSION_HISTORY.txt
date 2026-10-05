@@ -18,6 +18,31 @@
 
 
 ========================================
+v0.31.6
+========================================
+
+调整：
+- RuntimeShip 移动从“持续加速 + drag 衰减形成稳态极速”改为显式推重比模型。
+- 最高速度 = effective_thrust / 总质量 × speed_scale；当前 speed_scale = 500。
+- 加速度 = effective_thrust / 总质量 × acceleration_scale；当前 acceleration_scale = 200。
+- 松开推进输入后的减速度 = effective_thrust / 总质量 × deceleration_scale；当前 deceleration_scale = 300。
+- 倒车继续使用 reverse_thrust_ratio = 0.5，仅降低倒车推进加速度；当前最大速度限制仍统一使用 get_max_speed()。
+- 保留惯性方向：飞船转向只改变舰首与后续推力方向，不自动旋转已有 velocity。
+- 移除 drag 对最高速度的决定作用；velocity 超过当前 get_max_speed() 时直接 clamp。
+- 动力模块摧毁或因供能不足失去供电时，effective_thrust 下降，因此最高速度、加速度与减速度同步下降。
+- 编辑器预计最高速度改为直接使用设计推重比 × speed_scale，不再依赖物理帧率和 drag 稳态估算。
+- ship_movement_test HUD 新增最高速度、当前加速度和当前减速度显示。
+
+修复：
+- 更新战斗移动回归：W 前进与 S 倒车分别从静止状态验证输入方向，避免旧测试把“从正向高速减速到反向”所需时间误判为倒车输入失效。
+
+验证：
+- 飞船回归新增显式最高速度 clamp 与松油独立减速检查；57 项飞船检查通过。
+- 相关 README 同步说明新的速度、加速度、减速度和惯性规则。
+- 本版本不修改 Excel 模块字段、生成 .tres 或设计存档格式；thrust 与 mass 继续作为移动能力的数据来源。
+
+
+========================================
 v0.31.5
 ========================================
 
