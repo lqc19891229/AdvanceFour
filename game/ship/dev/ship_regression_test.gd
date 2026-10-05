@@ -63,7 +63,8 @@ func _run() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 func _test_module_art_data() -> void:
-	for definition in DATABASE.modules:
+	for raw_definition in DATABASE.modules:
+		var definition := raw_definition as ShipModuleDefinition
 		_check(
 			definition != null and ModuleArtLibrary.get_base_texture(definition) != null,
 			"Every generated module definition must carry its Excel-driven base texture"
