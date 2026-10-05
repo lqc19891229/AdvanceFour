@@ -6,7 +6,7 @@
 - 当前版本实现可旋转炮塔、自动选敌、自动瞄准和自动触发 fired；Projectile 由 RuntimeShip 根据 fired 事件生成。
 
 当前文件：
-- weapon_runtime.gd：单个武器模块的运行时炮塔节点。
+- weapon_runtime.gd：单个武器模块的运行时炮塔节点；1×1 武器可加载独立 turret Sprite2D。
 - weapon_runtime.tscn：WeaponRuntime 场景。
 
 运行时关系：
@@ -31,6 +31,11 @@ fired 信号
 - RuntimeShip 当前返回距离该炮塔最近的未 destroyed 模块中心。
 - 目标飞船没有任何存活模块时，会视为无效目标，并在重新搜索阶段直接跳过，避免反复重新选中已完全摧毁目标。
 - 同一艘飞船上的不同武器允许选择不同目标。
+
+炮塔视觉：
+- 武器贴图正式拆为底座和炮塔：{module_id}_base.png 由 ShipModuleRuntime 显示，{module_id}_turret.png 由 WeaponRuntime 显示。
+- 炮塔贴图以 WeaponRuntime 原点为旋转中心，默认朝向 Vector2.UP；当前 1×1 目标显示区域约 32×32 px。
+- 如果 turret PNG 尚未提供，WeaponRuntime 继续绘制原有白色圆心 + 炮管线作为 fallback。
 
 炮塔瞄准：
 - module.rotation_quarters 只作为炮塔进入战斗时的初始朝向。
