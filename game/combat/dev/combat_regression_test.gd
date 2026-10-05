@@ -165,6 +165,7 @@ func _test_waves_and_victory() -> void:
 	# A real emitted projectile lives after its firing ship is killed.
 	var enemy := battle.enemies[0]
 	var weapon := enemy.weapon_runtimes[0]
+	enemy.rotation = 0.0
 	weapon.global_position = Vector2(10000.0, 10000.0)
 	weapon.global_rotation = 0.0
 	enemy.request_fire()
@@ -226,6 +227,7 @@ func _test_friendly_fire() -> void:
 	_silence(ally)
 	var hp_before := _core_cell(ally).current_hp
 	var weapon := shooter.weapon_runtimes[0]
+	shooter.rotation = PI
 	weapon.global_position = _core_runtime(ally).global_position + Vector2(18.0, -100.0)
 	weapon.global_rotation = PI
 	shooter.request_fire()
@@ -233,6 +235,7 @@ func _test_friendly_fire() -> void:
 		await physics_frame
 	_check(_core_cell(ally).current_hp == hp_before, "Enemy shots must pass through allied Hull without friendly damage")
 	weapon = battle.player.weapon_runtimes[0]
+	battle.player.rotation = PI
 	weapon.global_position = _core_runtime(ally).global_position + Vector2(18.0, -100.0)
 	weapon.global_rotation = PI
 	battle.player.request_fire()
