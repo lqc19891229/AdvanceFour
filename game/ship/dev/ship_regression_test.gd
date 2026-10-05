@@ -430,11 +430,26 @@ func _test_saved_design_and_editor() -> void:
 	runtime.set_control_input(0.0, 0.0)
 	runtime._physics_process(0.5)
 	_check(runtime.get_speed() < cruising_speed, "Releasing throttle must decelerate using the independent deceleration rate")
-	var heavy := _design()
-	heavy.add_hull_cell(Vector2i(8, 8))
-	heavy.place(DATABASE.get_by_id(&"defense_lightarmor"), Vector2i(8, 8), 0)
-	editor.grid.set_ship(heavy)
-	_check(editor.speed_label.text.contains("预计最高速度：%.1f px/s" % runtime.estimate_design_top_speed(heavy)) and runtime.estimate_design_top_speed(heavy) < cruising_speed, "Adding mass must immediately lower the editor's predicted speed")
+	var armored := _design()
+	var armor_cell := armored.add_hull_cell(Vector2i(8, 8))
+	armored.place(DATABASE.get_by_id(&"defense_lightarmor"), Vector2i(8, 8), 0)
+	editor.grid.set_ship(armored)
+	_check(
+		is_equal_approx(armored.get_hull_cell_effective_max_hp(armor_cell), 40.0),
+		"Defense HP must add to the supporting Hull region HP"
+	)
+	_check(
+		is_equal_approx(runtime.estimate_design_top_speed(armored), cruising_speed)
+		and editor.speed_label.text.contains("预计最高速度：%.1f px/s" % cruising_speed),
+		"Non-propulsion Equipment must not change thrust-only top speed"
+	)
+	var faster := _design()
+	faster.add_hull_cell(Vector2i(8, 8))
+	faster.place(DATABASE.get_by_id(&"propulsion_smallengine"), Vector2i(8, 8), 0)
+	_check(
+		runtime.estimate_design_top_speed(faster) > cruising_speed,
+		"Adding propulsion thrust must increase predicted top speed"
+	)
 	var underpowered := _design()
 	underpowered.add_hull_cell(Vector2i(8, 8))
 	underpowered.place(DATABASE.get_by_id(&"function_radar"), Vector2i(8, 8), 0)
