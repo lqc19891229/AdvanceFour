@@ -122,6 +122,9 @@ D / →：右转
 推力：%.1f
 火力：%.1f
 推重比：%.3f
+最高速度：%.1f
+当前加速度：%.1f
+当前减速度：%.1f
 速度：%.1f
 朝向：%.1f°
 目标模块 Runtime：%d
@@ -167,6 +170,9 @@ Projectile 会携带 leftover 在同一弹道继续向内查询，因此同一�
 		ship.get_thrust(),
 		ship.get_firepower(),
 		ship.get_acceleration_score(),
+		runtime_ship.get_max_speed(),
+		runtime_ship.get_acceleration(),
+		runtime_ship.get_deceleration(),
 		runtime_ship.get_speed(),
 		runtime_ship.get_heading_degrees(),
 		_get_target_module_runtime_count(),
