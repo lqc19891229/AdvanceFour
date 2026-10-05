@@ -8,7 +8,7 @@
 - ship_grid_view.gd：网格绘制、Hull 放置、Equipment 安装 / 删除 / 移动 / 旋转及贴图预览。
 
 当前结构：
-- Hull Layout：决定船体形状、可安装范围、局部 HP 与 Hull 质量。
+- Hull Layout：决定船体形状、可安装范围与局部基础 HP。
 - Equipment：安装在 Hull 上，负责 Power / Damage / Thrust / Defense / Function 等功能。
 
 当前操作：
@@ -35,10 +35,10 @@
 
 属性面板：
 - 显示 Hull 格数量。
-- 显示 Hull 当前 HP / 最大 HP。
-- 分别显示 Hull 质量与 Equipment 质量。
-- Equipment 详情显示自身功能参数，不再显示 ModuleDefinition.hp 作为战斗耐久。
-- 预计最高速度使用 Hull + Equipment 总质量与设计推力计算。
+- 显示区域有效当前 HP / 最大 HP 汇总。
+- Equipment 不再显示质量。
+- 只有 Defense Equipment 显示“装甲 HP”；其他 Equipment 没有 hp 字段。
+- 预计最高速度只由设计有效引擎推力决定，不再受 Hull 或 Equipment 质量影响。
 
 设计规则：
 - Hull Layout 当前允许空格、分离区域，不要求相邻或连通。
@@ -46,4 +46,5 @@
 - Equipment 之间不能重叠。
 - Core Equipment 当前仍限制每艘飞船一个。
 - 编辑阶段允许临时供能不足；出航时要求总耗能不高于设计供能。
-- 第一版 basic_hull 固定 max_hp = 20、mass = 2。
+- 第一版 basic_hull 固定 max_hp = 20；其 mass 数据暂保留，但不参与移动。
+- 区域最大 HP = ShipHullCell.max_hp + 覆盖 Defense.hp。
