@@ -6,13 +6,13 @@
 
 当前测试：
 - ship_ai_test.gd / .tscn：敌舰 AI 双向交火测试；读取已保存设计，未找到存档时使用数据库中的示例模块构造测试船；存在但损坏 / 非法的存档会明确提示修正，不静默替换。
-- ship_regression_test.gd：Godot 无界面回归入口，验证 AI 移动、选敌与失效目标、数据驱动 HP、动力摧毁、双向实际命中、核心移除、旧 HUD 及编辑器往返。
+- ship_regression_test.gd：Godot 无界面回归入口，验证 AI 移动、选敌与失效目标、数据驱动 HP、动力摧毁、显式最高速度、松油减速、双向实际命中、核心移除、HUD 及编辑器往返。
 - ship_movement_test.tscn：读取 user://ships/test_ship.json，并实例化 RuntimeShip 做移动、朝向和武器运行时最小验证。
 - ship_movement_test.gd：负责加载 ShipData、创建玩家 RuntimeShip、创建第二艘 RuntimeShip 作为模块受击目标、绑定 PlayerShipController，以及显示测试信息。
 - weapon_target_dummy.gd：保留的通用 DamageReceiver 测试目标；当前 ship_movement_test 的主要目标已改为第二艘 RuntimeShip。
 
 职责说明：
-- 飞船绘制、速度、朝向、转向、自身朝向推进与核心中心旋转原点逻辑位于 game/ship/runtime/ship_runtime.gd。
+- 飞船绘制、速度、朝向、转向、自身朝向推进与核心中心旋转原点逻辑位于 game/ship/runtime/ship_runtime.gd；最高速度 / 加速度 / 减速度统一由有效推重比与 RuntimeShip 的 scale 参数计算。
 - 玩家键盘输入逻辑位于 game/ship/controller/player_ship_controller.gd。
 - 武器运行时逻辑位于 game/ship/weapon/weapon_runtime.gd，由 RuntimeShip 根据 ShipData 自动创建。
 - 弹丸运行时逻辑位于 game/ship/projectile/projectile_runtime.gd；RuntimeShip 在武器 fired 后生成 ProjectileRuntime。
