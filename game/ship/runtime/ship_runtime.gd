@@ -27,8 +27,9 @@ const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tsc
 const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile_runtime.tscn")
 
 @export var cell_size := 36.0
-@export var acceleration_scale := 180.0
-@export var drag := 2.5
+@export var speed_scale := 500.0
+@export var acceleration_scale := 200.0
+@export var deceleration_scale := 300.0
 @export var turn_speed_degrees := 120.0
 @export var reverse_thrust_ratio := 0.5
 @export var weapon_target_group: StringName = &"enemy_targets"
@@ -207,16 +208,18 @@ func is_removed_from_battle() -> bool:
 func get_speed() -> float:
 	return velocity.length()
 
+func get_max_speed() -> float:
+	return get_effective_acceleration_score() * speed_scale
+
+func get_acceleration() -> float:
+	return get_effective_acceleration_score() * acceleration_scale
+
+func get_deceleration() -> float:
+	return get_effective_acceleration_score() * deceleration_scale
+
 func estimate_design_top_speed(design: ShipData) -> float:
-	# Full-power, undamaged design, straight ahead at full throttle.
-	# Physics adds thrust before drag: v_next = (v + a * dt) * (1 - drag * dt).
-	var acceleration := design.get_acceleration_score() * acceleration_scale
-	if acceleration <= 0.0:
-		return 0.0
-	if drag <= 0.0:
-		return INF
-	var step_factor := maxf(1.0 - drag / float(Engine.physics_ticks_per_second), 0.0)
-	return acceleration * step_factor / drag
+	# Full-power, undamaged design.
+	return design.get_acceleration_score() * speed_scale
 
 func get_heading_degrees() -> float:
 	return wrapf(rad_to_deg(rotation), 0.0, 360.0)
@@ -234,13 +237,19 @@ func _physics_process(delta: float) -> void:
 	if not is_zero_approx(turn_input):
 		rotation += deg_to_rad(turn_speed_degrees) * turn_input * delta
 
+	var acceleration := get_acceleration()
+	var max_speed := get_max_speed()
+
 	if not is_zero_approx(throttle_input):
 		var thrust_ratio := 1.0 if throttle_input > 0.0 else reverse_thrust_ratio
-		var acceleration := get_effective_acceleration_score() * acceleration_scale * thrust_ratio
 		var forward := Vector2.UP.rotated(rotation)
-		velocity += forward * acceleration * throttle_input * delta
+		velocity += forward * acceleration * thrust_ratio * throttle_input * delta
+	else:
+		velocity = velocity.move_toward(Vector2.ZERO, get_deceleration() * delta)
 
-	velocity = velocity.move_toward(Vector2.ZERO, velocity.length() * drag * delta)
+	if velocity.length() > max_speed:
+		velocity = velocity.normalized() * max_speed
+
 	position += velocity * delta
 
 func _draw() -> void:
