@@ -23,6 +23,7 @@ var turret_visual: Sprite2D
 var cooldown_remaining := 0.0
 var operational := true
 var powered := true
+var efficiency := 1.0
 
 func setup(
 	ship: Node2D,
@@ -46,6 +47,7 @@ func setup(
 	cooldown_remaining = 0.0
 	operational = true
 	powered = true
+	efficiency = 1.0
 	visible = true
 	_build_turret_visual()
 	queue_redraw()
@@ -85,17 +87,28 @@ func set_powered(value: bool) -> void:
 	if not powered:
 		target = null
 
+func set_efficiency(value: float) -> void:
+	efficiency = clampf(value, 0.0, 1.0)
+	if efficiency <= 0.0:
+		target = null
+	if turret_visual != null:
+		var brightness := 0.35 + 0.65 * efficiency
+		turret_visual.modulate = Color(brightness, brightness, brightness, 1.0)
+
+func get_efficiency() -> float:
+	return efficiency
+
 func is_powered() -> bool:
 	return powered
 
 func is_active() -> bool:
-	return operational and powered
+	return operational and powered and efficiency > 0.0
 
 func fire_once() -> void:
 	if not _can_fire():
 		return
 	_emit_fire()
-	cooldown_remaining = maxf(fire_interval, 0.0)
+	cooldown_remaining = maxf(fire_interval / maxf(efficiency, 0.05), 0.0)
 
 func get_target() -> Node2D:
 	return target
@@ -123,7 +136,7 @@ func _physics_process(delta: float) -> void:
 
 	if cooldown_remaining <= 0.0 and _is_aimed_at_target():
 		_emit_fire()
-		cooldown_remaining = maxf(fire_interval, 0.0)
+		cooldown_remaining = maxf(fire_interval / maxf(efficiency, 0.05), 0.0)
 
 func _find_nearest_target() -> Node2D:
 	var best_target: Node2D
@@ -172,7 +185,7 @@ func _aim_at_target(delta: float) -> void:
 		return
 
 	var desired_global_rotation := Vector2.UP.angle_to(to_target.normalized())
-	var max_step := deg_to_rad(turn_speed_degrees) * delta
+	var max_step := deg_to_rad(turn_speed_degrees * efficiency) * delta
 	global_rotation = rotate_toward(global_rotation, desired_global_rotation, max_step)
 
 func _is_aimed_at_target() -> bool:
@@ -207,7 +220,7 @@ func _emit_fire() -> void:
 	var direction := Vector2.UP.rotated(global_rotation).normalized()
 	fired.emit(
 		module_instance,
-		weapon_definition.firepower,
+		weapon_definition.firepower * efficiency,
 		global_position,
 		direction
 	)
