@@ -18,6 +18,31 @@
 
 
 ========================================
+v0.31.8
+========================================
+
+修复 / 健壮性：
+- 模块导入改为两阶段流程：先在内存中构建并验证全部 ModuleDefinition，全部通过后才开始替换 generated 资源，避免贴图缺失或数据错误时提前删除旧 .tres。
+- 导入写入阶段增加回滚保护：开始替换前备份六类模块 .tres 与 module_database.tres；任一模块或 ModuleDatabase 保存失败时，清理本次半成品并恢复导入前资源。
+- Excel 解析前强制删除旧 tools/data_import/cache/modules.json；本次 Python 解析必须生成新的缓存文件，避免解析异常时误读旧 cache。
+- 对 Python 非零退出码增加一致性检查：若生成结果异常标记为成功则直接拒绝继续导入。
+
+编辑器：
+- 飞船编辑器待放置和移动预览继续使用绿色 / 红色表示合法性，同时绘制真实模块贴图。
+- Weapon 预览同时读取并绘制 base texture 与 turret texture；非武器模块只使用基础贴图。
+- ShipGridView 新增统一 preview texture 查询入口，使预览绘制与回归测试使用同一数据来源。
+
+验证：
+- tools/verify_project.py 新增 generated 贴图引用检查：Excel / JSON 中的 texture_path 与 turret_texture_path 必须同时存在于对应模块 .tres 和 module_database.tres。
+- ship_regression_test 新增 ModuleDatabase 贴图、Runtime 模块 Sprite2D、WeaponRuntime 炮塔 Sprite2D 与编辑器放置预览贴图检查。
+- 回归同时确认带贴图预览仍沿用 can_place 的可安装 / 不可安装判定，不改变原有红绿状态逻辑。
+
+数据 / 兼容性：
+- 不修改 Excel 字段定义、模块平衡值、ShipSerializer 存档结构、战斗规则或模块占格规则。
+- Excel 继续作为策划数据唯一真源；generated 资源仍由 Godot 导入插件统一生成。
+
+
+========================================
 v0.31.7
 ========================================
 
