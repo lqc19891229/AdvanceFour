@@ -15,6 +15,7 @@ var definitions: Dictionary = {}
 var selected_definition: ShipModuleDefinition
 var selected_module: ShipModuleInstance
 var moving_selected := false
+var placing_hull := false
 var preview_cell := Vector2i.ZERO
 var rotation_quarters := 0
 var pan_offset := Vector2.ZERO
@@ -66,10 +67,19 @@ func set_ship(new_ship: ShipData) -> void:
 func select_definition(id: String) -> void:
 	if definitions.has(id):
 		selected_definition = definitions[id]
+		placing_hull = false
 		_set_selected_module(null)
 		moving_selected = false
-		status_message.emit("放置模块：%s" % selected_definition.display_name)
+		status_message.emit("安装设备：%s" % selected_definition.display_name)
 		queue_redraw()
+
+func select_hull() -> void:
+	placing_hull = true
+	selected_definition = null
+	_set_selected_module(null)
+	moving_selected = false
+	status_message.emit("放置基础船体格")
+	queue_redraw()
 
 func select_installed_module(module: ShipModuleInstance) -> void:
 	if module == null or not ship.modules.has(module):
@@ -179,6 +189,18 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 
+			if placing_hull:
+				var hull_check := ship.can_add_hull_cell(cell)
+				if hull_check["ok"]:
+					ship.add_hull_cell(cell)
+					ship_changed.emit()
+					status_message.emit("已添加船体格：(%d, %d)" % [cell.x, cell.y])
+				else:
+					status_message.emit(hull_check["reason"])
+				queue_redraw()
+				accept_event()
+				return
+
 			var installed := ship.get_module_at(cell)
 			if installed != null:
 				select_installed_module(installed)
@@ -201,17 +223,26 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 			var module := ship.get_module_at(cell)
-			var check := ship.can_remove(module)
-			if check["ok"]:
-				var name := module.definition.display_name
-				var was_selected := module == selected_module
-				ship.remove(module)
-				if was_selected:
-					_set_selected_module(null)
-				ship_changed.emit()
-				status_message.emit("已删除：%s" % name)
+			if module != null:
+				var check := ship.can_remove(module)
+				if check["ok"]:
+					var name := module.definition.display_name
+					var was_selected := module == selected_module
+					ship.remove(module)
+					if was_selected:
+						_set_selected_module(null)
+					ship_changed.emit()
+					status_message.emit("已拆除设备：%s" % name)
+				else:
+					status_message.emit(check["reason"])
 			else:
-				status_message.emit(check["reason"])
+				var hull_check := ship.can_remove_hull_cell(cell)
+				if hull_check["ok"]:
+					ship.remove_hull_cell(cell)
+					ship_changed.emit()
+					status_message.emit("已拆除船体格：(%d, %d)" % [cell.x, cell.y])
+				else:
+					status_message.emit(hull_check["reason"])
 			queue_redraw()
 			accept_event()
 
@@ -237,9 +268,28 @@ func _draw() -> void:
 		var y := origin.y + float(i) * CELL_SIZE
 		draw_line(Vector2(x, 0), Vector2(x, size.y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
 		draw_line(Vector2(0, y), Vector2(size.x, y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
+	for hull_cell in ship.get_hull_cells():
+		_draw_hull_cell(hull_cell)
 	for module in ship.modules:
 		_draw_module(module)
 	_draw_preview()
+
+func _draw_hull_cell(hull_cell: ShipHullCell) -> void:
+	if hull_cell == null:
+		return
+	var rect := Rect2(grid_to_screen(hull_cell.grid_position), Vector2.ONE * CELL_SIZE)
+	var health := hull_cell.get_health_ratio()
+	var fill := Color(0.16, 0.20, 0.26, 1.0).lerp(
+		Color(0.08, 0.08, 0.08, 1.0),
+		1.0 - health
+	)
+	var edge := Color(0.56, 0.64, 0.72, 1.0).lerp(
+		Color(0.55, 0.18, 0.16, 1.0),
+		1.0 - health
+	)
+	draw_rect(rect.grow(-2.0), fill)
+	draw_rect(rect.grow(-2.0), edge, false, 2.0)
+
 
 func _draw_module(module: ShipModuleInstance) -> void:
 	var rect := Rect2(
@@ -356,6 +406,23 @@ func _draw_module_preview(
 
 
 func _draw_preview() -> void:
+	if placing_hull:
+		var hull_check := ship.can_add_hull_cell(preview_cell)
+		var hull_color := (
+			Color(0.35, 0.85, 0.55, 0.34)
+			if hull_check["ok"]
+			else Color(0.95, 0.25, 0.25, 0.34)
+		)
+		var hull_rect := Rect2(grid_to_screen(preview_cell), Vector2.ONE * CELL_SIZE)
+		draw_rect(hull_rect.grow(-3.0), hull_color)
+		draw_rect(
+			hull_rect.grow(-3.0),
+			Color(hull_color.r, hull_color.g, hull_color.b, 0.95),
+			false,
+			2.0
+		)
+		return
+
 	if moving_selected and selected_module != null:
 		var temp := ShipModuleInstance.new(
 			selected_module.uid,
