@@ -1,21 +1,21 @@
-《前进四》开发状态 v0.31.9
+《前进四》开发状态 v0.31.10
 
 当前阶段：模块化飞船战斗 Prototype，尚未形成完整 Roguelike 游戏。
 
 已完成：
 - 飞船数据已拆为 Hull Layout + Equipment 两层；网格编辑器可独立铺设基础船体格并在其上安装/移动/旋转设备。
-- Excel → Python → JSON cache → Godot 插件 → .tres 继续负责 Equipment 定义；Hull Cell 独立保存位置、max_hp/current_hp、质量与 hull_type。
+- Excel → Python → JSON cache → Godot 插件 → .tres 继续负责 Equipment 定义；Equipment 已取消 mass，共通 hp 也已移除，只有 Defense 保留 hp。Hull Cell 独立保存位置、max_hp/current_hp、质量与 hull_type。
 - 玩家移动与转向、核心中心原点、独立炮塔自动选敌与射击。
 - 模块贴图已纳入正式数据链：Excel 各模块 Sheet 使用 texture_path，Weapon 额外使用 turret_texture_path；导入后写入 JSON cache、模块 .tres 与 ModuleDatabase，不再由代码按 module_id 固定拼接路径。
 - 首批模块 PNG 已提交并完成数据挂载；武器视觉拆为底座 + 炮塔：ShipModuleRuntime 显示 weapon base，WeaponRuntime 显示 turret 并继续独立旋转瞄准。
 - 弹丸 swept ray 改为命中独立 Hull Cell 碰撞体；每个 Hull Cell 独立承伤并支持 HP-overkill 穿透。
 - 武器火力、攻击范围、射击间隔、炮塔转速、弹速和开火角容差已进入 Excel → JSON → .tres 数据链；不同武器可使用独立数值。
 - 攻击范围同时用于自动选敌和弹丸最大飞行距离；弹丸记录开火时射程与弹速，走完后消失，最后一帧不越界命中。
-- Equipment 不再拥有独立战斗 HP；其效率取覆盖 Hull Cell 健康度平均值。能源输出、推力、防御与武器性能会随局部 Hull 损伤下降；核心覆盖 Hull 全毁时整船移除。
+- 除 Defense 外 Equipment 不再拥有 hp；区域最大 HP = ShipHullCell.max_hp + 覆盖该区域的 Defense.hp。多格 Defense 的 hp 平均分配到覆盖区域。Equipment 效率仍取覆盖 Hull Cell 健康度平均值，核心覆盖 Hull 全毁时整船移除。
 - 敌舰 AI：选择最近有效玩家目标、转向追踪、接近与倒车保持距离。
 - 编辑器 → 单敌舰交火测试 → 返回编辑器并恢复设计。
-- 飞船移动已改为显式推重比模型：最高速度 = 有效推力 / 总质量 × speed_scale，加速度与松油减速度分别使用独立 scale；保留惯性方向并直接限制最大速度，不再依赖 drag 形成极速。
-- 当前移动参数为 speed_scale = 500、acceleration_scale = 200、deceleration_scale = 300、reverse_thrust_ratio = 0.5；动力战损或断电会同步降低最高速度和加减速能力。
+- 飞船移动已改为纯推力模型：最高速度、加速度与松油减速度只由当前有效引擎推力乘对应 scale 决定；Hull / Equipment 质量不参与移动计算。
+- 当前移动参数为 speed_scale = 2.5、acceleration_scale = 1.0、deceleration_scale = 1.5、reverse_thrust_ratio = 0.5；动力所在 Hull 受损或断电会同步降低有效推力，从而降低最高速度和加减速能力。
 - 飞船编辑器属性顶部显示预计最高速度，随模块布局变化更新，并提示供能不足。
 - 飞船编辑器支持 Hull/Equipment 分层操作：Hull 格独立放置/拆除；Equipment 只能完整安装在 Hull 上，并支持选中、移动、旋转，保留实例 uid。
 - 战斗世界固定星点 / 网格参照，HUD 显示实时速度与坐标，明确前进 / 倒车 / 转向操作。
@@ -32,7 +32,7 @@
 4. “敌舰 AI 测试”和旧 ship_movement_test.tscn 保留为独立诊断入口。
 
 下一阶段：
-0. v0.31.8 技术收口已完成；下一步进入 v0.32，优先建立战后战损状态持久化、维修与奖励闭环。首批模块贴图后续仅按实际视觉继续调整贴图规范、炮塔轴心与炮口 muzzle_offset。
+0. v0.31.10 已完成耐久与移动规则收口；下一步进入 v0.32，优先建立战后战损状态持久化、维修与奖励闭环。首批模块贴图后续仅按实际视觉继续调整贴图规范、炮塔轴心与炮口 muzzle_offset。
    武器基础战斗数值与贴图路径均已完成数据化；后续可继续设计射界、弹种、伤害类型等扩展。
    基础航速模型已完成显式最高速度 / 加速度 / 减速度拆分；后续仅在需要时继续做数值平衡、倒车极速或更复杂惯性规则。
 1. v0.32：战后奖励、战损状态持久化、维修 / 改装，再进入下一场战斗。
@@ -45,8 +45,8 @@
 - 现有炮塔仍可全周旋转；正式射界、引擎喷射空间、全项目阵营数据尚未实现；本场碰撞层已避免己方误伤。
 - 单场胜负结算已实现；存档仍仅保存设计，同场战损跨波次保留，但不写回设计。
 - Hull Layout 当前仍允许不相邻、不连通与任意空格；Equipment 必须完整覆盖在现有 Hull Cell 上。
-- 第一版 Hull Cell 固定使用 basic_hull：max_hp = 20、mass = 2；Hull 类型、装甲升级与船体扩展奖励尚未进入正式数据表。
-- ModuleDefinition.hp / Excel hp 字段暂保留用于旧数据兼容，但当前战斗耐久不再读取该字段。
+- 第一版 Hull Cell 固定使用 basic_hull：max_hp = 20、mass = 2；Hull 的 mass 暂保留为结构数据，但当前不参与速度或加速度计算。
+- ModuleDefinition 已移除 mass 与共通 hp；只有 DefenseModuleDefinition 保留 hp。Excel 源表也已删除所有 mass 列以及非 Defense 的 hp 列。
 
 验证：
 python3 tools/verify_project.py --godot /path/to/godot
