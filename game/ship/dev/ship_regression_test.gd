@@ -24,12 +24,20 @@ func _check(condition: bool, message: String) -> void:
 
 func _design() -> ShipData:
 	var ship := ShipData.new()
-	ship.place(DATABASE.get_by_id(&"core_bridge"), Vector2i.ZERO, 0)
-	ship.place(DATABASE.get_by_id(&"energy_smallreactor"), Vector2i(-1, 1), 0)
-	ship.place(DATABASE.get_by_id(&"energy_smallreactor"), Vector2i(2, 1), 0)
-	ship.place(DATABASE.get_by_id(&"propulsion_smallengine"), Vector2i(0, 2), 0)
-	ship.place(DATABASE.get_by_id(&"propulsion_smallengine"), Vector2i(1, 2), 0)
-	ship.place(DATABASE.get_by_id(&"weapon_cannon"), Vector2i(0, -1), 0)
+	var placements := [
+		[&"core_bridge", Vector2i.ZERO, 0],
+		[&"energy_smallreactor", Vector2i(-1, 1), 0],
+		[&"energy_smallreactor", Vector2i(2, 1), 0],
+		[&"propulsion_smallengine", Vector2i(0, 2), 0],
+		[&"propulsion_smallengine", Vector2i(1, 2), 0],
+		[&"weapon_cannon", Vector2i(0, -1), 0]
+	]
+	for placement in placements:
+		var definition := DATABASE.get_by_id(placement[0])
+		var position: Vector2i = placement[1]
+		var rotation: int = placement[2]
+		ship.ensure_hull_for_equipment(definition, position, rotation)
+		ship.place(definition, position, rotation)
 	return ship
 
 func _spawn(world: Node2D, location: Vector2, group: StringName = &"") -> ShipRuntime:
@@ -102,12 +110,15 @@ func _test_module_art_data() -> void:
 	await process_frame
 
 
-func _range_target(world: Node2D, location: Vector2, hp: float) -> ShipModuleRuntime:
-	var module := ShipModuleInstance.new(1, DATABASE.get_by_id(&"function_radar"), Vector2i.ZERO)
-	var target := ShipModuleRuntime.new()
-	world.add_child(target)
-	target.setup(module, location, Vector2(0.2, 2.0), hp)
-	return target
+func _range_target(world: Node2D, location: Vector2, hp: float) -> HullCellRuntime:
+	var data := ShipData.new()
+	var cell := data.add_hull_cell(Vector2i.ZERO, &"test_hull", hp, 0.0, hp)
+	var owner := ShipRuntime.new()
+	world.add_child(owner)
+	owner.setup(data)
+	owner.set_physics_process(false)
+	owner.position = location - Vector2(owner.cell_size * 0.5, owner.cell_size * 0.5)
+	return owner.get_hull_runtime(cell)
 
 func _range_projectile(world: Node2D, location: Vector2, shot_range: float) -> ProjectileRuntime:
 	var projectile := PROJECTILE.instantiate() as ProjectileRuntime
@@ -276,16 +287,19 @@ func _test_ai_and_damage() -> void:
 	ai._physics_process(1.0 / 60.0)
 	_check(ai.target == player and enemy.throttle_input > 0.0, "AI must resume tracking when a target returns")
 
-	var definition := DATABASE.get_by_id(&"function_radar").duplicate() as ShipModuleDefinition
-	definition.hp = 37.0
+	var definition := DATABASE.get_by_id(&"function_radar")
+	enemy.ship_data.add_hull_cell(Vector2i(9, 9), &"test_hull", 40.0, 2.0)
 	var isolated := enemy.ship_data.place(definition, Vector2i(9, 9), 0)
 	enemy.setup(enemy.ship_data)
-	_check(is_equal_approx(enemy.get_module_runtime(isolated).get_max_hp(), 37.0), "Module HP must come from its own definition")
-	_check(enemy.ship_data.get_module_at(Vector2i(5, 5)) == null, "Sparse layouts must retain empty space")
+	_check(is_equal_approx(enemy.get_module_efficiency(isolated), 1.0), "Equipment must start at full efficiency on intact Hull")
+	enemy.apply_hull_projectile_damage(enemy.ship_data.get_hull_cell_at(Vector2i(9, 9)), 20.0)
+	_check(is_equal_approx(enemy.get_module_efficiency(isolated), 0.5), "Equipment efficiency must follow the average health of its supporting Hull cells")
+	_check(enemy.ship_data.get_hull_cell_at(Vector2i(5, 5)) == null, "Sparse Hull Layouts must retain empty space")
 	for module in enemy.ship_data.modules:
 		if module.definition is PropulsionModuleDefinition:
-			enemy.get_module_runtime(module).apply_damage(100.0)
-	_check(is_zero_approx(enemy.get_effective_thrust()), "Destroyed engines must remove AI ship thrust")
+			for cell_position in module.get_cells():
+				enemy.apply_hull_projectile_damage(enemy.ship_data.get_hull_cell_at(cell_position), 1000.0)
+	_check(is_zero_approx(enemy.get_effective_thrust()), "Destroyed engine-supporting Hull must remove propulsion output")
 	enemy.velocity = Vector2.ZERO
 	enemy.set_control_input(1.0, 0.0)
 	var position_before := enemy.position
@@ -312,8 +326,12 @@ func _test_battle_scene() -> void:
 	if is_instance_valid(battle.player) and not battle.player.is_removed_from_battle():
 		for module in battle.player.ship_data.modules:
 			if module.definition is CoreModuleDefinition:
-				battle.player.get_module_runtime(module).apply_damage(1000.0)
-		_check(battle.battle_status == "玩家核心被摧毁", "Player core destruction must report the battle result")
+				for cell_position in module.get_cells():
+					battle.player.apply_hull_projectile_damage(
+						battle.player.ship_data.get_hull_cell_at(cell_position),
+						1000.0
+					)
+		_check(battle.battle_status == "玩家核心被摧毁", "Destroying all Core-supporting Hull must report the battle result")
 		await process_frame
 		_check(battle.get_node_or_null("Camera2D") != null, "Result camera must survive player removal")
 		await physics_frame
@@ -327,7 +345,7 @@ func _test_saved_design_and_editor() -> void:
 	var movement = MOVEMENT_TEST.instantiate()
 	root.add_child(movement)
 	await process_frame
-	_check(movement.get_node("CanvasLayer/Info").text.contains("ModuleDefinition.hp"), "Legacy movement HUD must use data-driven HP without the removed property")
+	_check(movement.get_node("CanvasLayer/Info").text.contains("Hull"), "Movement HUD must report the new Hull-based durability model")
 	movement.queue_free()
 	await process_frame
 	var editor = load("res://game/ship/editor/ship_editor.tscn").instantiate()
@@ -353,10 +371,11 @@ func _test_saved_design_and_editor() -> void:
 		core_preview["base"] != null and core_preview["turret"] == null,
 		"Editor placement preview must expose the base texture for non-weapon modules"
 	)
+	editable_design.add_hull_cell(Vector2i(8, 8))
 	_check(
 		editable_design.can_place(DATABASE.get_by_id(&"function_radar"), Vector2i(8, 8), 0)["ok"]
-		and not editable_design.can_place(DATABASE.get_by_id(&"function_radar"), Vector2i.ZERO, 0)["ok"],
-		"Textured placement preview must preserve valid-green and invalid-red placement decisions"
+		and not editable_design.can_place(DATABASE.get_by_id(&"function_radar"), Vector2i(9, 9), 0)["ok"],
+		"Textured equipment preview must be valid on free Hull and invalid outside Hull Layout"
 	)
 	var installed_weapon := editable_design.get_module_at(Vector2i(0, -1))
 	var installed_weapon_uid := installed_weapon.uid
@@ -368,6 +387,7 @@ func _test_saved_design_and_editor() -> void:
 		and editor.stats_label.text.contains("弹速：700.0 px/s"),
 		"Selecting an installed weapon must show its complete combat details"
 	)
+	editable_design.add_hull_cell(Vector2i(4, -1))
 	editor_grid.begin_move_selected()
 	_check(
 		not editor_grid.move_selected_to(Vector2i.ZERO)
@@ -407,10 +427,12 @@ func _test_saved_design_and_editor() -> void:
 	runtime._physics_process(0.5)
 	_check(runtime.get_speed() < cruising_speed, "Releasing throttle must decelerate using the independent deceleration rate")
 	var heavy := _design()
+	heavy.add_hull_cell(Vector2i(8, 8))
 	heavy.place(DATABASE.get_by_id(&"defense_lightarmor"), Vector2i(8, 8), 0)
 	editor.grid.set_ship(heavy)
 	_check(editor.speed_label.text.contains("预计最高速度：%.1f px/s" % runtime.estimate_design_top_speed(heavy)) and runtime.estimate_design_top_speed(heavy) < cruising_speed, "Adding mass must immediately lower the editor's predicted speed")
 	var underpowered := _design()
+	underpowered.add_hull_cell(Vector2i(8, 8))
 	underpowered.place(DATABASE.get_by_id(&"function_radar"), Vector2i(8, 8), 0)
 	editor.grid.set_ship(underpowered)
 	_check(editor.speed_label.text.contains("预计最高速度：—（供能不足）"), "Insufficient power must not present a misleading full-power speed")
