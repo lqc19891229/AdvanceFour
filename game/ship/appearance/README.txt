@@ -9,7 +9,6 @@
 - 默认外观资源：res://data/appearances/hull/human_basic.tres
 - 数据定义：res://data/definitions/appearance/hull_appearance_definition.gd
 - Runtime 贴图：res://data/assets/ship/hull/human_basic/
-- 源素材：tools/art_source/ship/hull/human_basic/
 - 共 16 张 64×64 Hull Tile，占位美术用于建立正式拼接流程。
 
 邻接规则：
