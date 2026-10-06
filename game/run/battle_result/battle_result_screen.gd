@@ -85,7 +85,7 @@ func _refresh_damage_list() -> void:
 	if run_state == null or run_state.current_ship == null:
 		return
 
-	var cells := run_state.current_ship.get_hull_cells()
+	var cells: Array[ShipHullCell] = run_state.current_ship.get_hull_cells()
 	cells.sort_custom(func(a: ShipHullCell, b: ShipHullCell) -> bool:
 		if a.grid_position.y == b.grid_position.y:
 			return a.grid_position.x < b.grid_position.x
@@ -97,7 +97,7 @@ func _refresh_damage_list() -> void:
 		if cell.current_hp >= cell.max_hp:
 			continue
 		damaged_count += 1
-		var position := cell.grid_position
+		var position: Vector2i = cell.grid_position
 		var module := run_state.current_ship.get_module_at(position) as ShipModuleInstance
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 38)
@@ -145,7 +145,7 @@ func _refresh_selected_detail() -> void:
 		repair_selected_button.disabled = true
 		return
 
-	var cell := run_state.current_ship.get_hull_cell_at(selected_position)
+	var cell: ShipHullCell = run_state.current_ship.get_hull_cell_at(selected_position)
 	if cell == null or cell.current_hp >= cell.max_hp:
 		has_selected_cell = false
 		selected_detail.text = "该 Hull 已修复，请选择其他受损区域。"
@@ -200,7 +200,7 @@ func _get_module_efficiency(module: ShipModuleInstance) -> float:
 		return 0.0
 	var total := 0.0
 	for position in cells:
-		var hull := run_state.current_ship.get_hull_cell_at(position)
+		var hull: ShipHullCell = run_state.current_ship.get_hull_cell_at(position)
 		if hull == null:
 			return 0.0
 		total += hull.get_health_ratio()
