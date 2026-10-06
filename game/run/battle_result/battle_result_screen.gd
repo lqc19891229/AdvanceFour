@@ -9,6 +9,8 @@ const DATABASE := preload("res://data/modules/module_database.tres")
 @onready var title: Label = $Center/Panel/Margin/Content/Title
 @onready var summary: Label = $Center/Panel/Margin/Content/Summary
 @onready var damage_list: VBoxContainer = $Center/Panel/Margin/Content/DamageScroll/DamageList
+@onready var reward_choice_title: Label = $Center/Panel/Margin/Content/RewardChoiceTitle
+@onready var reward_choice_row: HBoxContainer = $Center/Panel/Margin/Content/RewardChoiceRow
 @onready var selected_detail: Label = $Center/Panel/Margin/Content/SelectedDetail
 @onready var repair_selected_button: Button = $Center/Panel/Margin/Content/RepairSelected
 @onready var repair_button: Button = $Center/Panel/Margin/Content/ActionRow/RepairAll
@@ -68,17 +70,20 @@ func _refresh() -> void:
 		repair_cost
 	]
 
+	_refresh_reward_choices(result)
 	_refresh_damage_list()
 	_refresh_selected_detail()
 
 	repair_button.text = "全部维修（%d Credits）" % repair_cost
 	repair_button.disabled = repair_cost <= 0 or run_state.currency < repair_cost
-	refit_button.disabled = false
+	var pending_choice := bool(run_state.call("has_pending_reward_choice"))
+	refit_button.disabled = pending_choice
+	var has_next_configured := not result.next_battle_path.is_empty()
 	var has_next := not String(run_state.call("get_next_battle_path")).is_empty()
-	next_button.visible = has_next
-	next_button.disabled = not has_next
-	end_run_button.visible = not has_next
-	end_run_button.disabled = has_next
+	next_button.visible = has_next_configured
+	next_button.disabled = pending_choice or not has_next
+	end_run_button.visible = not has_next_configured
+	end_run_button.disabled = pending_choice
 
 
 func _build_reward_text(result: BattleResult) -> String:
@@ -98,6 +103,46 @@ func _build_reward_text(result: BattleResult) -> String:
 		var name := String(module_id) if definition == null else definition.display_name
 		parts.append("+%s ×%d" % [name, count])
 	return "奖励：" + ("无" if parts.is_empty() else "｜".join(parts))
+
+
+func _refresh_reward_choices(result: BattleResult) -> void:
+	for child in reward_choice_row.get_children():
+		reward_choice_row.remove_child(child)
+		child.queue_free()
+
+	if result.reward_choices.is_empty():
+		reward_choice_title.visible = false
+		reward_choice_row.visible = false
+		return
+
+	reward_choice_title.visible = true
+	reward_choice_row.visible = true
+	if result.reward_choice_claimed:
+		reward_choice_title.text = "已领取成长奖励"
+	else:
+		reward_choice_title.text = "选择 1 项成长奖励（领取后才能继续）"
+
+	for index in range(result.reward_choices.size()):
+		var raw_choice := result.reward_choices[index]
+		if not (raw_choice is BattleRewardOption):
+			continue
+		var choice := raw_choice as BattleRewardOption
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(0, 52)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.text = choice.get_label()
+		button.disabled = result.reward_choice_claimed
+		if result.reward_choice_claimed and result.selected_reward_choice == index:
+			button.text = "已领取｜" + button.text
+		button.pressed.connect(_claim_reward_choice.bind(index))
+		reward_choice_row.add_child(button)
+
+func _claim_reward_choice(index: int) -> void:
+	var run_state := _run_state()
+	if run_state == null:
+		return
+	if bool(run_state.call("claim_reward_choice", index)):
+		_refresh()
 
 func _refresh_damage_list() -> void:
 	_clear_damage_list()
@@ -258,12 +303,15 @@ func _repair_all() -> void:
 	_refresh()
 
 func _enter_refit() -> void:
+	var run_state := _run_state()
+	if run_state == null or bool(run_state.call("has_pending_reward_choice")):
+		return
 	get_tree().set_meta(RUN_REFIT_META, true)
 	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
 
 func _next_battle() -> void:
 	var run_state := _run_state()
-	if run_state == null:
+	if run_state == null or bool(run_state.call("has_pending_reward_choice")):
 		return
 	var next_path := String(run_state.call("advance_to_next_battle"))
 	if next_path.is_empty():
@@ -273,7 +321,7 @@ func _next_battle() -> void:
 
 func _end_run() -> void:
 	var run_state := _run_state()
-	if run_state == null or not run_state.run_active:
+	if run_state == null or not run_state.run_active or bool(run_state.call("has_pending_reward_choice")):
 		return
 	run_state.call("reset_run")
 	get_tree().set_meta(&"restore_ship_design", true)
