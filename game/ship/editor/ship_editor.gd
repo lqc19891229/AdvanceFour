@@ -4,6 +4,8 @@ const SAVE_PATH := "user://ships/test_ship.json"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const FIRST_BATTLE_DEFINITION_PATH := "res://data/battles/stage_001.tres"
+const PROTOTYPE_ROUTE_PATH := "res://data/routes/prototype_route.tres"
+const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
 
@@ -34,7 +36,11 @@ func _ready() -> void:
 		if run_refit_mode:
 			grid.set_run_inventory_enabled(true)
 			_load_run_ship()
-			$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "继续下一战"
+			var current_node := _run_state().call("get_current_route_node") as RunRouteNodeDefinition
+			if bool(_run_state().call("is_route_active")) and current_node != null and current_node.node_type == RunRouteNodeDefinition.NodeType.REFIT:
+				$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "完成整备并返回星图"
+			else:
+				$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "继续下一战"
 			$MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.disabled = true
 			$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.disabled = true
 			_refresh_inventory_button_labels()
@@ -156,17 +162,32 @@ func _bind_common_buttons() -> void:
 func _start_battle() -> void:
 	if not _save_design_for_departure():
 		return
-	var battle_path := FIRST_BATTLE_DEFINITION_PATH
 	if run_refit_mode:
-		battle_path = _run_state().advance_to_next_battle()
+		var run_state := _run_state()
+		if run_state != null and bool(run_state.call("is_route_active")):
+			var node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
+			if node != null and node.node_type == RunRouteNodeDefinition.NodeType.REFIT:
+				run_state.call("complete_current_route_node")
+				get_tree().change_scene_to_file(ROUTE_MAP_SCENE_PATH)
+				return
+		var battle_path := String(run_state.call("advance_to_next_battle"))
 		if battle_path.is_empty():
 			_show_status("当前 Run 已没有下一场战斗。")
 			return
-	else:
-		if not _run_state().start_run(grid.ship, FIRST_BATTLE_DEFINITION_PATH):
-			_show_status("无法创建 Run。")
-			return
-	get_tree().set_meta(BATTLE_DEFINITION_META, battle_path)
+		get_tree().set_meta(BATTLE_DEFINITION_META, battle_path)
+		get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
+		return
+
+	var run_state := _run_state()
+	if run_state == null or not bool(run_state.call("start_run_with_route", grid.ship, PROTOTYPE_ROUTE_PATH)):
+		_show_status("无法创建星系航线 Run。")
+		return
+	var start_node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
+	if start_node == null or start_node.node_type != RunRouteNodeDefinition.NodeType.BATTLE:
+		_show_status("航线起点不是有效战斗节点。")
+		run_state.call("reset_run")
+		return
+	get_tree().set_meta(BATTLE_DEFINITION_META, start_node.target_path)
 	get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
 
 func _start_ai_test() -> void:
