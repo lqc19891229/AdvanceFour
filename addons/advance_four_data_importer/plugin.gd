@@ -1,18 +1,18 @@
 @tool
 extends EditorPlugin
 
-const EXCEL_PATH := "res://tools/data_import/source/game_data.xlsx"
-const JSON_PATH := "res://tools/data_import/cache/modules.json"
-const GENERATED_ROOT := "res://data/generated/modules"
-const DATABASE_PATH := "res://data/generated/module_database.tres"
+const EXCEL_PATH := "res://tools/data_source/game_data.xlsx"
+const JSON_PATH := "res://tools/cache/modules.json"
+const MODULES_ROOT := "res://data/modules"
+const DATABASE_PATH := "res://data/modules/module_database.tres"
 
-const EnergyDef = preload("res://game/ship/definitions/energy_module_definition.gd")
-const PropulsionDef = preload("res://game/ship/definitions/propulsion_module_definition.gd")
-const WeaponDef = preload("res://game/ship/definitions/weapon_module_definition.gd")
-const DefenseDef = preload("res://game/ship/definitions/defense_module_definition.gd")
-const FunctionDef = preload("res://game/ship/definitions/function_module_definition.gd")
-const CoreDef = preload("res://game/ship/definitions/core_module_definition.gd")
-const ModuleDatabaseScript = preload("res://game/ship/data/module_database.gd")
+const EnergyDef = preload("res://data/definitions/module/energy_module_definition.gd")
+const PropulsionDef = preload("res://data/definitions/module/propulsion_module_definition.gd")
+const WeaponDef = preload("res://data/definitions/module/weapon_module_definition.gd")
+const DefenseDef = preload("res://data/definitions/module/defense_module_definition.gd")
+const FunctionDef = preload("res://data/definitions/module/function_module_definition.gd")
+const CoreDef = preload("res://data/definitions/module/core_module_definition.gd")
+const ModuleDatabaseScript = preload("res://data/definitions/module/module_database.gd")
 
 func _enter_tree() -> void:
 	add_tool_menu_item("前进四：导入模块数据", _import_all)
@@ -45,11 +45,11 @@ func _import_all() -> void:
 		return
 
 	var modules: Array[ShipModuleDefinition] = prepared["modules"]
-	var backup := _snapshot_generated_resources()
-	if not _write_generated_resources(modules, rows):
+	var backup := _snapshot_module_resources()
+	if not _write_module_resources(modules, rows):
 		_restore_generated_resources(backup)
 		get_editor_interface().get_resource_filesystem().scan()
-		push_error("模块数据导入失败，已恢复导入前的 generated 资源")
+		push_error("模块数据导入失败，已恢复导入前的 模块资源")
 		return
 
 	get_editor_interface().get_resource_filesystem().scan()
@@ -70,20 +70,20 @@ func _prepare_definitions(rows: Array) -> Dictionary:
 		modules.append(definition)
 	return {"ok": true, "modules": modules}
 
-func _write_generated_resources(
+func _write_module_resources(
 	modules: Array[ShipModuleDefinition],
 	rows: Array
 ) -> bool:
 	if modules.size() != rows.size():
 		push_error("模块定义数量与源数据数量不一致")
 		return false
-	if not _clear_generated_module_resources():
+	if not _clear_module_resources():
 		return false
 
 	for index in range(modules.size()):
 		var definition := modules[index]
 		var row: Dictionary = rows[index]
-		var folder := "%s/%s" % [GENERATED_ROOT, _type_folder(String(row["module_type"]))]
+		var folder := "%s/%s" % [MODULES_ROOT, _type_folder(String(row["module_type"]))]
 		_ensure_dir(folder)
 		var path := "%s/%s.tres" % [folder, String(definition.id)]
 		var err := ResourceSaver.save(definition, path)
@@ -162,7 +162,7 @@ func _run_excel_parser() -> Dictionary:
 		push_error("找不到 Python。请安装 Python 3，并确保 python 或 py 命令可用。")
 		return {}
 
-	var script_path := ProjectSettings.globalize_path("res://tools/data_import/import_excel.py")
+	var script_path := ProjectSettings.globalize_path("res://tools/import/import_excel.py")
 	var excel_path := ProjectSettings.globalize_path(EXCEL_PATH)
 	var json_path := ProjectSettings.globalize_path(JSON_PATH)
 	if FileAccess.file_exists(JSON_PATH):
@@ -233,7 +233,7 @@ func _ensure_dir(res_path: String) -> void:
 	var global_path := ProjectSettings.globalize_path(res_path)
 	DirAccess.make_dir_recursive_absolute(global_path)
 
-func _snapshot_generated_resources() -> Dictionary:
+func _snapshot_module_resources() -> Dictionary:
 	var snapshot := {
 		"module_files": {},
 		"database_exists": FileAccess.file_exists(DATABASE_PATH),
@@ -244,7 +244,7 @@ func _snapshot_generated_resources() -> Dictionary:
 
 	var type_folders := ["energy", "propulsion", "weapon", "defense", "function", "core"]
 	for type_folder in type_folders:
-		var folder := "%s/%s" % [GENERATED_ROOT, type_folder]
+		var folder := "%s/%s" % [MODULES_ROOT, type_folder]
 		_ensure_dir(folder)
 		var dir := DirAccess.open(folder)
 		if dir == null:
@@ -260,7 +260,7 @@ func _snapshot_generated_resources() -> Dictionary:
 	return snapshot
 
 func _restore_generated_resources(snapshot: Dictionary) -> void:
-	_clear_generated_module_resources()
+	_clear_module_resources()
 
 	for path in snapshot.get("module_files", {}):
 		var folder := String(path).get_base_dir()
@@ -282,15 +282,15 @@ func _restore_generated_resources(snapshot: Dictionary) -> void:
 			database_file.store_buffer(snapshot["database_bytes"])
 			database_file.close()
 
-func _clear_generated_module_resources() -> bool:
+func _clear_module_resources() -> bool:
 	var success := true
 	var type_folders := ["energy", "propulsion", "weapon", "defense", "function", "core"]
 	for type_folder in type_folders:
-		var folder := "%s/%s" % [GENERATED_ROOT, type_folder]
+		var folder := "%s/%s" % [MODULES_ROOT, type_folder]
 		_ensure_dir(folder)
 		var dir := DirAccess.open(folder)
 		if dir == null:
-			push_error("无法打开生成模块目录：%s" % folder)
+			push_error("无法打开模块资源目录：%s" % folder)
 			success = false
 			continue
 
