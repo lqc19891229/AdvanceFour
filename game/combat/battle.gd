@@ -144,12 +144,17 @@ func _physics_process(delta: float) -> void:
 			if countdown <= 0.0:
 				_start_next_wave()
 		Phase.FIGHTING:
+			var wave := battle_definition.get_wave(wave_index)
+			if wave == null:
+				_show_error("当前波次配置不存在。")
+				return
+			var wave_total := wave.get_total_enemy_count()
 			spawn_countdown -= delta
-			if spawned_in_wave < battle_definition.wave_enemy_counts[wave_index] and spawn_countdown <= 0.0:
+			if spawned_in_wave < wave_total and spawn_countdown <= 0.0:
 				_spawn_enemy()
-				spawn_countdown = maxf(battle_definition.spawn_interval_seconds, 0.0)
-			if spawned_in_wave == battle_definition.wave_enemy_counts[wave_index] and enemies.is_empty():
-				if wave_index == battle_definition.wave_enemy_counts.size() - 1:
+				spawn_countdown = _get_current_spawn_interval()
+			if spawned_in_wave == wave_total and enemies.is_empty():
+				if wave_index == battle_definition.get_wave_count() - 1:
 					phase = Phase.RESOLVING
 				else:
 					phase = Phase.INTERMISSION
@@ -164,13 +169,31 @@ func _start_next_wave() -> void:
 	spawn_countdown = 0.0
 	phase = Phase.FIGHTING
 	_spawn_enemy()
-	spawn_countdown = maxf(battle_definition.spawn_interval_seconds, 0.0)
+	spawn_countdown = _get_current_spawn_interval()
+
+func _get_current_spawn_interval() -> float:
+	var wave := battle_definition.get_wave(wave_index)
+	if wave != null and wave.spawn_interval_seconds >= 0.0:
+		return wave.spawn_interval_seconds
+	return maxf(battle_definition.spawn_interval_seconds, 0.0)
 
 func _spawn_enemy() -> void:
-	var wave_count := battle_definition.wave_enemy_counts[wave_index]
+	var wave := battle_definition.get_wave(wave_index)
+	if wave == null:
+		_show_error("当前波次配置不存在。")
+		return
+	var wave_count := wave.get_total_enemy_count()
+	var enemy_definition := wave.get_enemy_for_spawn_index(spawned_in_wave)
+	if enemy_definition == null:
+		_show_error("当前波次无法解析敌舰配置。")
+		return
+	var enemy_design := enemy_definition.build_design(DATABASE)
+	if enemy_design == null:
+		_show_error("敌舰蓝图无法生成有效飞船：%s" % enemy_definition.display_name)
+		return
 	var angle := float(wave_index) * 1.1 + TAU * float(spawned_in_wave) / float(wave_count)
 	var location := player.global_position + Vector2.RIGHT.rotated(angle) * maxf(battle_definition.spawn_radius, 180.0)
-	var enemy := _spawn_ship(build_starter_design(), location, false)
+	var enemy := _spawn_ship(enemy_design, location, false)
 	enemy.rotation = Vector2.UP.angle_to(player.global_position - location)
 	var controller := AIShipController.new()
 	enemy.add_child(controller)
@@ -210,7 +233,7 @@ func _finish_battle(victory: bool) -> void:
 		battle_definition.display_name,
 		defeated_enemies,
 		maxi(wave_index + 1, 0),
-		battle_definition.wave_enemy_counts.size(),
+		battle_definition.get_wave_count(),
 		elapsed_seconds,
 		"全部波次已清除。" if victory else "核心承载船体被摧毁。"
 	]
@@ -275,7 +298,9 @@ func _update_hud() -> void:
 
 	var remaining := 0
 	if wave_index >= 0 and phase in [Phase.FIGHTING, Phase.RESOLVING]:
-		remaining = maxi(battle_definition.wave_enemy_counts[wave_index] - spawned_in_wave, 0)
+		var wave := battle_definition.get_wave(wave_index)
+		if wave != null:
+			remaining = maxi(wave.get_total_enemy_count() - spawned_in_wave, 0)
 
 	hud.text = """前进四｜%s｜%s
 %s  波次 %d / %d
@@ -288,7 +313,7 @@ W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % 
 		design_source,
 		status,
 		maxi(wave_index + 1, 0),
-		battle_definition.wave_enemy_counts.size(),
+		battle_definition.get_wave_count(),
 		enemies.size(),
 		remaining,
 		defeated_enemies,
