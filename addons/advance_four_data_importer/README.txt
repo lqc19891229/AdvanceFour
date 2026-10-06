@@ -1,11 +1,21 @@
-Advance Four Data Importer - Godot 插件入口
+《前进四》Advance Four Data Importer
 
-文件：
-- plugin.cfg：EditorPlugin 注册配置。
-- plugin.gd：Godot 编辑器菜单入口，负责调用 tools/data_import 中的导入流程；数据验证通过后先清理旧的自动生成模块 .tres，再重新生成当前 Excel 对应的 .tres。
+职责：
+把 tools 中的策划源数据转换为 data 中 Godot Runtime 可直接加载的 Resource。
 
-职责边界：
-- addons 只负责 Godot EditorPlugin 接入。
-- Excel、Python 和 JSON cache 不放在 addons。
-- 真正的数据导入资源统一位于 res://tools/data_import/。
-- 最终运行数据输出到 res://data/generated/。
+输入：
+- res://tools/data_source/game_data.xlsx
+- res://tools/cache/modules.json
+
+输出：
+- res://data/modules/<type>/*.tres
+- res://data/modules/module_database.tres
+
+数据结构：
+- res://data/definitions/module/
+
+正式素材：
+- res://data/assets/modules/
+
+规则：
+导入失败时恢复导入前模块资源，避免留下半更新数据。
