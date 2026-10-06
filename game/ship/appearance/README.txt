@@ -9,7 +9,9 @@
 - 默认外观资源：res://data/appearances/hull/human_basic.tres
 - 数据定义：res://data/definitions/appearance/hull_appearance_definition.gd
 - Runtime 贴图：res://data/assets/ship/hull/human_basic/
-- 共 16 张 64×64 Hull Tile，占位美术用于建立正式拼接流程。
+- 共 16 张 64×64 Hull Tile，已替换为 human_basic 正式美术第一版。
+- 视觉语言：深灰蓝金属装甲、外露边装甲包边与高光、统一中心结构面板、弱蓝色技术细节。
+- 连接边延伸到 Tile 边界，保证相邻 Hull Cell 拼接时不出现透明裂缝。
 
 邻接规则：
 每个 Hull Cell 查询上 / 右 / 下 / 左四方向邻接，形成 4-bit mask：
