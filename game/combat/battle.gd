@@ -255,9 +255,10 @@ func _finish_battle(victory: bool) -> void:
 	pending_result.battle_path = _get_active_battle_path()
 	pending_result.next_battle_path = battle_definition.next_battle_path
 	pending_result.reward_credits = battle_definition.reward_credits if victory else 0
-	pending_result.reward_module_ids = battle_definition.reward_module_ids.duplicate() if victory else []
-	pending_result.reward_module_counts = battle_definition.reward_module_counts.duplicate() if victory else []
-	pending_result.reward_hull_cells = battle_definition.reward_hull_cells if victory else 0
+	if victory:
+		pending_result.reward_module_ids.assign(battle_definition.reward_module_ids)
+		pending_result.reward_module_counts.assign(battle_definition.reward_module_counts)
+		pending_result.reward_hull_cells = battle_definition.reward_hull_cells
 	pending_result.enemies_destroyed = defeated_enemies
 	pending_result.elapsed_seconds = elapsed_seconds
 	if victory and is_instance_valid(player):
