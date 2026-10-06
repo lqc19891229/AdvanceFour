@@ -1,14 +1,13 @@
 [gd_resource type="Resource" script_class="EnergyModuleDefinition" format=3 uid="uid://cmcvn2lj2g03n"]
 
-[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://data/definitions/module/energy_module_definition.gd" id="1_qc0em"]
-[ext_resource type="Texture2D" uid="uid://dpfiyc0mafs0g" path="res://data/assets/modules/energy_smallreactor.png" id="2_bvuiq"]
+[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://data/definitions/module/energy_module_definition.gd" id="1_r6gc2"]
+[ext_resource type="Texture2D" uid="uid://dpfiyc0mafs0g" path="res://data/assets/modules/energy_smallreactor.png" id="2_r8aqe"]
 
 [resource]
-script = ExtResource("1_qc0em")
+script = ExtResource("1_r6gc2")
 energy_output = 20.0
 id = &"energy_smallreactor"
 display_name = "小型反应堆"
 module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
-
-texture = ExtResource("2_bvuiq")
+texture = ExtResource("2_r8aqe")

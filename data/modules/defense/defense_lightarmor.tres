@@ -1,15 +1,14 @@
 [gd_resource type="Resource" script_class="DefenseModuleDefinition" format=3 uid="uid://d3cgij15dxy60"]
 
-[ext_resource type="Script" uid="uid://dw8g3d8ctmge3" path="res://data/definitions/module/defense_module_definition.gd" id="1_notj0"]
-[ext_resource type="Texture2D" uid="uid://cooehl8ssh6d" path="res://data/assets/modules/defense_lightarmor.png" id="2_udwdu"]
+[ext_resource type="Script" uid="uid://dw8g3d8ctmge3" path="res://data/definitions/module/defense_module_definition.gd" id="1_36gwa"]
+[ext_resource type="Texture2D" uid="uid://cooehl8ssh6d" path="res://data/assets/modules/defense_lightarmor.png" id="2_ed47o"]
 
 [resource]
-script = ExtResource("1_notj0")
-hp = 20.0
-protection = 10.0
+script = ExtResource("1_36gwa")
+hp = 10.0
+protection = 1.0
 id = &"defense_lightarmor"
 display_name = "轻型装甲"
 module_type = 3
 description = "基础防护模块，为飞船提供结构防护。"
-
-texture = ExtResource("2_udwdu")
+texture = ExtResource("2_ed47o")

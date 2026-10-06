@@ -1,8 +1,6 @@
 {
-  "ok": false,
-  "errors": [
-    "Defense!第 2 行：DEFENSE 模块必须填写 protection > 0"
-  ],
+  "ok": true,
+  "errors": [],
   "warnings": [],
   "counts": {
     "Energy": 1,
@@ -89,7 +87,7 @@
       "energy_output": 0.0,
       "thrust": 0.0,
       "firepower": 0.0,
-      "protection": 0.0,
+      "protection": 1.0,
       "attack_range": 0.0,
       "fire_interval": 0.0,
       "turn_speed_degrees": 0.0,

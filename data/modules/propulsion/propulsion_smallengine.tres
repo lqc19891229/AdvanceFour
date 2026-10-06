@@ -1,15 +1,14 @@
 [gd_resource type="Resource" script_class="PropulsionModuleDefinition" format=3 uid="uid://d4mhsglj3vxk3"]
 
-[ext_resource type="Script" uid="uid://li02sb2a2ata" path="res://data/definitions/module/propulsion_module_definition.gd" id="1_1spns"]
-[ext_resource type="Texture2D" uid="uid://dwh8lmh0krcch" path="res://data/assets/modules/propulsion_smallengine.png" id="2_nwuqa"]
+[ext_resource type="Script" uid="uid://li02sb2a2ata" path="res://data/definitions/module/propulsion_module_definition.gd" id="1_hse7d"]
+[ext_resource type="Texture2D" uid="uid://dwh8lmh0krcch" path="res://data/assets/modules/propulsion_smallengine.png" id="2_im6lw"]
 
 [resource]
-script = ExtResource("1_1spns")
-thrust = 10.0
+script = ExtResource("1_hse7d")
+thrust = 20.0
 id = &"propulsion_smallengine"
 display_name = "小型引擎"
 module_type = 1
 description = "基础动力模块，为飞船提供主要推进力。"
-
 energy_cost = 5.0
-texture = ExtResource("2_nwuqa")
+texture = ExtResource("2_im6lw")

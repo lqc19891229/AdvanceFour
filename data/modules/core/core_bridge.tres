@@ -1,15 +1,14 @@
 [gd_resource type="Resource" script_class="CoreModuleDefinition" format=3 uid="uid://cvyytwixan6ed"]
 
-[ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://data/definitions/module/core_module_definition.gd" id="1_j1ief"]
-[ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://data/assets/modules/core_bridge.png" id="2_ovdck"]
+[ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://data/definitions/module/core_module_definition.gd" id="1_b8pjc"]
+[ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://data/assets/modules/core_bridge.png" id="2_uwatk"]
 
 [resource]
-script = ExtResource("1_j1ief")
+script = ExtResource("1_b8pjc")
 id = &"core_bridge"
 display_name = "舰桥"
 module_type = 5
 description = "飞船核心区域。核心模块被击毁时，飞船判定为沉没。"
 size = Vector2i(2, 2)
-
 energy_cost = 20.0
-texture = ExtResource("2_ovdck")
+texture = ExtResource("2_uwatk")
