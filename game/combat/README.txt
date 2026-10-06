@@ -7,15 +7,18 @@
 
 主要文件：
 - battle.gd / battle.tscn：正式战斗场景与状态机。battle.tscn 是所有关卡复用的唯一战斗容器。
-- battle_definition.gd：BattleDefinition Resource，保存关卡战斗配置。
-- definitions/stage_001.tres：第一份正式战斗配置。
+- battle_definition.gd：BattleDefinition Resource，保存关卡战斗配置与 Wave 列表。
+- battle_wave_definition.gd：BattleWaveDefinition Resource，保存每波敌舰组合与可选生成间隔。
+- enemy_ship_definition.gd：EnemyShipDefinition Resource，把设备 ID / 位置 / 旋转构造成敌舰 ShipData。
+- enemies/：正式敌舰蓝图资源；当前含 scout.tres 与 gunship.tres。
+- definitions/stage_001.tres：第一份正式战斗配置，直接引用敌舰蓝图并定义三波组合。
 - battle_backdrop.gd：世界坐标固定的程序化星点与淡网格。
 - dev/combat_regression_test.gd：战斗流程、碰撞、关卡配置与编辑器往返回归。
 
 BattleDefinition 当前字段：
 - battle_id：稳定战斗 ID。
 - display_name：HUD / 结算显示名称。
-- wave_enemy_counts：每波敌舰数量。
+- waves：BattleWaveDefinition 列表。每波定义敌舰蓝图、对应数量，并可覆盖本波生成间隔。
 - preparation_seconds：开战前准备时间。
 - intermission_seconds：波间时间。
 - spawn_interval_seconds：同波敌舰生成间隔。
@@ -52,9 +55,11 @@ VICTORY / DEFEAT 只结算一次，并冻结 World 子树。
 - 下一阶段战损持久化时，应把“玩家设计 / 当前战损状态”提升为正式 Run / Session 数据，不继续依赖编辑器测试存档语义。
 
 敌舰：
-- 当前敌舰仍使用 Battle.build_starter_design() 的固定 Prototype 蓝图。
-- BattleDefinition 已把波次与场景流程从 battle.gd 中拆出，但敌舰蓝图、敌舰组合与 Boss 定义尚未数据化。
-- 下一步关卡系统扩展时，应优先把“每波生成什么敌舰”加入关卡数据，而不是在 battle.gd 中继续增加 if / match。
+- 正式敌舰由 EnemyShipDefinition 数据化，不再由 Battle.build_starter_design() 固定生成。
+- BattleWaveDefinition 负责描述每波“哪些敌舰 × 各多少艘”；Battle 只按波次顺序解析并生成。
+- stage_001 当前使用侦察舰 scout 与炮舰 gunship 两种蓝图。
+- EnemyShipDefinition 构建出的 ShipData 若不合法，Battle 直接进入 ERROR，不静默替换。
+- Boss 仍待后续扩展，但应继续沿用 EnemyShipDefinition / Wave 数据链，而不是在 battle.gd 写关卡专用分支。
 
 碰撞分组：
 - 玩家 Hull 使用 collision_layer = 4，敌舰 Hull 使用 collision_layer = 8。
@@ -69,4 +74,4 @@ HUD：
 当前边界：
 - 同一场战斗内战损跨波次保留。
 - 退出或重试时目前仍从保存的设计重新建立 RuntimeShip，因此战损尚未写回长期状态。
-- 尚无资源奖励、维修、连续关卡 Run、正式敌舰蓝图、Boss 配置。
+- 尚无资源奖励、维修、连续关卡 Run、Boss 专用配置；普通敌舰蓝图与波次组合已完成数据化。
