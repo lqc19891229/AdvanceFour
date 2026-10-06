@@ -6,6 +6,7 @@
 主要内容：
 - battle_result/：战斗胜利后的结果页，显示 Credits、受损 Hull、成长奖励选择与维修。
 - shop/：补给商店，使用 Credits 购买模块 / Hull 并写入 Run Inventory。
+- route/：星图与路线节点选择。
 - dev/run_regression_test.gd：验证战损持久化、Retry 战前恢复、跨关卡继承、奖励与维修。
 
 状态来源：
@@ -18,7 +19,11 @@ Ship Editor
 → Victory
 → BattleResult
 → Result Screen
-→ Repair / Reward Choice / Shop / Refit / Next Battle
+→ Repair / Reward Choice
+→ Route Map
+→ Shop / Refit
+→ Route Map
+→ Battle / End
 
 边界：
 - game/run 不定义具体关卡内容。
@@ -66,3 +71,12 @@ v0.36.0：
 - Credits 不足时购买原子失败。
 - 未领取 Reward Choice 时商店入口锁定。
 - 只有仍有下一战的战果页显示商店，当前最终关不开放商店。
+
+
+v0.37.0：
+- 正式 Run 改为数据化 RunRouteDefinition。
+- Prototype 航线为：第一战 → [补给商店 / 整备站] → 第二战 → 航线终点。
+- 星图只允许选择当前节点连接的下一节点，已离开的分支不可返回。
+- Battle 节点胜利后先进入战果页，再返回星图。
+- Shop / Refit 节点完成后回星图。
+- 旧线性 Run API 保留给诊断入口。
