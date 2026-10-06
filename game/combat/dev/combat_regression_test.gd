@@ -36,7 +36,7 @@ func _new_battle(counts: Array[int]) -> Battle:
 	definition.battle_id = &"regression_test"
 	definition.display_name = "战斗回归测试"
 	for count in counts:
-		var wave := BattleWaveDefinition.new()
+		var wave = BattleWaveDefinition.new()
 		wave.enemies.append(TEST_ENEMY)
 		wave.counts.append(count)
 		wave.spawn_interval_seconds = 0.12
