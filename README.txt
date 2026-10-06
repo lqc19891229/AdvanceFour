@@ -130,12 +130,13 @@
 3. 数据
 用于科技、蓝图、永久解锁。
 
-当前 Prototype（v0.33）已先使用 Credits 验证战后经济闭环：
+当前 Prototype（v0.34）已先使用 Credits + Run Inventory 验证战后经济闭环：
 - 战斗胜利获得 Credits。
 - Hull 战损会保留到下一场战斗。
 - 战果页支持选择单个受损 Hull 进行局部维修，也保留“全部维修”。
 - 当前维修费用规则为 1 缺失 Hull HP = 1 Credit。
 - Equipment 本身不维护独立 HP；其效率由覆盖 Hull Cell 的健康度决定，因此修复承载区域会恢复对应模块效率。
+- 战斗可固定奖励模块与 Hull 库存；Run 整备时新增 Hull / Equipment 必须消耗库存，拆除会返还库存，移动 / 旋转免费。
 - 这是当前 Prototype 的临时经济验证层，后续正式资源体系仍按合金 / 能源核心 / 数据方向迭代。
 
 九、Roguelike 成长
