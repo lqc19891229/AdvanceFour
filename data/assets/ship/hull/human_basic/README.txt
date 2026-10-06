@@ -1,4 +1,4 @@
-human_basic Hull Runtime Tile 第一版。
+human_basic Hull Runtime Tile 正式美术第一版。
 
 共 16 张 64×64 PNG，文件名 hull_0000.png ～ hull_1111.png。
 四位二进制按 LEFT/DOWN/RIGHT/UP 展示，实际 bit 权重为：
