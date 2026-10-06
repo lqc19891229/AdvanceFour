@@ -38,8 +38,9 @@ ShipData.hull_cells
 - Hull = 0 第一版仍保留暗化壳体，不删除视觉格。
 
 Fallback：
-- HullAppearanceDefinition 缺失、tile 数量不足或某张 Texture2D 为空时，该 Hull Cell 自动回退到原程序绘制外壳。
-- 美术资源未配置完整时不会导致船体不可见。
+- 当前默认 human_basic.tres 会由 ShipAppearanceRenderer 预加载；项目内默认资源必须存在且可加载。
+- 在已成功加载 HullAppearanceDefinition 的前提下，若某个 mask 对应 Texture2D 为空或索引不可用，该 Hull Cell 自动回退到原程序绘制外壳。
+- fallback 用于局部 Tile 配置异常，不替代默认外观资源本身的完整性要求。
 
 Equipment 显示规则保持不变：
 - Core：显示。
