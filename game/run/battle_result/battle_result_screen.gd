@@ -10,6 +10,7 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var repair_button: Button = $Center/Panel/Margin/Content/RepairAll
 @onready var refit_button: Button = $Center/Panel/Margin/Content/Refit
 @onready var next_button: Button = $Center/Panel/Margin/Content/NextBattle
+@onready var end_run_button: Button = $Center/Panel/Margin/Content/EndRun
 
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
@@ -18,6 +19,7 @@ func _ready() -> void:
 	repair_button.pressed.connect(_repair_all)
 	refit_button.pressed.connect(_enter_refit)
 	next_button.pressed.connect(_next_battle)
+	end_run_button.pressed.connect(_end_run)
 	_refresh()
 
 func _refresh() -> void:
@@ -27,6 +29,7 @@ func _refresh() -> void:
 		repair_button.disabled = true
 		refit_button.disabled = true
 		next_button.disabled = true
+		end_run_button.disabled = true
 		return
 	var result := _run_state().last_result as BattleResult
 	var damaged := 0
@@ -53,8 +56,11 @@ func _refresh() -> void:
 	repair_button.text = "全部维修（%d Credits）" % repair_cost
 	repair_button.disabled = repair_cost <= 0 or _run_state().currency < repair_cost
 	refit_button.disabled = false
-	next_button.disabled = String(_run_state().call("get_next_battle_path")).is_empty()
-	next_button.text = "下一战" if not next_button.disabled else "Run 已完成"
+	var has_next := not String(_run_state().call("get_next_battle_path")).is_empty()
+	next_button.visible = has_next
+	next_button.disabled = not has_next
+	end_run_button.visible = not has_next
+	end_run_button.disabled = has_next
 
 func _repair_all() -> void:
 	_run_state().call("repair_all")
@@ -70,3 +76,11 @@ func _next_battle() -> void:
 		return
 	get_tree().set_meta(BATTLE_DEFINITION_META, next_path)
 	get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
+
+
+func _end_run() -> void:
+	if _run_state() == null or not _run_state().run_active:
+		return
+	_run_state().call("reset_run")
+	get_tree().set_meta(&"restore_ship_design", true)
+	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
