@@ -296,6 +296,8 @@ W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % 
 	]
 
 func retry() -> void:
+	if battle_definition != null and not battle_definition.resource_path.is_empty():
+		get_tree().set_meta(BATTLE_DEFINITION_META, battle_definition.resource_path)
 	get_tree().reload_current_scene()
 
 func return_from_battle() -> void:
