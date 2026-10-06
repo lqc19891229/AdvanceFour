@@ -5,6 +5,7 @@ const SAVE_PATH := "user://ships/test_ship.json"
 const CONTENT := "UI/ResultOverlay/Center/Panel/Margin/Content/"
 const CUSTOM_BATTLE_DEFINITION_PATH := "res://game/combat/dev/custom_battle_definition.tres"
 const INVALID_BATTLE_DEFINITION_PATH := "res://game/combat/dev/missing_battle_definition.tres"
+const TEST_ENEMY := preload("res://game/combat/enemies/scout.tres")
 
 var checks := 0
 var failures: Array[String] = []
@@ -34,7 +35,12 @@ func _new_battle(counts: Array[int]) -> Battle:
 	var definition := BattleDefinition.new()
 	definition.battle_id = &"regression_test"
 	definition.display_name = "战斗回归测试"
-	definition.wave_enemy_counts = counts
+	for count in counts:
+		var wave := BattleWaveDefinition.new()
+		wave.enemies.append(TEST_ENEMY)
+		wave.counts.append(count)
+		wave.spawn_interval_seconds = 0.12
+		definition.waves.append(wave)
 	definition.preparation_seconds = 0.03
 	definition.intermission_seconds = 0.03
 	definition.spawn_interval_seconds = 0.12
@@ -287,7 +293,8 @@ func _test_custom_definition_retry() -> void:
 	var battle := current_scene as Battle
 	_check(battle != null and battle.battle_definition.battle_id == &"regression_custom", "Battle must load the explicitly selected custom definition")
 	_check(battle.battle_definition.display_name == "自定义回归关卡", "Custom battle display name must come from the selected definition")
-	_check(battle.battle_definition.wave_enemy_counts == [2], "Custom battle wave data must come from the selected definition")
+	_check(battle.battle_definition.get_wave_count() == 1 and battle.battle_definition.get_wave(0).get_total_enemy_count() == 2, "Custom battle wave data must come from the selected definition")
+	_check(battle.battle_definition.get_wave(0).get_enemy_for_spawn_index(0).enemy_id == &"scout", "Custom battle wave must preserve its enemy blueprint")
 	_check(is_equal_approx(battle.battle_definition.spawn_radius, 333.0), "Custom battle spawn radius must come from the selected definition")
 
 	battle.retry()
