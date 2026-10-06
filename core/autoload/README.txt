@@ -7,7 +7,8 @@
 
 - run_state.gd
   功能：当前 Roguelike Run 的跨场景状态，保存 current_ship、战前快照、Credits、完成关卡和最近 BattleResult。
-  规则：胜利提交战损；失败不提交；Retry 使用 battle_entry_ship；战后维修通过 Hull Cell 缺失 HP 扣除 Credits。
+  规则：胜利提交战损与奖励；失败不提交；Retry 使用 battle_entry_ship；战后维修通过 Hull Cell 缺失 HP 扣除 Credits。
+  Run Inventory：module_inventory 保存模块数量，hull_stock 保存可新增 Hull Cell 数量。
 
   维修接口：
   - get_repair_cost_for_cell(position)：查询单格维修费用。
