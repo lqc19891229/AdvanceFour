@@ -1,7 +1,7 @@
 class_name AdvanceFourDataManager
 extends Node
 
-const MODULE_DATABASE_PATH := "res://data/generated/module_database.tres"
+const MODULE_DATABASE_PATH := "res://data/modules/module_database.tres"
 
 var module_database: ModuleDatabase
 var modules_by_id: Dictionary = {}
