@@ -259,6 +259,7 @@ func _finish_battle(victory: bool) -> void:
 		pending_result.reward_module_ids.assign(battle_definition.reward_module_ids)
 		pending_result.reward_module_counts.assign(battle_definition.reward_module_counts)
 		pending_result.reward_hull_cells = battle_definition.reward_hull_cells
+		pending_result.reward_choices.assign(battle_definition.reward_choices)
 	pending_result.enemies_destroyed = defeated_enemies
 	pending_result.elapsed_seconds = elapsed_seconds
 	if victory and is_instance_valid(player):
