@@ -49,6 +49,7 @@ func _run() -> void:
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 8.0), "Victory must persist Hull damage into RunState")
 	var completed: Array = run_state.get("completed_battles")
 	_check(int(run_state.get("currency")) == 100 and completed.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
+	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("currency")) == 100, "The same victory must not be committed twice")
 
 	var result_screen_scene := load("res://game/run/battle_result/battle_result_screen.tscn") as PackedScene
 	var result_screen := result_screen_scene.instantiate() as Control
@@ -56,7 +57,9 @@ func _run() -> void:
 	await process_frame
 	var result_summary := result_screen.get_node("Center/Panel/Margin/Content/Summary") as Label
 	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/RepairAll") as Button
+	var end_run_button := result_screen.get_node("Center/Panel/Margin/Content/EndRun") as Button
 	_check(result_summary.text.contains("+100 Credits") and repair_button.text.contains("12 Credits"), "Battle result screen must expose reward and repair cost")
+	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
 	result_screen.queue_free()
 	await process_frame
 
@@ -95,6 +98,27 @@ func _run() -> void:
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Defeat must not commit battle damage")
 	completed = run_state.get("completed_battles")
 	_check(int(run_state.get("currency")) == 0 and completed.is_empty(), "Defeat must not grant rewards or completion")
+
+	# Current final-stage result must expose a way to leave the Run.
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_002_PATH)), "Final-stage flow must be able to start")
+	var final_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_002_PATH) as ShipData
+	var final_victory := BattleResult.new()
+	final_victory.outcome = BattleResult.Outcome.VICTORY
+	final_victory.battle_id = &"stage_002"
+	final_victory.battle_path = STAGE_002_PATH
+	final_victory.next_battle_path = ""
+	final_victory.ship_after_battle = final_ship
+	final_victory.reward_credits = 150
+	_check(bool(run_state.call("commit_victory", final_victory)), "Final-stage victory must commit")
+	result_screen = result_screen_scene.instantiate() as Control
+	root.add_child(result_screen)
+	await process_frame
+	end_run_button = result_screen.get_node("Center/Panel/Margin/Content/EndRun") as Button
+	var next_button := result_screen.get_node("Center/Panel/Margin/Content/NextBattle") as Button
+	_check(end_run_button.visible and not next_button.visible, "Final-stage result must offer End Run instead of a dead Next Battle action")
+	result_screen.queue_free()
+	await process_frame
 
 	run_state.call("reset_run")
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])
