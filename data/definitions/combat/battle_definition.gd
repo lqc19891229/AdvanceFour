@@ -1,6 +1,8 @@
 class_name BattleDefinition
 extends Resource
 
+const DATABASE := preload("res://data/modules/module_database.tres")
+
 @export var battle_id: StringName = &"stage_001"
 @export var display_name := "第一战"
 @export var waves: Array[Resource] = []
@@ -35,6 +37,9 @@ func is_valid() -> bool:
 	for count in reward_module_counts:
 		if count < 0:
 			return false
+	for module_id in reward_module_ids:
+		if module_id == &"" or DATABASE.get_by_id(module_id) == null:
+			return false
 	if return_scene_path.is_empty():
 		return false
 	return true
@@ -66,6 +71,9 @@ func get_invalid_reason() -> String:
 	for count in reward_module_counts:
 		if count < 0:
 			return "模块奖励数量不能为负数。"
+	for module_id in reward_module_ids:
+		if module_id == &"" or DATABASE.get_by_id(module_id) == null:
+			return "模块奖励 ID 无效：%s" % String(module_id)
 	if return_scene_path.is_empty():
 		return "战斗返回场景不能为空。"
 	return ""
