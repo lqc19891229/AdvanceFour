@@ -3,6 +3,8 @@ extends SceneTree
 const BATTLE_SCENE := preload("res://game/combat/battle.tscn")
 const SAVE_PATH := "user://ships/test_ship.json"
 const CONTENT := "UI/ResultOverlay/Center/Panel/Margin/Content/"
+const CUSTOM_BATTLE_DEFINITION_PATH := "res://game/combat/dev/custom_battle_definition.tres"
+const INVALID_BATTLE_DEFINITION_PATH := "res://game/combat/dev/missing_battle_definition.tres"
 
 var checks := 0
 var failures: Array[String] = []
@@ -86,6 +88,7 @@ func _run() -> void:
 	await _test_late_projectile_and_failure()
 	await _test_friendly_fire()
 	await _test_errors()
+	await _test_custom_definition_retry()
 	await _test_editor_roundtrip()
 	if had_save:
 		var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -257,10 +260,43 @@ func _test_errors() -> void:
 	_check(invalid.phase == Battle.Phase.ERROR and invalid.result_overlay.visible, "Empty encounter configuration must show a recoverable error")
 	invalid.queue_free()
 	await process_frame
+
+	get_tree().set_meta(Battle.BATTLE_DEFINITION_META, INVALID_BATTLE_DEFINITION_PATH)
+	invalid = BATTLE_SCENE.instantiate() as Battle
+	root.add_child(invalid)
+	_check(invalid.phase == Battle.Phase.ERROR, "Explicit invalid battle definition path must enter ERROR")
+	_check(invalid.result_summary.text.contains("战斗配置不存在"), "Invalid battle definition path must report the configuration error")
+	_check(invalid.battle_definition == null or invalid.battle_definition.battle_id != &"stage_001", "Explicit invalid battle definition path must never fall back to stage_001")
+	invalid.queue_free()
+	await process_frame
+
 	ShipSerializer.save_to_file(ShipData.new(), SAVE_PATH)
 	invalid = _new_battle([1])
 	_check(invalid.phase == Battle.Phase.ERROR and invalid.player == null, "Invalid saved design must not silently use the fallback")
 	invalid.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(SAVE_PATH)
+
+func _test_custom_definition_retry() -> void:
+	var design := Battle.build_starter_design()
+	var saved := ShipSerializer.save_to_file(design, SAVE_PATH)
+	_check(saved["ok"], "Custom battle retry test must save a valid player design")
+	get_tree().set_meta(Battle.BATTLE_DEFINITION_META, CUSTOM_BATTLE_DEFINITION_PATH)
+	change_scene_to_file("res://game/combat/battle.tscn")
+	await scene_changed
+	var battle := current_scene as Battle
+	_check(battle != null and battle.battle_definition.battle_id == &"regression_custom", "Battle must load the explicitly selected custom definition")
+	_check(battle.battle_definition.display_name == "自定义回归关卡", "Custom battle display name must come from the selected definition")
+	_check(battle.battle_definition.wave_enemy_counts == [2], "Custom battle wave data must come from the selected definition")
+	_check(is_equal_approx(battle.battle_definition.spawn_radius, 333.0), "Custom battle spawn radius must come from the selected definition")
+
+	battle.retry()
+	await scene_changed
+	battle = current_scene as Battle
+	_check(battle != null and battle.battle_definition.battle_id == &"regression_custom", "Retry must preserve the active custom BattleDefinition")
+	_check(battle.battle_definition.display_name == "自定义回归关卡", "Retry must not fall back to the scene default BattleDefinition")
+	battle.queue_free()
+	current_scene = null
 	await process_frame
 	DirAccess.remove_absolute(SAVE_PATH)
 
