@@ -104,6 +104,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "全部维修"
 
+[node name="Shop" type="Button" parent="Center/Panel/Margin/Content/ActionRow"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "商店"
+
 [node name="Refit" type="Button" parent="Center/Panel/Margin/Content/ActionRow"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
