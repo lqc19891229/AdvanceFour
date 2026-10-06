@@ -195,7 +195,7 @@ func _get_module_efficiency(module: ShipModuleInstance) -> float:
 	var run_state := _run_state()
 	if run_state == null or run_state.current_ship == null or module == null:
 		return 0.0
-	var cells := module.get_cells()
+	var cells: Array[Vector2i] = module.get_cells()
 	if cells.is_empty():
 		return 0.0
 	var total := 0.0
@@ -210,12 +210,12 @@ func _get_module_efficiency_after_repair(module: ShipModuleInstance, repaired_po
 	var run_state := _run_state()
 	if run_state == null or run_state.current_ship == null or module == null:
 		return 0.0
-	var cells := module.get_cells()
+	var cells: Array[Vector2i] = module.get_cells()
 	if cells.is_empty():
 		return 0.0
 	var total := 0.0
 	for position in cells:
-		var hull := run_state.current_ship.get_hull_cell_at(position)
+		var hull: ShipHullCell = run_state.current_ship.get_hull_cell_at(position)
 		if hull == null:
 			return 0.0
 		total += 1.0 if position == repaired_position else hull.get_health_ratio()
