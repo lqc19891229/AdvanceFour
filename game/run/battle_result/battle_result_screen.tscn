@@ -70,3 +70,9 @@ text = "进入整备"
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "下一战"
+
+[node name="EndRun" type="Button" parent="Center/Panel/Margin/Content"]
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "结束 Run 并返回设计器"
