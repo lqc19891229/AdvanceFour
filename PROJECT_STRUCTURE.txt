@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.36.0
+《前进四》项目目录规划 V0.37.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -28,6 +28,8 @@ res://
 │  │  └─ gunship.tres
 │  ├─ shops/
 │  │  └─ basic_shop.tres
+│  ├─ routes/
+│  │  └─ prototype_route.tres
 │  └─ battles/
 │     ├─ stage_001.tres
 │     └─ stage_002.tres
@@ -41,6 +43,7 @@ res://
 │  ├─ run/
 │  │  ├─ battle_result/
 │  │  ├─ shop/
+│  │  ├─ route/
 │  │  └─ dev/
 │  └─ ship/
 │     ├─ appearance/
@@ -260,7 +263,7 @@ Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
 
 
 ========================================
-十、v0.36 Run / 战后闭环
+十、v0.37 Run / 路线闭环
 ========================================
 
 core/autoload/run_state.gd
@@ -276,13 +279,25 @@ data/definitions/combat/battle_result.gd
 
 正式流程：
 Ship Editor
-→ RunState.start_run()
+→ RunState.start_run_with_route()
 → stage_001
 → Victory
 → BattleResult
 → RunState.commit_victory()
 → Battle Result Screen
-→ 维修 / Run Refit / stage_002
+→ Route Map
+→ Shop / Run Refit
+→ Route Map
+→ stage_002
+→ Route End
+
+Route：
+- data/definitions/run/run_route_node_definition.gd：路线节点类型、目标资源、下一节点和星图位置。
+- data/definitions/run/run_route_definition.gd：路线节点集合、起点与连接合法性。
+- data/routes/prototype_route.tres：当前正式 Prototype 航线。
+- game/run/route/：星图展示与节点选择。
+- RunState 记录当前路线节点和已完成节点；正式 Run 通过路线决定战斗 / 商店 / 整备 / 终点。
+- 当前路线：stage_001 → [Shop / Refit] → stage_002 → End。
 
 Shop：
 - data/definitions/run/shop_item_definition.gd：单个商品内容与 Credits 价格。
