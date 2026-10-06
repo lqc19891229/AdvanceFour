@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="PropulsionModuleDefinition" format=3 uid="uid://d4mhsglj3vxk3"]
 
-[ext_resource type="Script" uid="uid://li02sb2a2ata" path="res://game/ship/definitions/propulsion_module_definition.gd" id="1_1spns"]
-[ext_resource type="Texture2D" uid="uid://dwh8lmh0krcch" path="res://game/ship/art/modules/propulsion_smallengine.png" id="2_nwuqa"]
+[ext_resource type="Script" uid="uid://li02sb2a2ata" path="res://data/definitions/module/propulsion_module_definition.gd" id="1_1spns"]
+[ext_resource type="Texture2D" uid="uid://dwh8lmh0krcch" path="res://data/assets/modules/propulsion_smallengine.png" id="2_nwuqa"]
 
 [resource]
 script = ExtResource("1_1spns")
