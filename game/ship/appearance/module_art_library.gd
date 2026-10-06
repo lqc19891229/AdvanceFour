@@ -1,6 +1,9 @@
 class_name ModuleArtLibrary
 extends RefCounted
 
+# Turret textures point right at zero rotation, in the editor and in battle.
+const WEAPON_FORWARD := Vector2.RIGHT
+
 static func get_base_texture(definition: ShipModuleDefinition) -> Texture2D:
 	if definition == null:
 		return null

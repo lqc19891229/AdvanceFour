@@ -6,6 +6,7 @@
 当前：
 - scout.tres
 - gunship.tres
+- 当前敌舰武器安装旋转为 3（炮口朝船体上方），与 AI 使用的舰首方向一致。
 
 依赖：
 - EnemyShipDefinition：data/definitions/combat/

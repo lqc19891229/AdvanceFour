@@ -19,10 +19,15 @@ WeaponModuleDefinition 位于 data/definitions/module/。
 - attack_range 同时决定选敌距离和 Projectile 最大飞行距离。
 
 射界与炮塔：
+- 武器贴图与无贴图回退炮口均以向右为 0°；与舰船移动的向上前方分别定义。
+- rotation_quarters：0 右、1 下、2 左、3 上；编辑器安装方向与战斗射界中心一致。
 - module.rotation_quarters 是安装方向与射界中心。
+- 世界射界中心 = 船体 global_rotation + 安装角度，不随当前炮塔转角漂移。
 - firing_arc_degrees 限制搜索、旋转与开火。
+- 有限射界在安装方向 ± 半射界内逐步转动，整个转动路径不得穿过禁止区域；360° 炮塔使用最短转向路径。
 - turn_speed_degrees × efficiency 决定炮塔转速。
 - fire_angle_tolerance_degrees 决定允许开火的角误差。
+- 自动与手动开火共用冷却、供电及当前炮口射界检查；弹丸方向来自当前炮口世界方向。
 - Weapon base 由 ShipModuleRuntime 显示，turret 由 WeaponRuntime 独立旋转。
 
 效率与供电：

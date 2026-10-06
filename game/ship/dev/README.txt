@@ -5,6 +5,7 @@
 
 主要文件：
 - ship_regression_test.gd：无界面回归，覆盖 Hull HP、Equipment efficiency、供电、移动、武器、Projectile、核心沉没、编辑器与存档。
+- 武器回归覆盖四个安装方向、船体旋转、0°/窄射界/180°/宽射界/360°、炮口与弹道一致、转动全过程限制及自动/手动开火检查。
 - ship_ai_test.gd / .tscn：玩家与 AI 飞船交火测试。
 - ship_movement_test.gd / .tscn：移动、控制、武器与命中最小测试。
 - weapon_target_dummy.gd：通用 DamageReceiver 测试目标。

@@ -180,7 +180,7 @@ func _test_waves_and_victory() -> void:
 	var weapon := enemy.weapon_runtimes[0]
 	enemy.rotation = 0.0
 	weapon.global_position = Vector2(10000.0, 10000.0)
-	weapon.global_rotation = 0.0
+	weapon.global_rotation = Vector2.UP.angle()
 	enemy.request_fire()
 	_kill(enemy)
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.RESOLVING), "Final clearance must wait for projectiles")
@@ -218,7 +218,7 @@ func _test_late_projectile_and_failure() -> void:
 	var weapon := enemy.weapon_runtimes[0]
 	# The last airborne shot destroys the final surviving Core-supporting Hull cell.
 	weapon.global_position = final_core_runtime.global_position + Vector2(0.0, -100.0)
-	weapon.global_rotation = PI
+	weapon.global_rotation = Vector2.DOWN.angle()
 	enemy.request_fire()
 	_kill(enemy)
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.DEFEAT), "Last enemy's airborne shot must still be able to defeat the player")
@@ -242,7 +242,7 @@ func _test_friendly_fire() -> void:
 	var weapon := shooter.weapon_runtimes[0]
 	shooter.rotation = PI
 	weapon.global_position = _core_runtime(ally).global_position + Vector2(18.0, -100.0)
-	weapon.global_rotation = PI
+	weapon.global_rotation = Vector2.DOWN.angle()
 	shooter.request_fire()
 	for frame in range(20):
 		await physics_frame
@@ -250,7 +250,7 @@ func _test_friendly_fire() -> void:
 	weapon = battle.player.weapon_runtimes[0]
 	battle.player.rotation = PI
 	weapon.global_position = _core_runtime(ally).global_position + Vector2(18.0, -100.0)
-	weapon.global_rotation = PI
+	weapon.global_rotation = Vector2.DOWN.angle()
 	battle.player.request_fire()
 	_check(await _wait_until(func(): return _core_cell(ally).current_hp < hp_before), "Player shots must hit the same opposing Hull through battle masks")
 	# Destroy both sides before resolution in one frame: failure takes precedence.

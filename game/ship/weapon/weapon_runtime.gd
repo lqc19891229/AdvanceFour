@@ -122,11 +122,12 @@ func has_target() -> bool:
 	return _is_target_valid(target)
 
 func _physics_process(delta: float) -> void:
-	if not is_active():
-		return
 	if owner_ship == null or not is_instance_valid(owner_ship):
 		return
 	if module_instance == null or weapon_definition == null:
+		return
+	global_rotation = _clamp_global_rotation_to_firing_arc(global_rotation)
+	if not is_active():
 		return
 
 	cooldown_remaining = maxf(0.0, cooldown_remaining - delta)
@@ -139,9 +140,8 @@ func _physics_process(delta: float) -> void:
 
 	_aim_at_target(delta)
 
-	if cooldown_remaining <= 0.0 and _is_aimed_at_target():
-		_emit_fire()
-		cooldown_remaining = maxf(fire_interval / maxf(efficiency, 0.05), 0.0)
+	if _can_fire() and _is_aimed_at_target():
+		fire_once()
 
 func _find_nearest_target() -> Node2D:
 	var best_target: Node2D
@@ -195,13 +195,16 @@ func get_firing_arc_center_global_rotation() -> float:
 		return mount_local_rotation
 	return owner_ship.global_rotation + mount_local_rotation
 
+func get_muzzle_world_direction() -> Vector2:
+	return ModuleArtLibrary.WEAPON_FORWARD.rotated(global_rotation).normalized()
+
 func is_world_direction_inside_firing_arc(world_direction: Vector2) -> bool:
 	if world_direction.is_zero_approx():
 		return true
 	var arc := clampf(firing_arc_degrees, 0.0, 360.0)
 	if arc >= 359.999:
 		return true
-	var direction_rotation := Vector2.UP.angle_to(world_direction.normalized())
+	var direction_rotation := ModuleArtLibrary.WEAPON_FORWARD.angle_to(world_direction.normalized())
 	var center_rotation := get_firing_arc_center_global_rotation()
 	var difference := absf(wrapf(direction_rotation - center_rotation, -PI, PI))
 	return difference <= deg_to_rad(arc * 0.5) + 0.000001
@@ -221,10 +224,20 @@ func _aim_at_target(delta: float) -> void:
 	if to_target.is_zero_approx():
 		return
 
-	var desired_global_rotation := Vector2.UP.angle_to(to_target.normalized())
+	var desired_global_rotation := ModuleArtLibrary.WEAPON_FORWARD.angle_to(to_target.normalized())
 	var allowed_global_rotation := _clamp_global_rotation_to_firing_arc(desired_global_rotation)
-	var max_step := deg_to_rad(turn_speed_degrees * efficiency) * delta
-	global_rotation = rotate_toward(global_rotation, allowed_global_rotation, max_step)
+	var max_step := deg_to_rad(maxf(turn_speed_degrees * efficiency, 0.0)) * maxf(delta, 0.0)
+	if clampf(firing_arc_degrees, 0.0, 360.0) >= 359.999:
+		global_rotation = rotate_toward(global_rotation, allowed_global_rotation, max_step)
+		return
+
+	# A finite arc is an interval around the mount, not a circular shortest path.
+	# Even for arcs wider than 180 degrees, never rotate through the forbidden sector.
+	var center_rotation := get_firing_arc_center_global_rotation()
+	var current_rotation := _clamp_global_rotation_to_firing_arc(global_rotation)
+	var current_relative := wrapf(current_rotation - center_rotation, -PI, PI)
+	var desired_relative := wrapf(allowed_global_rotation - center_rotation, -PI, PI)
+	global_rotation = center_rotation + move_toward(current_relative, desired_relative, max_step)
 
 func _is_aimed_at_target() -> bool:
 	if target == null:
@@ -238,7 +251,7 @@ func _is_aimed_at_target() -> bool:
 	if not is_world_direction_inside_firing_arc(to_target):
 		return false
 
-	var desired_global_rotation := Vector2.UP.angle_to(to_target.normalized())
+	var desired_global_rotation := ModuleArtLibrary.WEAPON_FORWARD.angle_to(to_target.normalized())
 	var difference := absf(wrapf(desired_global_rotation - global_rotation, -PI, PI))
 	return difference <= deg_to_rad(fire_angle_tolerance_degrees)
 
@@ -255,11 +268,11 @@ func _can_fire() -> bool:
 		and module_instance != null
 		and weapon_definition != null
 		and cooldown_remaining <= 0.0
-		and is_world_direction_inside_firing_arc(Vector2.UP.rotated(global_rotation))
+		and is_world_direction_inside_firing_arc(get_muzzle_world_direction())
 	)
 
 func _emit_fire() -> void:
-	var direction := Vector2.UP.rotated(global_rotation).normalized()
+	var direction := get_muzzle_world_direction()
 	fired.emit(
 		module_instance,
 		weapon_definition.firepower * efficiency,
@@ -271,4 +284,4 @@ func _draw() -> void:
 	if turret_visual != null and is_instance_valid(turret_visual):
 		return
 	draw_circle(Vector2.ZERO, 4.0, Color.WHITE, false, 1.0)
-	draw_line(Vector2.ZERO, Vector2.UP * 16.0, Color.WHITE, 2.0)
+	draw_line(Vector2.ZERO, ModuleArtLibrary.WEAPON_FORWARD * 16.0, Color.WHITE, 2.0)
