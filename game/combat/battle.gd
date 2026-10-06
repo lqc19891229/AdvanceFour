@@ -8,7 +8,7 @@ enum Phase { PREPARING, FIGHTING, INTERMISSION, RESOLVING, VICTORY, DEFEAT, ERRO
 const PLAYER_SHIP_SAVE_PATH := "user://ships/test_ship.json"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const SHIP_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
-const DATABASE := preload("res://data/generated/module_database.tres")
+const DATABASE := preload("res://data/modules/module_database.tres")
 const PLAYER_LAYER := 4
 const ENEMY_LAYER := 8
 
