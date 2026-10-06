@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://game/combat/battle.gd" id="1"]
 [ext_resource type="Script" path="res://game/combat/battle_backdrop.gd" id="2"]
-[ext_resource type="Resource" path="res://game/combat/definitions/stage_001.tres" id="3"]
+[ext_resource type="Resource" path="res://data/battles/stage_001.tres" id="3"]
 
 [sub_resource type="StyleBoxFlat" id="HUDStyle"]
 bg_color = Color(0.055, 0.075, 0.105, 0.92)
