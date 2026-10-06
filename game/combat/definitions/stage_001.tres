@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BattleDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/combat/battle_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+battle_id = &"stage_001"
+display_name = "第一战"
+wave_enemy_counts = Array[int]([1, 1, 2])
+preparation_seconds = 2.0
+intermission_seconds = 3.0
+spawn_interval_seconds = 1.25
+spawn_radius = 460.0
+return_scene_path = "res://game/ship/editor/ship_editor.tscn"
