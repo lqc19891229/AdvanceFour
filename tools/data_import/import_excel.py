@@ -68,6 +68,28 @@ WEAPON_FIELDS = [
 WEAPON_TEXTURE_FIELD = "turret_texture_path"
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
+HEADER_ALIASES = {
+    "标识": "id",
+    "显示名称": "display_name",
+    "描述": "description",
+    "宽度": "width",
+    "高度": "height",
+    "能耗": "energy_cost",
+    "贴图路径": "texture_path",
+    "能量输出": "energy_output",
+    "推力": "thrust",
+    "火力": "firepower",
+    "攻击范围": "attack_range",
+    "射击间隔": "fire_interval",
+    "炮塔转速（度/秒）": "turn_speed_degrees",
+    "弹速": "projectile_speed",
+    "开火角容差（度）": "fire_angle_tolerance_degrees",
+    "射界（度）": "firing_arc_degrees",
+    "炮塔贴图路径": "turret_texture_path",
+    "生命值": "hp",
+    "防护": "protection",
+}
+
 
 def col_to_index(ref: str) -> int:
     letters = "".join(c for c in ref if c.isalpha()).upper()
@@ -181,10 +203,17 @@ def as_int(value: Any, field: str, sheet: str, row_number: int, errors: list[str
     return i
 
 
+def normalize_headers(row: list[Any]) -> list[str]:
+    return [
+        HEADER_ALIASES.get(str(value).strip(), str(value).strip())
+        for value in row
+    ]
+
+
 def find_header_row(rows: list[list[Any]], required_columns: list[str]) -> int | None:
     """Allow an optional note row before the header row."""
     for idx, row in enumerate(rows[:10]):
-        headers = [str(x).strip() for x in row]
+        headers = normalize_headers(row)
         if all(c in headers for c in required_columns):
             return idx
     return None
@@ -218,7 +247,7 @@ def parse_sheet(
         errors.append(f"{sheet_name} 工作表找不到有效表头，必须包含：{', '.join(required_columns)}")
         return []
 
-    headers = [str(x).strip() for x in rows[header_idx]]
+    headers = normalize_headers(rows[header_idx])
     missing = [c for c in required_columns if c not in headers]
     if missing:
         errors.append(f"{sheet_name} 缺少列：{', '.join(missing)}")
