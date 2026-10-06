@@ -66,7 +66,7 @@ func _run() -> void:
 	var damage_button := damage_list.get_child(0) as Button
 	damage_button.pressed.emit()
 	await process_frame
-	_check(repair_selected.text.contains("12 Credits") and selected_detail.text.contains("12"), "Selecting a damaged Hull must expose its local repair action")
+	_check(repair_selected.text.contains("12 Credits") and selected_detail.text.contains("8 / 20"), "Selecting a damaged Hull must expose its local repair action")
 	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
 	result_screen.queue_free()
 	await process_frame
