@@ -25,4 +25,7 @@ spawn_interval_seconds = 1.0
 script = ExtResource("1")
 waves = Array[Resource]([SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")])
 reward_credits = 100
+reward_module_ids = Array[StringName]([&"defense_lightarmor"])
+reward_module_counts = Array[int]([1])
+reward_hull_cells = 1
 next_battle_path = "res://data/battles/stage_002.tres"
