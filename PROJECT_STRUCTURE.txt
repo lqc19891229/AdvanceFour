@@ -1,347 +1,216 @@
-《前进四》项目目录规划 V0.31.14
+《前进四》项目目录规划 V0.31.15
 
 res://
-├─ core/                                  # 全项目共享底层系统
-│  └─ autoload/                           # 后续 Run / Session 等全局状态入口
+├─ core/                                  # 跨系统基础设施
+│  └─ autoload/                           # 全局数据 / Session 等入口
 │
-├─ game/                                  # 核心玩法
-│  ├─ combat/                             # 正式关卡战斗系统
-│  │  ├─ README.txt
-│  │  ├─ battle.gd                       # 通用战斗状态机与关卡执行器
-│  │  ├─ battle.tscn                     # 所有关卡复用的正式战斗场景
-│  │  ├─ battle_definition.gd            # BattleDefinition：关卡级配置与 Wave 列表
-│  │  ├─ battle_wave_definition.gd       # BattleWaveDefinition：单波敌舰组成
-│  │  ├─ enemy_ship_definition.gd        # EnemyShipDefinition：敌舰蓝图 → ShipData
-│  │  ├─ battle_backdrop.gd              # 世界固定星点与网格参照
-│  │  ├─ enemies/                        # 正式敌舰蓝图
-│  │  │  ├─ README.txt
-│  │  │  ├─ scout.tres
-│  │  │  └─ gunship.tres
-│  │  ├─ definitions/                    # 关卡战斗配置，不复制 battle.tscn
-│  │  │  ├─ README.txt
-│  │  │  └─ stage_001.tres
+├─ data/                                  # Runtime 正式数据与素材
+│  ├─ definitions/                        # 数据结构定义：回答“这种数据是什么”
+│  │  ├─ module/                          # ModuleDefinition / ModuleDatabase 类型
+│  │  ├─ ship/                            # ShipData / Hull / Instance / Serializer
+│  │  └─ combat/                          # Battle / Wave / Enemy Definition
+│  ├─ assets/                             # Runtime 正式素材
+│  │  └─ modules/                         # 模块 PNG
+│  ├─ modules/                            # 模块具体 .tres + module_database.tres
+│  │  ├─ energy/
+│  │  ├─ propulsion/
+│  │  ├─ weapon/
+│  │  ├─ defense/
+│  │  ├─ function/
+│  │  └─ core/
+│  ├─ enemies/                            # 敌舰蓝图实例
+│  │  ├─ scout.tres
+│  │  └─ gunship.tres
+│  └─ battles/                            # 战斗关卡实例
+│     └─ stage_001.tres
+│
+├─ game/                                  # Gameplay 执行逻辑与场景
+│  ├─ combat/
+│  │  ├─ battle.gd
+│  │  ├─ battle.tscn
+│  │  ├─ battle_backdrop.gd
 │  │  └─ dev/
-│  │     └─ combat_regression_test.gd    # 正式战斗流程回归
-│  │
 │  └─ ship/
-│     ├─ appearance/                      # Runtime 外观策略与船壳绘制
-│     ├─ art/                             # 模块贴图与统一加载规则
-│     │  └─ modules/                      # 普通模块 PNG；武器 base + turret
-│     ├─ definitions/                     # 六类 Equipment Definition
-│     ├─ data/                            # ShipData / Hull Cell / ModuleInstance / Serializer
-│     ├─ editor/                          # 飞船工程编辑器；不是战斗逻辑宿主
-│     ├─ runtime/                         # ShipData 在战斗世界中的 Runtime 表现
-│     ├─ controller/                      # 玩家 / AI 控制输入
-│     ├─ weapon/                          # 武器运行时、炮塔瞄准与发射
-│     ├─ projectile/                      # 弹丸移动、swept ray、命中与穿透
-│     ├─ damage/                          # 通用受伤组件
-│     └─ dev/                             # 飞船子系统独立测试
+│     ├─ appearance/
+│     ├─ editor/
+│     ├─ runtime/
+│     ├─ controller/
+│     ├─ weapon/
+│     ├─ projectile/
+│     ├─ damage/
+│     └─ dev/
+│
+├─ tools/                                 # 内容制作输入与开发工具
+│  ├─ data_source/
+│  │  └─ game_data.xlsx
+│  ├─ art_source/                         # 源美术；.gdignore
+│  │  └─ modules/
+│  ├─ cache/
+│  │  └─ modules.json
+│  ├─ import/
+│  │  └─ import_excel.py
+│  └─ verify_project.py
 │
 ├─ addons/
 │  └─ advance_four_data_importer/
-│     ├─ plugin.cfg
-│     └─ plugin.gd
-│
-├─ tools/
-│  ├─ verify_project.py                   # 统一自动检查入口
-│  └─ data_import/
-│     ├─ source/
-│     │  └─ game_data.xlsx                # 策划数据唯一真源；标题行使用中文
-│     ├─ cache/
-│     │  └─ modules.json                  # 中文表头转换后的英文内部字段缓存
-│     └─ import_excel.py                  # Excel 解析、中文字段映射与校验
-│
-├─ data/
-│  └─ generated/                          # 自动生成，禁止手动修改
-│     ├─ modules/
-│     └─ module_database.tres
-│
-├─ PROJECT_STATUS.txt
-├─ PROJECT_STRUCTURE.txt
-├─ VERSION_HISTORY.txt
-├─ WORKFLOW.txt
 └─ project.godot
 
 
 ========================================
-一、核心分层
+一、四个核心目录的边界
 ========================================
 
-项目当前按四层理解：
+1. tools：生产内容
+   - 策划源表、源素材、缓存、导入脚本、验证工具。
+   - 不作为游戏 Runtime 的正式资源路径。
+   - art_source 使用 .gdignore，防止重复导入。
 
-1. 策划数据层
-   game_data.xlsx
-   ↓
-   Python
-   ↓
-   modules.json
-   ↓
-   Godot importer
-   ↓
-   .tres / ModuleDatabase
+2. data：描述内容
+   - 游戏运行时加载的数据结构、配置实例和正式素材。
+   - definitions 是数据“类型/结构”；modules/enemies/battles 是具体实例。
+   - assets 是 Runtime 正式素材。
+   - 不再存在 generated 层级。
+   - 自动生成文件直接归入对应业务目录。
 
-2. 飞船设计数据层
-   ShipData
-   ├─ Hull Layout
-   │  └─ ShipHullCell
-   └─ Equipment
-      └─ ShipModuleInstance
+3. game：执行内容
+   - 场景、Node、Controller、Runtime、Renderer、Gameplay、UI、开发测试。
+   - 不保存策划源数据、纯 Definition 类或正式 PNG 素材。
 
-3. Runtime 战斗实体层
-   ShipRuntime
-   ├─ HullCellRuntime
-   ├─ WeaponRuntime
-   ├─ ProjectileRuntime
-   ├─ PlayerShipController / AIShipController
-   └─ Appearance Layer
+4. core：支撑整个项目
+   - 跨场景、跨系统共享的底层服务。
+   - 不放 Ship / Weapon / Battle 等具体玩法规则。
 
-4. 关卡战斗层
-   BattleDefinition
-   ↓
-   battle.tscn / Battle
-   ↓
-   生成玩家与敌舰、调度波次、判定胜负、结算
-
-飞船编辑器只负责设计飞船与发起出航，不承担正式关卡战斗规则。
+判断：
+“它是什么？” → data
+“它怎么运行？” → game
+“它怎么被制作出来？” → tools
+“所有系统都需要的底层能力？” → core
 
 
 ========================================
-二、正式战斗场景原则
+二、数据链
 ========================================
 
-1. res://game/combat/battle.tscn 是正式战斗容器。
-2. 后续普通关卡、精英战、Boss 战默认全部复用 battle.tscn。
-3. 不因为增加新关卡而复制 battle.tscn。
-4. 不在 battle.gd 中持续堆叠“第几关”的专用 if / match。
-5. 不同关卡通过 BattleDefinition Resource 提供配置。
-6. 当前第一份正式配置为：
-   res://game/combat/definitions/stage_001.tres
-7. 上层系统通过 SceneTree meta：
-   battle_definition_path
-   指定下一场 BattleDefinition，然后统一进入 battle.tscn。
-8. 若没有提供外部配置，battle.tscn 使用自身绑定的 stage_001.tres。
-9. 重新挑战时必须继续使用当前 BattleDefinition。
-10. BattleDefinition 当前管理：
-    - battle_id
-    - display_name
-    - waves
-    - preparation_seconds
-    - intermission_seconds
-    - spawn_interval_seconds
-    - spawn_radius
-    - return_scene_path
-    - restore_saved_ship_on_return
-11. BattleWaveDefinition 管理：
-    - enemies
-    - counts
-    - spawn_interval_seconds（-1 表示继承 BattleDefinition）
-12. EnemyShipDefinition 管理：
-    - enemy_id
-    - display_name
-    - module_ids
-    - module_positions
-    - module_rotations
-13. Battle 不再定义敌舰布局；它只执行 BattleDefinition → Wave → EnemyShipDefinition。
-14. 显式指定的 battle_definition_path 若为空、缺失或类型错误，必须进入 ERROR，禁止静默回退默认关卡。
-15. Boss / 奖励仍待后续数据化。
+模块数值：
+tools/data_source/game_data.xlsx
+→ tools/import/import_excel.py
+→ tools/cache/modules.json
+→ addons/advance_four_data_importer
+→ data/modules/<type>/<module_id>.tres
+→ data/modules/module_database.tres
+
+模块素材：
+tools/art_source/modules/
+→ 正式 Runtime 版本
+→ data/assets/modules/
+→ ModuleDefinition.texture / Weapon.turret_texture
+
+说明：
+Excel 当前旧行若仍含历史 game/ship/art/modules 路径，Python importer 会规范化为 data/assets/modules；
+新数据应直接填写 data/assets 路径。
 
 
 ========================================
-三、Hull 与 Equipment 数据规则
+三、数据定义与实例
 ========================================
 
-1. Hull Layout 与 Equipment 是两层独立数据。
-2. ShipHullCell 保存：
-   - grid_position
-   - hull_type
-   - max_hp
-   - current_hp
-   - mass
-3. 第一版 basic_hull：
-   - max_hp = 20
-   - mass = 2
-4. Equipment 必须完整覆盖已有 Hull Cell。
-5. Hull 当前允许：
-   - 不相邻
-   - 不连通
-   - 中间空格
-6. Hull Cell 上有 Equipment 时不能直接拆除该 Hull Cell。
-7. ShipHullCell.mass 当前保留为结构数据，不参与移动计算。
-8. Equipment Definition 已取消共通 hp 与 mass。
-9. Energy / Propulsion / Weapon / Function / Core 不拥有独立 hp。
-10. Defense 单独保留 hp 与 protection。
-11. 多格 Equipment 的运行效率取覆盖 Hull Cell 健康比例平均值。
-12. 核心覆盖的 Hull Cell 全部损毁时，整船判定沉没。
+data/definitions/module/
+- ModuleDefinition 及 Energy/Propulsion/Weapon/Defense/Function/Core 子类
+- ModuleDatabase 类型
 
+data/definitions/ship/
+- ShipData
+- ShipHullCell
+- ShipModuleInstance
+- ShipSerializer
 
-========================================
-四、区域耐久与伤害规则
-========================================
+data/definitions/combat/
+- BattleDefinition
+- BattleWaveDefinition
+- EnemyShipDefinition
 
-1. 战斗碰撞基础单位是 Hull Cell，不是整个 Equipment 外框。
-2. 区域最大 HP =
-   ShipHullCell.max_hp + 覆盖该格的 Defense hp 分配值。
-3. 多格 Defense.hp 平均分配到它覆盖的 Hull Cell。
-4. 区域 current HP 最终映射回 ShipHullCell.current_hp。
-5. Defense.protection 是百分比减伤，不是额外独立运行时血条。
-6. Projectile 使用本物理帧整段 swept ray 处理高速命中。
-7. 当前伤害支持 HP-overkill 穿透：
-   前方 Hull 区域被击穿并仍有剩余伤害时，继续沿弹道查询后方区域。
-8. 发射者被摧毁后，已经生成的 Projectile 继续独立存在与造成伤害。
-9. 当前没有：
-   - 独立穿甲系数
-   - 材质抗性
-   - 爆炸 / 溅射
-   - 正式伤害类型
+具体实例：
+- data/modules/
+- data/enemies/
+- data/battles/
+
+definitions 不承担 Gameplay 执行。
 
 
 ========================================
-五、武器规则
+四、正式战斗结构
 ========================================
 
-Weapon 数据当前由 Excel 正式提供：
-- firepower
-- attack_range
-- fire_interval
-- turn_speed_degrees
-- projectile_speed
-- firing_arc_degrees
-- fire_angle_tolerance_degrees
-- texture_path
-- turret_texture_path
+data/battles/stage_001.tres
+↓
+BattleDefinition
+↓
+BattleWaveDefinition
+↓
+EnemyShipDefinition（data/enemies）
+↓
+ShipData
+↓
+game/combat/battle.tscn / Battle
 
-规则：
-1. rotation_quarters 定义武器安装方向，也是射界中心基准。
-2. WeaponRuntime 独立旋转炮塔。
-3. 自动选敌、炮塔转向和开火都受 firing_arc_degrees 约束。
-4. attack_range 同时限制选敌距离与弹丸最大飞行距离。
-5. Projectile 在开火时记录本发自己的射程和速度。
-6. WeaponRuntime 的 operational 与 powered 分离。
-7. 武器对应结构失效后不可恢复工作；单纯恢复供能不会复活已失效武器。
+Battle 只执行配置，不定义具体关卡内容。
+重新挑战保持当前 BattleDefinition。
+显式 battle_definition_path 无效时进入 ERROR，不回退默认关卡。
 
 
 ========================================
-六、能源与推进规则
+五、飞船分层
 ========================================
 
-1. RuntimeShip 记录 module_powered_by_uid。
-2. 供能不足时使用当前 Prototype 固定优先级：
-   核心 > 能源 > 动力 > 防护 > 功能 > 武器
-3. 同类型按 module.uid 升序稳定分配。
-4. is_energy_sufficient() 只表示能否覆盖全部存活负载。
-5. 供能不足不代表所有模块都停止工作。
-6. 推进只统计当前仍有效且已供电的 Propulsion。
-7. 当前运动模型不计算 Hull / Equipment 质量。
-8. 当前最高速度、加速度、松油减速度由有效推力乘各自 scale 决定。
-9. 动力所在 Hull 受损会通过效率降低有效推力。
+Data：
+ShipData
+├─ Hull Layout → ShipHullCell
+└─ Equipment → ShipModuleInstance → ModuleDefinition
 
+Runtime：
+ShipRuntime
+├─ HullCellRuntime
+├─ WeaponRuntime
+├─ ProjectileRuntime
+├─ Player / AI Controller
+└─ Appearance Layer
 
-========================================
-七、Appearance Layer
-========================================
-
-1. Appearance 只负责 Runtime 战斗显示，不修改 ShipData。
-2. 编辑器继续完整显示 Hull + Equipment 工程视图。
-3. 战斗中根据 Hull Layout 生成连续外壳。
-4. Core / Weapon / Propulsion 外露。
-5. Energy / Defense / Function 默认被船壳包覆。
-6. 武器视觉拆为 base + turret，炮塔贴图跟随 WeaponRuntime 独立转动。
-7. 后续舰首、舰尾、推进开孔、装甲蒙皮属于 Appearance 扩展，不应改变底层飞船数据结构。
+数据结构属于 data，运行实体属于 game。
 
 
 ========================================
-八、存档与战斗状态
+六、自动生成规则
 ========================================
 
-1. ShipSerializer 当前 FORMAT_VERSION = 2。
-2. 存档保存 Hull Cell：
-   - position
-   - hull_type
-   - max_hp
-   - current_hp
-   - mass
-3. Equipment 保存：
-   - module_id
-   - position
-   - rotation
-4. 运行时 uid 不作为长期存档稳定标识。
-5. 旧 v1 存档继续兼容读取。
-6. 当前正式战斗仍从 user://ships/test_ship.json 读取玩家设计。
-7. 同一场 battle 内战损跨波次保留。
-8. 当前退出 / 重试仍重新从存档建立 RuntimeShip。
-9. 下一阶段 v0.32 应建立正式战后状态写回：
-   Runtime 战损
-   → BattleResult / Run State
-   → 战损持久化
-   → 维修 / 奖励 / 下一战
+不通过 generated 目录区分自动生成内容。
+
+当前自动生成：
+- data/modules/<type>/*.tres
+- data/modules/module_database.tres
+
+来源：
+- tools/data_source/game_data.xlsx
+
+生成器：
+- tools/import/import_excel.py
+- addons/advance_four_data_importer
+
+这些文件是否允许手工修改，由 data/modules README 明确规定。
 
 
 ========================================
-九、编辑器职责
+七、验证
 ========================================
 
-飞船编辑器负责：
-- Hull 铺设 / 拆除
-- Equipment 安装 / 移动 / 旋转
-- 设计合法性
-- 属性预览
-- 保存 / 载入设计
-- 发起正式战斗
-- 发起独立 AI 开发测试
-
-飞船编辑器不负责：
-- 波次逻辑
-- 战斗胜负
-- 敌舰生成
-- 关卡配置
-- 奖励
-- Boss 流程
-
-点击“出航战斗”当前执行：
-验证设计
-→ 保存玩家设计
-→ 指定 stage_001.tres
-→ 切换到统一 battle.tscn。
-
-
-========================================
-十、测试与验证
-========================================
-
-统一验证入口：
+统一入口：
 python3 tools/verify_project.py --godot /path/to/godot
 
-当前 Godot 版本：
-4.6.1
-
-战斗回归位于：
-game/combat/dev/combat_regression_test.gd
+Godot：4.6.1
 
 至少覆盖：
-- 玩家真实输入与移动反馈
-- 波次与波间
-- 胜利 / 失败
-- 残留弹丸
-- 同帧失败优先
-- 阵营碰撞隔离
-- 非法关卡配置与非法 battle_definition_path
-- 自定义 BattleDefinition 加载与 Retry 保持配置
-- 波次敌舰蓝图解析
-- 编辑器 → 正式战斗 → 重试 / 返回
-
-
-========================================
-十一、目录文档规则
-========================================
-
-1. 主要功能目录放 README.txt。
-2. README 说明：
-   - 目录职责
-   - 主要文件
-   - 使用方法
-   - 依赖
-   - 当前边界
-3. 新增 / 删除重要文件、改变核心职责或使用方式时同步更新 README。
-4. data/generated 禁止手动修改。
-5. Excel 是模块策划数据唯一真源。
-6. 中文 Excel 表头仅服务策划可读性；导入阶段转换为稳定英文内部字段。
+- Excel / cache 一致性
+- 模块资源与正式素材引用
+- Ship 回归
+- Combat 回归
+- 自定义 BattleDefinition / Retry
+- 非法 BattleDefinition
