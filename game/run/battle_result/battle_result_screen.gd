@@ -2,6 +2,7 @@ extends Control
 
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
+const SHOP_SCENE_PATH := "res://game/run/shop/shop_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
 const DATABASE := preload("res://data/modules/module_database.tres")
@@ -14,6 +15,7 @@ const DATABASE := preload("res://data/modules/module_database.tres")
 @onready var selected_detail: Label = $Center/Panel/Margin/Content/SelectedDetail
 @onready var repair_selected_button: Button = $Center/Panel/Margin/Content/RepairSelected
 @onready var repair_button: Button = $Center/Panel/Margin/Content/ActionRow/RepairAll
+@onready var shop_button: Button = $Center/Panel/Margin/Content/ActionRow/Shop
 @onready var refit_button: Button = $Center/Panel/Margin/Content/ActionRow/Refit
 @onready var next_button: Button = $Center/Panel/Margin/Content/ActionRow/NextBattle
 @onready var end_run_button: Button = $Center/Panel/Margin/Content/ActionRow/EndRun
@@ -27,6 +29,7 @@ func _run_state() -> Node:
 func _ready() -> void:
 	repair_selected_button.pressed.connect(_repair_selected)
 	repair_button.pressed.connect(_repair_all)
+	shop_button.pressed.connect(_open_shop)
 	refit_button.pressed.connect(_enter_refit)
 	next_button.pressed.connect(_next_battle)
 	end_run_button.pressed.connect(_end_run)
@@ -41,6 +44,7 @@ func _refresh() -> void:
 		selected_detail.text = ""
 		repair_selected_button.disabled = true
 		repair_button.disabled = true
+		shop_button.disabled = true
 		refit_button.disabled = true
 		next_button.disabled = true
 		end_run_button.disabled = true
@@ -77,8 +81,10 @@ func _refresh() -> void:
 	repair_button.text = "全部维修（%d Credits）" % repair_cost
 	repair_button.disabled = repair_cost <= 0 or run_state.currency < repair_cost
 	var pending_choice := bool(run_state.call("has_pending_reward_choice"))
-	refit_button.disabled = pending_choice
 	var has_next_configured := not result.next_battle_path.is_empty()
+	shop_button.visible = has_next_configured
+	shop_button.disabled = pending_choice or not has_next_configured
+	refit_button.disabled = pending_choice
 	var has_next := not String(run_state.call("get_next_battle_path")).is_empty()
 	next_button.visible = has_next_configured
 	next_button.disabled = pending_choice or not has_next
@@ -301,6 +307,12 @@ func _repair_all() -> void:
 		return
 	run_state.call("repair_all")
 	_refresh()
+
+func _open_shop() -> void:
+	var run_state := _run_state()
+	if run_state == null or bool(run_state.call("has_pending_reward_choice")):
+		return
+	get_tree().change_scene_to_file(SHOP_SCENE_PATH)
 
 func _enter_refit() -> void:
 	var run_state := _run_state()
