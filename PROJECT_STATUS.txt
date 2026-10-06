@@ -1,10 +1,12 @@
-《前进四》开发状态 v0.31.16
+《前进四》开发状态 v0.31.17
 
 当前阶段：模块化飞船战斗 Prototype，尚未形成完整 Roguelike 游戏。
 
+v0.31.17 收口素材管理：删除 tools/art_source 与重复 PNG，模块贴图和 Hull Tile 只在 data/assets 保留唯一一份正式资源；tools 仅保留策划源数据、缓存、导入和验证工具。
+
 v0.31.16 完成 Appearance Hull Tile 第一版：新增 HullAppearanceDefinition、human_basic.tres 与 16 个四方向邻接 Hull Tile；ShipAppearanceRenderer 由程序外壳升级为 mask→Texture2D 拼接，并保留缺图时的程序绘制 fallback。第一版仍不把外观 ID 写入 ShipData / ShipSerializer，Equipment 显示规则与战斗逻辑不变。
 
-v0.31.15 完成项目目录职责重构：tools 负责源数据/源素材与生产工具；data 负责 Runtime 正式数据、Definition、配置实例与正式素材；game 只保留 Gameplay/Runtime/Scene；core 只保留跨系统基础设施。移除 data/generated 层级，自动生成模块资源直接归入 data/modules。模块 PNG 从 game 移至 data/assets，源素材副本归入 tools/art_source，并通过 .gdignore 与 Runtime 资源隔离。
+v0.31.15 完成项目目录职责重构：tools 负责源数据与生产工具；data 负责 Runtime 正式数据、Definition、配置实例与正式素材；game 只保留 Gameplay/Runtime/Scene；core 只保留跨系统基础设施。移除 data/generated 层级，自动生成模块资源直接归入 data/modules。模块 PNG 从 game 移至 data/assets。v0.31.17 进一步取消 tools 下的重复素材副本，素材统一由 data/assets 单份管理。
 
 已完成：
 - 飞船数据已拆为 Hull Layout + Equipment 两层；网格编辑器可独立铺设基础船体格并在其上安装/移动/旋转设备。
