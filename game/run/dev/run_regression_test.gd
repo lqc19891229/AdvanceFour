@@ -166,6 +166,9 @@ func _run() -> void:
 	shop_screen.queue_free()
 	await process_frame
 
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Inventory primitive test must start a clean Run")
+
 	# Inventory primitives must be atomic.
 	run_state.call("add_module_to_inventory", &"weapon_cannon", 2)
 	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 2, "Module inventory must add fixed quantities")
