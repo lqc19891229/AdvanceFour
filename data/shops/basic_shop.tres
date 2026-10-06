@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="ShopDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/run/shop_definition.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/run/shop_item_definition.gd" id="2"]
+
+[sub_resource type="Resource" id="Armor"]
+script = ExtResource("2")
+item_id = &"armor"
+display_name = "轻型装甲"
+module_id = &"defense_lightarmor"
+module_count = 1
+price_credits = 45
+
+[sub_resource type="Resource" id="Cannon"]
+script = ExtResource("2")
+item_id = &"cannon"
+display_name = "机炮"
+module_id = &"weapon_cannon"
+module_count = 1
+price_credits = 70
+
+[sub_resource type="Resource" id="Engine"]
+script = ExtResource("2")
+item_id = &"engine"
+display_name = "小型引擎"
+module_id = &"propulsion_smallengine"
+module_count = 1
+price_credits = 55
+
+[sub_resource type="Resource" id="Reactor"]
+script = ExtResource("2")
+item_id = &"reactor"
+display_name = "小型反应堆"
+module_id = &"energy_smallreactor"
+module_count = 1
+price_credits = 60
+
+[sub_resource type="Resource" id="Radar"]
+script = ExtResource("2")
+item_id = &"radar"
+display_name = "雷达"
+module_id = &"function_radar"
+module_count = 1
+price_credits = 50
+
+[sub_resource type="Resource" id="Hull"]
+script = ExtResource("2")
+item_id = &"hull"
+display_name = "基础船体"
+hull_cells = 1
+price_credits = 25
+
+[resource]
+script = ExtResource("1")
+shop_id = &"basic_shop"
+display_name = "补给商店"
+items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("Hull")])
