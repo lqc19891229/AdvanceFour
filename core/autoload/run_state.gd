@@ -70,13 +70,36 @@ func record_defeat(result: BattleResult) -> void:
 		return
 	last_result = result
 
+func get_repair_cost_for_cell(position: Vector2i) -> int:
+	if current_ship == null:
+		return 0
+	var cell := current_ship.get_hull_cell_at(position)
+	if cell == null:
+		return 0
+	return ceili(maxf(cell.max_hp - cell.current_hp, 0.0) * REPAIR_COST_PER_HP)
+
+func repair_cell(position: Vector2i) -> bool:
+	if current_ship == null:
+		return false
+	var cell := current_ship.get_hull_cell_at(position)
+	if cell == null:
+		return false
+	var cost := get_repair_cost_for_cell(position)
+	if cost <= 0:
+		return true
+	if currency < cost:
+		return false
+	currency -= cost
+	cell.repair_full()
+	return true
+
 func get_total_repair_cost() -> int:
 	if current_ship == null:
 		return 0
-	var missing_hp := 0.0
+	var total := 0
 	for cell in current_ship.get_hull_cells():
-		missing_hp += maxf(cell.max_hp - cell.current_hp, 0.0)
-	return ceili(missing_hp * REPAIR_COST_PER_HP)
+		total += get_repair_cost_for_cell(cell.grid_position)
+	return total
 
 func repair_all() -> bool:
 	var cost := get_total_repair_cost()
