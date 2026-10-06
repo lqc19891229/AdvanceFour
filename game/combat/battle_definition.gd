@@ -3,7 +3,7 @@ extends Resource
 
 @export var battle_id: StringName = &"stage_001"
 @export var display_name := "第一战"
-@export var wave_enemy_counts: Array[int] = [1, 1, 2]
+@export var waves: Array[BattleWaveDefinition] = []
 @export var preparation_seconds := 2.0
 @export var intermission_seconds := 3.0
 @export var spawn_interval_seconds := 1.25
@@ -16,10 +16,11 @@ func is_valid() -> bool:
 		return false
 	if display_name.strip_edges().is_empty():
 		return false
-	if wave_enemy_counts.is_empty():
+	if waves.is_empty():
 		return false
-	if wave_enemy_counts.any(func(count: int): return count <= 0):
-		return false
+	for wave in waves:
+		if wave == null or not wave.is_valid():
+			return false
 	if preparation_seconds < 0.0 or intermission_seconds < 0.0 or spawn_interval_seconds < 0.0:
 		return false
 	if spawn_radius <= 0.0:
@@ -33,10 +34,14 @@ func get_invalid_reason() -> String:
 		return "战斗 ID 不能为空。"
 	if display_name.strip_edges().is_empty():
 		return "战斗名称不能为空。"
-	if wave_enemy_counts.is_empty():
+	if waves.is_empty():
 		return "战斗至少需要一波敌舰。"
-	if wave_enemy_counts.any(func(count: int): return count <= 0):
-		return "每波敌舰数量必须大于零。"
+	for index in range(waves.size()):
+		var wave := waves[index]
+		if wave == null:
+			return "第 %d 波配置为空。" % (index + 1)
+		if not wave.is_valid():
+			return "第 %d 波：%s" % [index + 1, wave.get_invalid_reason()]
 	if preparation_seconds < 0.0 or intermission_seconds < 0.0 or spawn_interval_seconds < 0.0:
 		return "战斗计时参数不能为负数。"
 	if spawn_radius <= 0.0:
@@ -44,3 +49,11 @@ func get_invalid_reason() -> String:
 	if return_scene_path.is_empty():
 		return "战斗返回场景不能为空。"
 	return ""
+
+func get_wave_count() -> int:
+	return waves.size()
+
+func get_wave(index: int) -> BattleWaveDefinition:
+	if index < 0 or index >= waves.size():
+		return null
+	return waves[index]
