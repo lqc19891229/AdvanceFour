@@ -3,7 +3,7 @@ extends Control
 const SAVE_PATH := "user://ships/test_ship.json"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
-const FIRST_BATTLE_DEFINITION_PATH := "res://game/combat/definitions/stage_001.tres"
+const FIRST_BATTLE_DEFINITION_PATH := "res://data/battles/stage_001.tres"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 
 @onready var grid: ShipGridView = $MainLayout/Center/Grid
