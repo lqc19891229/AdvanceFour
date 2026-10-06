@@ -47,9 +47,9 @@ func _import_all() -> void:
 	var modules: Array[ShipModuleDefinition] = prepared["modules"]
 	var backup := _snapshot_module_resources()
 	if not _write_module_resources(modules, rows):
-		_restore_generated_resources(backup)
+		_restore_module_resources(backup)
 		get_editor_interface().get_resource_filesystem().scan()
-		push_error("模块数据导入失败，已恢复导入前的 模块资源")
+		push_error("模块数据导入失败，已恢复导入前的模块资源")
 		return
 
 	get_editor_interface().get_resource_filesystem().scan()
@@ -259,7 +259,7 @@ func _snapshot_module_resources() -> Dictionary:
 		dir.list_dir_end()
 	return snapshot
 
-func _restore_generated_resources(snapshot: Dictionary) -> void:
+func _restore_module_resources(snapshot: Dictionary) -> void:
 	_clear_module_resources()
 
 	for path in snapshot.get("module_files", {}):
