@@ -43,12 +43,17 @@ func _run() -> void:
 	victory.next_battle_path = STAGE_002_PATH
 	victory.ship_after_battle = stage_one_ship
 	victory.reward_credits = 100
+	victory.reward_module_ids = Array[StringName]([&"defense_lightarmor"])
+	victory.reward_module_counts = Array[int]([1])
+	victory.reward_hull_cells = 1
 	victory.enemies_destroyed = 5
 	_check(bool(run_state.call("commit_victory", victory)), "Victory must commit a valid BattleResult")
 	var current_ship := run_state.get("current_ship") as ShipData
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 8.0), "Victory must persist Hull damage into RunState")
 	var completed: Array = run_state.get("completed_battles")
 	_check(int(run_state.get("currency")) == 100 and completed.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
+	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 1, "Victory must add fixed module rewards to Run inventory")
+	_check(int(run_state.get("hull_stock")) == 1, "Victory must add fixed Hull rewards to Run inventory")
 	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("currency")) == 100, "The same victory must not be committed twice")
 
 	var result_screen_scene := load("res://game/run/battle_result/battle_result_screen.tscn") as PackedScene
@@ -58,7 +63,7 @@ func _run() -> void:
 	var result_summary := result_screen.get_node("Center/Panel/Margin/Content/Summary") as Label
 	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/RepairAll") as Button
 	var end_run_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/EndRun") as Button
-	_check(result_summary.text.contains("+100 Credits") and repair_button.text.contains("12 Credits"), "Battle result screen must expose reward and repair cost")
+	_check(result_summary.text.contains("+100 Credits") and result_summary.text.contains("轻型装甲") and result_summary.text.contains("+1 Hull") and repair_button.text.contains("12 Credits"), "Battle result screen must expose all rewards and repair cost")
 	var damage_list := result_screen.get_node("Center/Panel/Margin/Content/DamageScroll/DamageList") as VBoxContainer
 	var repair_selected := result_screen.get_node("Center/Panel/Margin/Content/RepairSelected") as Button
 	var selected_detail := result_screen.get_node("Center/Panel/Margin/Content/SelectedDetail") as Label
@@ -108,6 +113,43 @@ func _run() -> void:
 	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when Credits are insufficient")
 	_check(is_equal_approx(local_b.current_hp, 10.0) and int(run_state.get("currency")) == 0, "Failed local repair must be atomic")
 
+	# Inventory primitives must be atomic.
+	run_state.call("add_module_to_inventory", &"weapon_cannon", 2)
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 2, "Module inventory must add fixed quantities")
+	_check(bool(run_state.call("take_module_from_inventory", &"weapon_cannon", 1)), "Available module inventory must be consumable")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Consuming a module must decrement inventory")
+	_check(not bool(run_state.call("take_module_from_inventory", &"weapon_cannon", 2)), "Module inventory must reject over-consumption atomically")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Failed module consumption must preserve inventory")
+	run_state.call("add_hull_stock", 2)
+	_check(bool(run_state.call("take_hull_stock", 1)) and int(run_state.get("hull_stock")) == 1, "Hull stock must be consumable")
+	_check(not bool(run_state.call("take_hull_stock", 2)) and int(run_state.get("hull_stock")) == 1, "Hull stock over-consumption must fail atomically")
+
+	# Run refit editor must expose inventory mode without allowing free clear.
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Run refit integration test must start a Run")
+	run_state.call("add_module_to_inventory", &"defense_lightarmor", 1)
+	run_state.call("add_hull_stock", 1)
+	set_meta(&"run_refit_mode", true)
+	var refit_editor = load("res://game/ship/editor/ship_editor.tscn").instantiate()
+	root.add_child(refit_editor)
+	await process_frame
+	var refit_grid := refit_editor.get_node("MainLayout/Center/Grid") as ShipGridView
+	var clear_button := refit_editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/ClearButton") as Button
+	_check(refit_grid.run_inventory_enabled and clear_button.disabled, "Run refit must enable inventory constraints and disable one-click clear")
+	var found_armor_inventory := false
+	var found_hull_inventory := false
+	var module_buttons := refit_editor.get_node("MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons") as VBoxContainer
+	for child in module_buttons.get_children():
+		if child is Button:
+			var text_value := (child as Button).text
+			if text_value.contains("轻型装甲") and text_value.contains("库存 1"):
+				found_armor_inventory = true
+			if text_value.contains("基础船体格") and text_value.contains("库存 1"):
+				found_hull_inventory = true
+	_check(found_armor_inventory and found_hull_inventory, "Run refit buttons must show module and Hull inventory counts")
+	refit_editor.queue_free()
+	await process_frame
+
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "A second Run must start after reset")
 	var defeat_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
@@ -135,7 +177,10 @@ func _run() -> void:
 	final_victory.next_battle_path = ""
 	final_victory.ship_after_battle = final_ship
 	final_victory.reward_credits = 150
+	final_victory.reward_module_ids = Array[StringName]([&"weapon_cannon"])
+	final_victory.reward_module_counts = Array[int]([1])
 	_check(bool(run_state.call("commit_victory", final_victory)), "Final-stage victory must commit")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Final-stage module reward must enter inventory")
 	result_screen = result_screen_scene.instantiate() as Control
 	root.add_child(result_screen)
 	await process_frame
