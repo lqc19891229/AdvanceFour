@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.35.0
+《前进四》项目目录规划 V0.36.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -9,6 +9,7 @@ res://
 │  │  ├─ module/
 │  │  ├─ ship/
 │  │  ├─ combat/
+│  │  ├─ run/                             # Shop 等 Run 数据定义
 │  │  └─ appearance/
 │  ├─ assets/
 │  │  ├─ modules/
@@ -25,6 +26,8 @@ res://
 │  ├─ enemies/
 │  │  ├─ scout.tres
 │  │  └─ gunship.tres
+│  ├─ shops/
+│  │  └─ basic_shop.tres
 │  └─ battles/
 │     ├─ stage_001.tres
 │     └─ stage_002.tres
@@ -37,6 +40,7 @@ res://
 │  │  └─ dev/
 │  ├─ run/
 │  │  ├─ battle_result/
+│  │  ├─ shop/
 │  │  └─ dev/
 │  └─ ship/
 │     ├─ appearance/
@@ -256,7 +260,7 @@ Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
 
 
 ========================================
-十、v0.35 Run / 战后闭环
+十、v0.36 Run / 战后闭环
 ========================================
 
 core/autoload/run_state.gd
@@ -279,6 +283,14 @@ Ship Editor
 → RunState.commit_victory()
 → Battle Result Screen
 → 维修 / Run Refit / stage_002
+
+Shop：
+- data/definitions/run/shop_item_definition.gd：单个商品内容与 Credits 价格。
+- data/definitions/run/shop_definition.gd：数据化商店商品表。
+- data/shops/basic_shop.tres：当前 Prototype 固定补给商店。
+- game/run/shop/：商店场景与购买 UI。
+- RunState.purchase_shop_item()：原子扣 Credits 并写入 Run Inventory。
+- 当前商店无限库存、不出售、不随机刷新；最终关不显示商店。
 
 Reward Choice：
 - BattleDefinition.reward_choices：战后成长奖励候选。
