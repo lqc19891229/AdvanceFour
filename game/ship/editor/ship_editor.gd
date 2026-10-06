@@ -2,6 +2,9 @@ extends Control
 
 const SAVE_PATH := "user://ships/test_ship.json"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
+const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
+const FIRST_BATTLE_DEFINITION_PATH := "res://game/combat/definitions/stage_001.tres"
+const BATTLE_DEFINITION_META := &"battle_definition_path"
 
 @onready var grid: ShipGridView = $MainLayout/Center/Grid
 @onready var module_buttons: VBoxContainer = $MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons
@@ -84,7 +87,8 @@ func _bind_common_buttons() -> void:
 	$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.pressed.connect(_start_battle)
 
 func _start_battle() -> void:
-	_start_scene_with_design("res://game/combat/battle.tscn")
+	get_tree().set_meta(BATTLE_DEFINITION_META, FIRST_BATTLE_DEFINITION_PATH)
+	_start_scene_with_design(BATTLE_SCENE_PATH)
 
 func _start_ai_test() -> void:
 	_start_scene_with_design("res://game/ship/dev/ship_ai_test.tscn")
