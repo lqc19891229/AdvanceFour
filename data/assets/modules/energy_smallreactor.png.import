@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://game/ship/art/modules/energy_smallreactor.png"
+source_file="res://data/assets/modules/energy_smallreactor.png"
 dest_files=["res://.godot/imported/energy_smallreactor.png-78c2e5efbe0c4c28bac169ff5c5a8576.ctex"]
 
 [params]
