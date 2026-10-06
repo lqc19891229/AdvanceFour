@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dpfiyc0mafs0g"
-path="res://.godot/imported/energy_smallreactor.png-461d46b2d2e07b3da0b2dcc11ef7bb87.ctex"
+uid="uid://dngsc0hkr2svd"
+path="res://.godot/imported/hull_0110.png-2494ea195a1b98a7a26db42db31cd262.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/assets/modules/energy_smallreactor.png"
-dest_files=["res://.godot/imported/energy_smallreactor.png-461d46b2d2e07b3da0b2dcc11ef7bb87.ctex"]
+source_file="res://data/assets/ship/hull/human_basic/hull_0110.png"
+dest_files=["res://.godot/imported/hull_0110.png-2494ea195a1b98a7a26db42db31cd262.ctex"]
 
 [params]
 
