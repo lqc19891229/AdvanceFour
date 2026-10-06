@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://game/ship/dev/ship_movement_test.gd" id="1_script"]
-[ext_resource type="Resource" path="res://data/generated/module_database.tres" id="2_db"]
+[ext_resource type="Resource" path="res://data/modules/module_database.tres" id="2_db"]
 
 [node name="ShipMovementTest" type="Node2D"]
 script = ExtResource("1_script")
