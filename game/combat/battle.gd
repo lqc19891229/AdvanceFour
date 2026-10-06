@@ -86,13 +86,16 @@ func _resolve_battle_definition() -> void:
 	var definition_path := String(get_tree().get_meta(BATTLE_DEFINITION_META))
 	get_tree().remove_meta(BATTLE_DEFINITION_META)
 	if definition_path.is_empty():
+		battle_definition = null
 		battle_definition_error = "指定的战斗配置路径为空。"
 		return
 	if not ResourceLoader.exists(definition_path):
+		battle_definition = null
 		battle_definition_error = "指定的战斗配置不存在：%s" % definition_path
 		return
 	var loaded := ResourceLoader.load(definition_path)
 	if not (loaded is BattleDefinition):
+		battle_definition = null
 		battle_definition_error = "指定资源不是 BattleDefinition：%s" % definition_path
 		return
 	battle_definition = loaded as BattleDefinition
