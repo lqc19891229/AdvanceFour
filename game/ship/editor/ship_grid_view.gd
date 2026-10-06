@@ -20,6 +20,62 @@ var preview_cell := Vector2i.ZERO
 var rotation_quarters := 0
 var pan_offset := Vector2.ZERO
 var is_panning := false
+var run_inventory_enabled := false
+
+func _run_state() -> Node:
+	return get_node_or_null("/root/RunState")
+
+func set_run_inventory_enabled(enabled: bool) -> void:
+	run_inventory_enabled = enabled
+	queue_redraw()
+
+func _get_run_module_count(module_id: StringName) -> int:
+	var run_state := _run_state()
+	if not run_inventory_enabled or run_state == null:
+		return 0
+	return int(run_state.call("get_module_inventory_count", module_id))
+
+func _can_take_run_module(module_id: StringName) -> bool:
+	var run_state := _run_state()
+	return (
+		not run_inventory_enabled
+		or (
+			run_state != null
+			and bool(run_state.call("has_module_in_inventory", module_id, 1))
+		)
+	)
+
+func _take_run_module(module_id: StringName) -> bool:
+	if not run_inventory_enabled:
+		return true
+	var run_state := _run_state()
+	return run_state != null and bool(run_state.call("take_module_from_inventory", module_id, 1))
+
+func _return_run_module(module_id: StringName) -> void:
+	if not run_inventory_enabled:
+		return
+	var run_state := _run_state()
+	if run_state != null:
+		run_state.call("add_module_to_inventory", module_id, 1)
+
+func _can_take_run_hull() -> bool:
+	if not run_inventory_enabled:
+		return true
+	var run_state := _run_state()
+	return run_state != null and int(run_state.get("hull_stock")) > 0
+
+func _take_run_hull() -> bool:
+	if not run_inventory_enabled:
+		return true
+	var run_state := _run_state()
+	return run_state != null and bool(run_state.call("take_hull_stock", 1))
+
+func _return_run_hull() -> void:
+	if not run_inventory_enabled:
+		return
+	var run_state := _run_state()
+	if run_state != null:
+		run_state.call("add_hull_stock", 1)
 
 var type_colors := {
 	ShipModuleDefinition.ModuleType.ENERGY: Color("#d9b84c"),
@@ -70,7 +126,13 @@ func select_definition(id: String) -> void:
 		placing_hull = false
 		_set_selected_module(null)
 		moving_selected = false
-		status_message.emit("安装设备：%s" % selected_definition.display_name)
+		if run_inventory_enabled:
+			status_message.emit("安装设备：%s｜库存 %d" % [
+				selected_definition.display_name,
+				_get_run_module_count(selected_definition.id)
+			])
+		else:
+			status_message.emit("安装设备：%s" % selected_definition.display_name)
 		queue_redraw()
 
 func select_hull() -> void:
@@ -78,7 +140,12 @@ func select_hull() -> void:
 	selected_definition = null
 	_set_selected_module(null)
 	moving_selected = false
-	status_message.emit("放置基础船体格")
+	if run_inventory_enabled:
+		var run_state := _run_state()
+		var stock := 0 if run_state == null else int(run_state.get("hull_stock"))
+		status_message.emit("放置基础船体格｜库存 %d" % stock)
+	else:
+		status_message.emit("放置基础船体格")
 	queue_redraw()
 
 func select_installed_module(module: ShipModuleInstance) -> void:
@@ -151,6 +218,9 @@ func rotate_preview() -> void:
 	queue_redraw()
 
 func clear_ship() -> void:
+	if run_inventory_enabled:
+		status_message.emit("Run 整备模式禁止一键清空，请逐个拆除以返还库存。")
+		return
 	ship.clear()
 	_set_selected_module(null)
 	moving_selected = false
@@ -191,10 +261,13 @@ func _gui_input(event: InputEvent) -> void:
 
 			if placing_hull:
 				var hull_check := ship.can_add_hull_cell(cell)
-				if hull_check["ok"]:
-					ship.add_hull_cell(cell)
-					ship_changed.emit()
-					status_message.emit("已添加船体格：(%d, %d)" % [cell.x, cell.y])
+				if not _can_take_run_hull():
+					status_message.emit("Hull 库存不足。")
+				elif hull_check["ok"]:
+					if _take_run_hull():
+						ship.add_hull_cell(cell)
+						ship_changed.emit()
+						status_message.emit("已添加船体格：(%d, %d)" % [cell.x, cell.y])
 				else:
 					status_message.emit(hull_check["reason"])
 				queue_redraw()
@@ -207,12 +280,23 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 
+			if selected_definition == null:
+				status_message.emit("请先选择要安装的设备。")
+				queue_redraw()
+				accept_event()
+				return
 			var check := ship.can_place(selected_definition, cell, rotation_quarters)
-			if check["ok"]:
-				var placed := ship.place(selected_definition, cell, rotation_quarters)
-				_set_selected_module(null)
-				ship_changed.emit()
-				status_message.emit("已放置：%s" % placed.definition.display_name)
+			if run_inventory_enabled and not _can_take_run_module(selected_definition.id):
+				status_message.emit("库存不足：%s" % selected_definition.display_name)
+			elif check["ok"]:
+				if _take_run_module(selected_definition.id):
+					var placed := ship.place(selected_definition, cell, rotation_quarters)
+					if placed == null:
+						_return_run_module(selected_definition.id)
+					else:
+						_set_selected_module(null)
+						ship_changed.emit()
+						status_message.emit("已放置：%s" % placed.definition.display_name)
 			else:
 				status_message.emit(check["reason"])
 			queue_redraw()
@@ -229,6 +313,7 @@ func _gui_input(event: InputEvent) -> void:
 					var name := module.definition.display_name
 					var was_selected := module == selected_module
 					ship.remove(module)
+					_return_run_module(module.definition.id)
 					if was_selected:
 						_set_selected_module(null)
 					ship_changed.emit()
@@ -239,6 +324,7 @@ func _gui_input(event: InputEvent) -> void:
 				var hull_check := ship.can_remove_hull_cell(cell)
 				if hull_check["ok"]:
 					ship.remove_hull_cell(cell)
+					_return_run_hull()
 					ship_changed.emit()
 					status_message.emit("已拆除船体格：(%d, %d)" % [cell.x, cell.y])
 				else:
