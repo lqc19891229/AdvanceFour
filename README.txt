@@ -130,7 +130,7 @@
 3. 数据
 用于科技、蓝图、永久解锁。
 
-当前 Prototype（v0.36）已先使用 Credits + Run Inventory 验证战后经济闭环：
+当前 Prototype（v0.37）已先使用 Credits + Run Inventory 验证战后经济闭环：
 - 战斗胜利获得 Credits。
 - Hull 战损会保留到下一场战斗。
 - 战果页支持选择单个受损 Hull 进行局部维修，也保留“全部维修”。
@@ -139,6 +139,7 @@
 - 战斗可固定奖励模块与 Hull 库存；Run 整备时新增 Hull / Equipment 必须消耗库存，拆除会返还库存，移动 / 旋转免费。
 - 战后成长奖励可配置为多选一候选；Credits 立即结算，模块/Hull 候选必须先选择 1 项，领取后才能进入整备或下一战。
 - stage_001 战果页可进入补给商店，用 Credits 购买模块或 Hull，购买结果直接进入 Run Inventory。
+- v0.37 起正式 Run 使用 Prototype 星系航线：第一战后在星图中二选一进入补给商店或整备站，随后汇合到第二战并抵达航线终点。
 - 这是当前 Prototype 的临时经济验证层，后续正式资源体系仍按合金 / 能源核心 / 数据方向迭代。
 
 九、Roguelike 成长
