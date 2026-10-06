@@ -10,10 +10,10 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var damage_list: VBoxContainer = $Center/Panel/Margin/Content/DamageScroll/DamageList
 @onready var selected_detail: Label = $Center/Panel/Margin/Content/SelectedDetail
 @onready var repair_selected_button: Button = $Center/Panel/Margin/Content/RepairSelected
-@onready var repair_button: Button = $Center/Panel/Margin/Content/RepairAll
-@onready var refit_button: Button = $Center/Panel/Margin/Content/Refit
-@onready var next_button: Button = $Center/Panel/Margin/Content/NextBattle
-@onready var end_run_button: Button = $Center/Panel/Margin/Content/EndRun
+@onready var repair_button: Button = $Center/Panel/Margin/Content/ActionRow/RepairAll
+@onready var refit_button: Button = $Center/Panel/Margin/Content/ActionRow/Refit
+@onready var next_button: Button = $Center/Panel/Margin/Content/ActionRow/NextBattle
+@onready var end_run_button: Button = $Center/Panel/Margin/Content/ActionRow/EndRun
 
 var has_selected_cell := false
 var selected_position := Vector2i.ZERO
