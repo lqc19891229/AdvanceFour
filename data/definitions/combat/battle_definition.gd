@@ -14,6 +14,7 @@ const DATABASE := preload("res://data/modules/module_database.tres")
 @export var reward_module_ids: Array[StringName] = []
 @export var reward_module_counts: Array[int] = []
 @export var reward_hull_cells := 0
+@export var reward_choices: Array[Resource] = []
 @export_file("*.tres") var next_battle_path := ""
 @export_file("*.tscn") var return_scene_path := "res://game/ship/editor/ship_editor.tscn"
 @export var restore_saved_ship_on_return := true
@@ -39,6 +40,9 @@ func is_valid() -> bool:
 			return false
 	for module_id in reward_module_ids:
 		if module_id == &"" or DATABASE.get_by_id(module_id) == null:
+			return false
+	for choice in reward_choices:
+		if not (choice is BattleRewardOption) or not (choice as BattleRewardOption).is_valid():
 			return false
 	if return_scene_path.is_empty():
 		return false
@@ -74,6 +78,13 @@ func get_invalid_reason() -> String:
 	for module_id in reward_module_ids:
 		if module_id == &"" or DATABASE.get_by_id(module_id) == null:
 			return "模块奖励 ID 无效：%s" % String(module_id)
+	for index in range(reward_choices.size()):
+		var choice := reward_choices[index]
+		if not (choice is BattleRewardOption):
+			return "第 %d 个奖励选项类型无效。" % (index + 1)
+		var typed_choice := choice as BattleRewardOption
+		if not typed_choice.is_valid():
+			return "第 %d 个奖励选项：%s" % [index + 1, typed_choice.get_invalid_reason()]
 	if return_scene_path.is_empty():
 		return "战斗返回场景不能为空。"
 	return ""
