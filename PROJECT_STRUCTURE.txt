@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.34.0
+《前进四》项目目录规划 V0.35.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -133,6 +133,8 @@ data/definitions/combat/
 - BattleDefinition
 - BattleWaveDefinition
 - EnemyShipDefinition
+- BattleResult
+- BattleRewardOption
 
 具体实例：
 - data/modules/
@@ -254,7 +256,7 @@ Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
 
 
 ========================================
-十、v0.33 Run / 战后闭环
+十、v0.35 Run / 战后闭环
 ========================================
 
 core/autoload/run_state.gd
@@ -277,6 +279,13 @@ Ship Editor
 → RunState.commit_victory()
 → Battle Result Screen
 → 维修 / Run Refit / stage_002
+
+Reward Choice：
+- BattleDefinition.reward_choices：战后成长奖励候选。
+- BattleRewardOption：一个候选可奖励模块和/或 Hull。
+- Credits 与固定奖励在 Victory commit 时结算；reward_choices 必须额外选择 1 项。
+- pending choice 会阻止 Refit / Next Battle / End Run，但不阻止维修。
+- 每场候选只能领取一次。
 
 Run Inventory：
 - RunState.module_inventory：module_id → 数量。
