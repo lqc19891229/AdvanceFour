@@ -1,6 +1,8 @@
-《前进四》开发状态 v0.31.15
+《前进四》开发状态 v0.31.16
 
 当前阶段：模块化飞船战斗 Prototype，尚未形成完整 Roguelike 游戏。
+
+v0.31.16 完成 Appearance Hull Tile 第一版：新增 HullAppearanceDefinition、human_basic.tres 与 16 个四方向邻接 Hull Tile；ShipAppearanceRenderer 由程序外壳升级为 mask→Texture2D 拼接，并保留缺图时的程序绘制 fallback。第一版仍不把外观 ID 写入 ShipData / ShipSerializer，Equipment 显示规则与战斗逻辑不变。
 
 v0.31.15 完成项目目录职责重构：tools 负责源数据/源素材与生产工具；data 负责 Runtime 正式数据、Definition、配置实例与正式素材；game 只保留 Gameplay/Runtime/Scene；core 只保留跨系统基础设施。移除 data/generated 层级，自动生成模块资源直接归入 data/modules。模块 PNG 从 game 移至 data/assets，源素材副本归入 tools/art_source，并通过 .gdignore 与 Runtime 资源隔离。
 
@@ -9,7 +11,7 @@ v0.31.15 完成项目目录职责重构：tools 负责源数据/源素材与生�
 - Excel → Python → JSON cache → Godot 插件 → .tres 继续负责 Equipment 定义；Equipment 已取消 mass，共通 hp 也已移除，只有 Defense 保留 hp。Hull Cell 独立保存位置、max_hp/current_hp、质量与 hull_type。
 - 玩家移动与转向、核心中心原点、独立炮塔自动选敌与射击。
 - 模块贴图已纳入正式数据链：Excel 各模块 Sheet 使用 texture_path，Weapon 额外使用 turret_texture_path；导入后写入 JSON cache、模块 .tres 与 ModuleDatabase，不再由代码按 module_id 固定拼接路径。
-- 首批模块 PNG 已提交并完成数据挂载；武器视觉拆为底座 + 炮塔。v0.31.11 新增独立 Appearance Layer：战斗中根据 Hull Layout 自动绘制连续外壳，Core / Weapon / Propulsion 外露，Energy / Defense / Function 被船壳包覆；编辑器仍完整显示 Hull + Equipment。
+- 首批模块 PNG 已提交并完成数据挂载；武器视觉拆为底座 + 炮塔。v0.31.11 新增独立 Appearance Layer；v0.31.16 已将 Hull 外壳从程序绘制升级为 16 邻接 Tile 拼接，Core / Weapon / Propulsion 外露，Energy / Defense / Function 被船壳包覆；编辑器仍完整显示 Hull + Equipment。
 - 弹丸 swept ray 改为命中独立 Hull Cell 碰撞体；每个 Hull Cell 独立承伤并支持 HP-overkill 穿透。
 - 武器火力、攻击范围、射击间隔、炮塔转速、弹速、射界和开火角容差已进入 Excel → JSON → .tres 数据链；不同武器可使用独立数值。weapon_cannon 当前射界为 180°。
 - 攻击范围同时用于自动选敌和弹丸最大飞行距离；弹丸记录开火时射程与弹速，走完后消失，最后一帧不越界命中。
