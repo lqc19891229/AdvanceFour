@@ -33,25 +33,25 @@ def main() -> int:
     environment = os.environ.copy()
     with tempfile.TemporaryDirectory(prefix="advancefour-check-") as scratch:
         environment["XDG_DATA_HOME"] = str(Path(scratch) / "user_data")
-        source = ROOT / "tools/data_import/source/game_data.xlsx"
+        source = ROOT / "tools/data_source/game_data.xlsx"
         with zipfile.ZipFile(source) as workbook:
             corrupt = workbook.testzip()
             if corrupt:
                 raise RuntimeError(f"Corrupt workbook entry: {corrupt}")
         parsed_path = Path(scratch) / "modules.json"
-        print(run([sys.executable, "tools/data_import/import_excel.py", str(source), str(parsed_path)], environment).strip())
+        print(run([sys.executable, "tools/import/import_excel.py", str(source), str(parsed_path)], environment).strip())
         parsed = json.loads(parsed_path.read_text(encoding="utf-8"))
-        cached = json.loads((ROOT / "tools/data_import/cache/modules.json").read_text(encoding="utf-8"))
+        cached = json.loads((ROOT / "tools/cache/modules.json").read_text(encoding="utf-8"))
         if parsed != cached:
             raise RuntimeError("Excel source differs from modules.json; run the data importer")
         print("Workbook archive and source/cache parity: OK")
 
-        database_text = (ROOT / "data/generated/module_database.tres").read_text(encoding="utf-8")
+        database_text = (ROOT / "data/modules/module_database.tres").read_text(encoding="utf-8")
         for module in parsed["modules"]:
             folder = module["module_type"].lower()
-            resource_path = ROOT / "data/generated/modules" / folder / f"{module['id']}.tres"
+            resource_path = ROOT / "data/modules" / folder / f"{module['id']}.tres"
             if not resource_path.exists():
-                raise RuntimeError(f"Generated module resource is missing: {resource_path.relative_to(ROOT)}")
+                raise RuntimeError(f"Module resource is missing: {resource_path.relative_to(ROOT)}")
             resource_text = resource_path.read_text(encoding="utf-8")
             texture_paths = [module["texture_path"]]
             if module["module_type"] == "WEAPON":
@@ -59,13 +59,13 @@ def main() -> int:
             for texture_path in texture_paths:
                 if texture_path not in resource_text:
                     raise RuntimeError(
-                        f"Generated resource {resource_path.relative_to(ROOT)} does not reference {texture_path}"
+                        f"Module resource {resource_path.relative_to(ROOT)} does not reference {texture_path}"
                     )
                 if texture_path not in database_text:
                     raise RuntimeError(
-                        f"ModuleDatabase does not reference generated texture {texture_path}"
+                        f"ModuleDatabase does not reference module texture {texture_path}"
                     )
-        print("Generated module texture references: OK")
+        print("Module texture references: OK")
 
         run([args.godot, "--headless", "--editor", "--path", str(ROOT), "--import"], environment)
         for label, script in [
