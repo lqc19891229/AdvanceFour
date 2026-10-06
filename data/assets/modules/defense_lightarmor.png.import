@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://game/ship/art/modules/defense_lightarmor.png"
+source_file="res://data/assets/modules/defense_lightarmor.png"
 dest_files=["res://.godot/imported/defense_lightarmor.png-5ef43bb93fe6145430a6ea59b68f317f.ctex"]
 
 [params]
