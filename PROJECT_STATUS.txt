@@ -1,6 +1,8 @@
-《前进四》开发状态 v0.31.14
+《前进四》开发状态 v0.31.15
 
 当前阶段：模块化飞船战斗 Prototype，尚未形成完整 Roguelike 游戏。
+
+v0.31.15 完成项目目录职责重构：tools 负责源数据/源素材与生产工具；data 负责 Runtime 正式数据、Definition、配置实例与正式素材；game 只保留 Gameplay/Runtime/Scene；core 只保留跨系统基础设施。移除 data/generated 层级，自动生成模块资源直接归入 data/modules。模块 PNG 从 game 移至 data/assets，源素材副本归入 tools/art_source，并通过 .gdignore 与 Runtime 资源隔离。
 
 已完成：
 - 飞船数据已拆为 Hull Layout + Equipment 两层；网格编辑器可独立铺设基础船体格并在其上安装/移动/旋转设备。
@@ -23,14 +25,14 @@
 - v0.31.13 将 battle.tscn 正式化为所有关卡共用的战斗容器；新增 BattleDefinition Resource 与 definitions/stage_001.tres。飞船编辑器只负责验证/保存设计并选择关卡配置，不再承载战斗规则。后续普通关卡、精英战与 Boss 战均应复用 battle.tscn，通过 BattleDefinition 数据化差异。
 - v0.31.14 完成敌舰与波次内容数据化：新增 EnemyShipDefinition、BattleWaveDefinition、scout / gunship 蓝图；stage_001 现在直接定义三波敌舰组合。Battle 不再固定调用 build_starter_design() 生成敌舰。显式关卡路径加载失败会进入 ERROR，Retry 保持当前 BattleDefinition，并纳入自动回归。
 - 最终清场后等待空中弹丸结束；核心 Equipment 所覆盖 Hull 全部损毁时判定失败，失败优先于同帧胜利。
-- 自动检查源表完整性、源表与缓存一致性、generated 贴图引用以及 Godot 物理 / 场景回归；模块重新导入后 ModuleDatabase 已同步持有 Texture2D 引用。
-- v0.31.8 完成数据导入技术收口：Excel 解析前强制清理旧 cache，避免解析失败时误读历史 modules.json；全部模块先构建验证后再替换 generated 资源，写入失败会恢复导入前的模块 .tres 与 ModuleDatabase。
+- 自动检查源表完整性、源表与缓存一致性、模块贴图引用以及 Godot 物理 / 场景回归；模块重新导入后 ModuleDatabase 已同步持有 Texture2D 引用。
+- v0.31.8 完成数据导入技术收口：Excel 解析前强制清理旧 cache，避免解析失败时误读历史 modules.json；全部模块先构建验证后再替换 data/modules 资源，写入失败会恢复导入前的模块 .tres 与 ModuleDatabase。
 - 飞船编辑器待放置/移动预览继续使用红绿合法性提示，同时显示模块真实贴图；新增回归覆盖模块贴图数据链、Runtime 视觉与编辑器 weapon base/turret 预览。
 
 当前入口：
 1. F5 运行默认飞船编辑器，完成合法设计，点击“出航战斗”。
 2. WASD / 方向键驾驶，清除 stage_001 配置的三波敌舰后结算；当前组合为侦察舰×2 → 侦察舰×1+炮舰×1 → 炮舰×2。R 重开，Esc 返回编辑器。
-3. 可 F6 单独运行 game/combat/battle.tscn；默认使用 definitions/stage_001.tres，无存档时使用调试示例船。
+3. 可 F6 单独运行 game/combat/battle.tscn；默认使用 data/battles/stage_001.tres，无存档时使用调试示例船。
 4. “敌舰 AI 测试”和旧 ship_movement_test.tscn 保留为独立诊断入口。
 
 下一阶段：
