@@ -1,10 +1,13 @@
-数据源目录
+《前进四》tools/data_source 目录说明
 
-文件：
-- game_data.xlsx：当前游戏策划数据源。
+职责：
+保存策划可直接编辑的数据源。
 
-规则：
-- Excel 是数据唯一真源。
-- 模块参数只在 Excel 修改。
-- 当前使用六个 Sheet：Energy、Propulsion、Weapon、Defense、Function、Core。
-- 六个 Sheet 的共同基础字段包含 hp；hp 必须 > 0。
+当前：
+- game_data.xlsx：模块策划数值唯一真源。
+
+工作流：
+修改 Excel
+→ 运行导入/验证
+→ 更新 tools/cache/modules.json
+→ 生成 data/modules 下的正式 Runtime Resource。
