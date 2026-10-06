@@ -3,6 +3,7 @@ extends Control
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
 const SHOP_SCENE_PATH := "res://game/run/shop/shop_screen.tscn"
+const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
 const DATABASE := preload("res://data/modules/module_database.tres")
@@ -81,12 +82,23 @@ func _refresh() -> void:
 	repair_button.text = "全部维修（%d Credits）" % repair_cost
 	repair_button.disabled = repair_cost <= 0 or run_state.currency < repair_cost
 	var pending_choice := bool(run_state.call("has_pending_reward_choice"))
+	if bool(run_state.call("is_route_active")):
+		shop_button.visible = false
+		refit_button.visible = false
+		next_button.visible = true
+		next_button.text = "返回星图"
+		next_button.disabled = pending_choice or not bool(run_state.call("is_current_route_node_complete"))
+		end_run_button.visible = false
+		return
+
 	var has_next_configured := not result.next_battle_path.is_empty()
 	shop_button.visible = has_next_configured
 	shop_button.disabled = pending_choice or not has_next_configured
+	refit_button.visible = true
 	refit_button.disabled = pending_choice
 	var has_next := not String(run_state.call("get_next_battle_path")).is_empty()
 	next_button.visible = has_next_configured
+	next_button.text = "下一战"
 	next_button.disabled = pending_choice or not has_next
 	end_run_button.visible = not has_next_configured
 	end_run_button.disabled = pending_choice
@@ -324,6 +336,9 @@ func _enter_refit() -> void:
 func _next_battle() -> void:
 	var run_state := _run_state()
 	if run_state == null or bool(run_state.call("has_pending_reward_choice")):
+		return
+	if bool(run_state.call("is_route_active")):
+		get_tree().change_scene_to_file(ROUTE_MAP_SCENE_PATH)
 		return
 	var next_path := String(run_state.call("advance_to_next_battle"))
 	if next_path.is_empty():
