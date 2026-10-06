@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://game/ship/art/modules/weapon_cannon_turret.png"
+source_file="res://data/assets/modules/weapon_cannon_turret.png"
 dest_files=["res://.godot/imported/weapon_cannon_turret.png-399f8c8c8096ad9201b8de7e9fb4e7f2.ctex"]
 
 [params]
