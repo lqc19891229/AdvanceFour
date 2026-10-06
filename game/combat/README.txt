@@ -1,55 +1,72 @@
 《前进四》game/combat 目录说明
 
 用途：
-负责单场战斗的波次调度、玩家与敌舰生成、胜负判定、HUD 和结算。
-飞船运动、AI、炮塔、弹丸与模块损伤继续复用 game/ship，不复制模块静态数值。
+负责正式关卡战斗的通用运行容器，包括玩家与敌舰生成、波次调度、胜负判定、HUD、结算与退出。
+飞船运动、AI、武器、弹丸、局部战损继续复用 game/ship；combat 不复制模块静态数值。
+以后普通关卡、Boss 战等都复用 battle.tscn，通过 BattleDefinition 提供不同战斗配置，不为每一关复制战斗场景。
 
 主要文件：
-- battle.gd / .tscn：单场战斗入口、状态机及界面。
-- battle_backdrop.gd：世界坐标固定的程序化星点与淡网格，随镜头移动提供位移参照。
-- dev/combat_regression_test.gd：独立战斗流程与物理碰撞回归。
+- battle.gd / battle.tscn：正式战斗场景与状态机。battle.tscn 是所有关卡复用的唯一战斗容器。
+- battle_definition.gd：BattleDefinition Resource，保存关卡战斗配置。
+- definitions/stage_001.tres：第一份正式战斗配置。
+- battle_backdrop.gd：世界坐标固定的程序化星点与淡网格。
+- dev/combat_regression_test.gd：战斗流程、碰撞、关卡配置与编辑器往返回归。
 
-使用：
-1. 在飞船编辑器完成合法设计，点击“出航战斗”。当前设计会先保存。
-2. WASD / 方向键驾驶；炮塔自动攻击。
-3. R 重新挑战，Esc 或“返回改船”退出战斗。
-4. 胜负结算后点击“重新挑战”或“返回飞船编辑器”。
-5. 单独 F6 运行 battle.tscn 时，若没有存档则使用数据库模块构造示例船；非法存档明确显示“无法出航”。
+BattleDefinition 当前字段：
+- battle_id：稳定战斗 ID。
+- display_name：HUD / 结算显示名称。
+- wave_enemy_counts：每波敌舰数量。
+- preparation_seconds：开战前准备时间。
+- intermission_seconds：波间时间。
+- spawn_interval_seconds：同波敌舰生成间隔。
+- spawn_radius：围绕玩家生成敌舰的距离。
+- return_scene_path：退出战斗后进入的场景。
+- restore_saved_ship_on_return：返回场景时是否要求恢复已保存玩家设计。
+
+正式关卡入口：
+1. 上层系统先保存或准备玩家 ShipData。
+2. 上层系统将 BattleDefinition 资源路径写入 SceneTree meta：battle_definition_path。
+3. 切换到 res://game/combat/battle.tscn。
+4. Battle 启动时读取该 BattleDefinition，并立即清除 meta，随后按配置运行。
+5. 若没有提供 meta，battle.tscn 使用场景中绑定的默认 stage_001.tres。
+6. “重新挑战”会保留当前 BattleDefinition；因此从关卡选择进入第二关后，重试仍然是第二关。
+
+当前编辑器入口：
+- 飞船编辑器仍可作为现阶段的出航入口，但它不再定义战斗规则。
+- 点击“出航战斗”时只负责验证 / 保存玩家飞船，选择 stage_001.tres，然后进入正式 battle.tscn。
+- AI 测试仍进入 game/ship/dev/ship_ai_test.tscn，与正式战斗分离。
 
 状态流程：
 PREPARING（出航准备）
-→ FIGHTING（逐个生成本波敌舰，战斗至全部击毁）
-→ INTERMISSION（波间倒计时）
+→ FIGHTING（本波交战）
+→ INTERMISSION（波间）
 → 下一波 FIGHTING
 → 最后一波清除后 RESOLVING（等待已发射弹丸结束）
-→ 玩家仍存活则 VICTORY。
-弹丸走完各自发射时记录的攻击范围或伤害耗尽后结束；发射者被摧毁不提前清除空中弹丸。
-任何未结算阶段玩家核心被击毁都立即进入 DEFEAT；同一帧双方都被击毁时失败优先。
-VICTORY / DEFEAT 只结算一次，禁用 World 子树的游戏处理，HUD 与结算按钮继续可用。
+→ VICTORY。
+任何未结算阶段玩家核心承载 Hull 全部损毁都立即进入 DEFEAT；同一帧双方都被击毁时失败优先。
+VICTORY / DEFEAT 只结算一次，并冻结 World 子树。
 
-当前 Prototype 配置：
-- wave_enemy_counts = [1, 1, 2]，三波共四艘敌舰。
-- preparation_seconds = 2.0，intermission_seconds = 3.0，spawn_interval_seconds = 1.25。
-- spawn_radius = 460，生成位置围绕玩家当前舰桥坐标。
-- 波次与时间目前是 battle 场景导出参数，未扩展 Excel 模块表。
-- 敌舰使用独立的固定示例布局，不再复制玩家设计；模块定义仍全部从生成的 ModuleDatabase 读取。
+玩家飞船：
+- 当前正式入口仍使用 user://ships/test_ship.json 作为玩家设计来源。
+- F6 单独运行 battle.tscn 且没有玩家存档时，可使用调试示例设计；这是开发便利，不属于未来关卡存档方案。
+- 下一阶段战损持久化时，应把“玩家设计 / 当前战损状态”提升为正式 Run / Session 数据，不继续依赖编辑器测试存档语义。
 
-局部碰撞分组：
-- 本场玩家模块使用 collision_layer = 4，敌舰模块使用 collision_layer = 8。
-- 玩家 Projectile 只查询敌舰层，敌舰 Projectile 只查询玩家层；弹丸本身 collision_layer = 0。
-- 掩码在 projectile_spawned 时设置并保留，因此发射者先被摧毁时，弹丸仍会命中原来的敌方。
-- 多艘敌舰不会相互遮挡或误伤；这是本场最小分组，不是全项目正式阵营 / 友伤数据系统。
-- ShipRuntime / ProjectileRuntime 的默认行为及旧 dev 测试保持兼容。
+敌舰：
+- 当前敌舰仍使用 Battle.build_starter_design() 的固定 Prototype 蓝图。
+- BattleDefinition 已把波次与场景流程从 battle.gd 中拆出，但敌舰蓝图、敌舰组合与 Boss 定义尚未数据化。
+- 下一步关卡系统扩展时，应优先把“每波生成什么敌舰”加入关卡数据，而不是在 battle.gd 中继续增加 if / match。
+
+碰撞分组：
+- 玩家 Hull 使用 collision_layer = 4，敌舰 Hull 使用 collision_layer = 8。
+- 玩家 Projectile 只查询敌舰层，敌舰 Projectile 只查询玩家层；Projectile 自身 collision_layer = 0。
+- 这是当前战斗场景的最小阵营隔离，尚不是正式 faction / friendly-fire 数据系统。
 
 HUD：
-镜头跟随玩家，飞船保持屏幕中心；星点和网格固定在世界中，推进时向反方向滚动。
-W / 上：前进，S / 下：倒车，A / 左、D / 右：转向。
-战斗移动完全复用 RuntimeShip：最高速度 / 加速度按有效推重比计算，松开推进后使用独立减速度，转向保留已有速度惯性方向；动力战损或断电会同步降低运动能力。
-显示实时速度（px/s）、世界坐标、波次、场上敌舰、本波待生成数、击毁数、舰桥单模块 HP、存活模块、可用武器、有效供能 / 需求和有效推力。
-舰桥 HP 不是整船统一血条；其他模块继续独立受损。
+- 镜头跟随玩家；世界星点与网格保持世界坐标固定。
+- 显示关卡名称、飞船来源、波次、场上敌舰、Hull HP、核心效率、可用设备、可用武器、供能 / 需求、有效推力、速度与世界坐标。
+- W / S 前进 / 倒车，A / D 转向；方向键同理。
 
-存档与边界：
-- 同一场战斗内，玩家模块受损会跨波次保留。
-- 返回编辑器恢复原设计；重新挑战会创建全新运行时耐久。
-- 本阶段尚无资源奖励、战损存档、战后维修、连续战斗或正式敌舰强度平衡。
-- 模块可分离、不相邻、不连通和任意空格的结构规则保持不变。
+当前边界：
+- 同一场战斗内战损跨波次保留。
+- 退出或重试时目前仍从保存的设计重新建立 RuntimeShip，因此战损尚未写回长期状态。
+- 尚无资源奖励、维修、连续关卡 Run、正式敌舰蓝图、Boss 配置。
