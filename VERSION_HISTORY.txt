@@ -18,6 +18,42 @@
 
 
 ========================================
+v0.37.0 星系路线节点第一版（2026-10-06）
+========================================
+
+新增：
+- 新增 RunRouteNodeDefinition / RunRouteDefinition，路线与节点连接关系数据化。
+- 新增 data/routes/prototype_route.tres。
+- 新增 game/run/route/route_map_screen.tscn，可视化显示节点与连接线。
+- RunState 新增 route_definition、current_route_node_id、completed_route_nodes，以及路线启动、节点完成、可选节点查询和节点选择接口。
+- 飞船编辑器正式出航改为 start_run_with_route()，路线起点自动进入第一战。
+
+当前 Prototype 路线：
+第一战
+↙      ↘
+补给商店  整备站
+↘      ↙
+第二战
+   ↓
+航线终点
+
+流程：
+- 第一战胜利后仍先进入战果页处理维修与成长奖励。
+- 成长奖励领取后，“返回星图”解锁。
+- 星图只允许选择当前节点连出的合法下一节点，不能跨层跳关。
+- 商店节点使用现有数据化补给商店；离开商店后节点完成并返回星图。
+- 整备站节点进入 Run Refit；保存整备后完成节点并返回星图。
+- 商店 / 整备两个分支最终汇合至 stage_002。
+- stage_002 胜利后回星图，航线终点可结束当前 Run 并返回飞船编辑器。
+
+兼容：
+- 旧 start_run() / next_battle_path 线性流程继续保留，供独立诊断场景和旧回归使用。
+- BattleDefinition.next_battle_path 暂不删除；正式 v0.37 Run 的推进由 RunRouteDefinition 决定。
+
+验证：
+- Run regression 新增路线数据合法性、起点、Reward Choice 锁路线、双分支、禁止跳关、星图节点渲染、商店/整备汇合、第二战与终点推进检查。
+
+========================================
 v0.36.0 商店第一版（2026-10-06）
 ========================================
 
