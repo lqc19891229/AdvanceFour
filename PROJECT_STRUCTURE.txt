@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.31.15
+《前进四》项目目录规划 V0.31.16
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -8,9 +8,13 @@ res://
 │  ├─ definitions/                        # 数据结构定义：回答“这种数据是什么”
 │  │  ├─ module/                          # ModuleDefinition / ModuleDatabase 类型
 │  │  ├─ ship/                            # ShipData / Hull / Instance / Serializer
-│  │  └─ combat/                          # Battle / Wave / Enemy Definition
+│  │  ├─ combat/                          # Battle / Wave / Enemy Definition
+│  │  └─ appearance/                      # HullAppearanceDefinition
 │  ├─ assets/                             # Runtime 正式素材
-│  │  └─ modules/                         # 模块 PNG
+│  │  ├─ modules/                         # 模块 PNG
+│  │  └─ ship/hull/human_basic/           # 16 个 Hull 邻接 Tile
+│  ├─ appearances/                        # 外观配置实例
+│  │  └─ hull/human_basic.tres
 │  ├─ modules/                            # 模块具体 .tres + module_database.tres
 │  │  ├─ energy/
 │  │  ├─ propulsion/
@@ -44,7 +48,8 @@ res://
 │  ├─ data_source/
 │  │  └─ game_data.xlsx
 │  ├─ art_source/                         # 源美术；.gdignore
-│  │  └─ modules/
+│  │  ├─ modules/
+│  │  └─ ship/hull/human_basic/
 │  ├─ cache/
 │  │  └─ modules.json
 │  ├─ import/
@@ -214,3 +219,24 @@ Godot：4.6.1
 - Combat 回归
 - 自定义 BattleDefinition / Retry
 - 非法 BattleDefinition
+
+
+========================================
+八、Appearance Hull Tile 第一版
+========================================
+
+默认资源：
+data/appearances/hull/human_basic.tres
+
+定义：
+data/definitions/appearance/hull_appearance_definition.gd
+
+素材：
+data/assets/ship/hull/human_basic/hull_0000.png ～ hull_1111.png
+
+邻接 bit：
+UP=1、RIGHT=2、DOWN=4、LEFT=8。
+
+ShipAppearanceRenderer 根据 Hull Layout 计算 mask，直接使用 tiles[mask]。
+Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
+第一版默认 human_basic，不修改 ShipData / ShipSerializer。
