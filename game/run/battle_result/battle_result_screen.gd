@@ -39,7 +39,7 @@ func _refresh() -> void:
 			damaged += 1
 		else:
 			intact += 1
-	var repair_cost := _run_state().get_total_repair_cost()
+	var repair_cost := int(_run_state().call("get_total_repair_cost"))
 	title.text = "战斗胜利"
 	summary.text = "%s\n奖励：+%d Credits\n当前 Credits：%d\n\nHull 完整：%d  受损：%d  摧毁：%d\n全部维修费用：%d" % [
 		String(result.battle_id),
@@ -53,11 +53,11 @@ func _refresh() -> void:
 	repair_button.text = "全部维修（%d Credits）" % repair_cost
 	repair_button.disabled = repair_cost <= 0 or _run_state().currency < repair_cost
 	refit_button.disabled = false
-	next_button.disabled = _run_state().get_next_battle_path().is_empty()
+	next_button.disabled = String(_run_state().call("get_next_battle_path")).is_empty()
 	next_button.text = "下一战" if not next_button.disabled else "Run 已完成"
 
 func _repair_all() -> void:
-	_run_state().repair_all()
+	_run_state().call("repair_all")
 	_refresh()
 
 func _enter_refit() -> void:
@@ -65,7 +65,7 @@ func _enter_refit() -> void:
 	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
 
 func _next_battle() -> void:
-	var next_path := _run_state().advance_to_next_battle()
+	var next_path := String(_run_state().call("advance_to_next_battle"))
 	if next_path.is_empty():
 		return
 	get_tree().set_meta(BATTLE_DEFINITION_META, next_path)
