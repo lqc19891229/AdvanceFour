@@ -5,7 +5,7 @@ const SAVE_PATH := "user://ships/test_ship.json"
 const CONTENT := "UI/ResultOverlay/Center/Panel/Margin/Content/"
 const CUSTOM_BATTLE_DEFINITION_PATH := "res://game/combat/dev/custom_battle_definition.tres"
 const INVALID_BATTLE_DEFINITION_PATH := "res://game/combat/dev/missing_battle_definition.tres"
-const TEST_ENEMY := preload("res://game/combat/enemies/scout.tres")
+const TEST_ENEMY := preload("res://data/enemies/scout.tres")
 
 var checks := 0
 var failures: Array[String] = []
