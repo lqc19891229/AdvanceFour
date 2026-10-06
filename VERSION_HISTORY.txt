@@ -18,6 +18,35 @@
 
 
 ========================================
+v0.34.0 Run Inventory 第一版（2026-10-06）
+========================================
+
+新增：
+- RunState 新增 module_inventory 与 hull_stock，作为当前 Run 的模块 / Hull 库存。
+- 新增模块库存增减与查询接口，以及 Hull stock 增减接口。
+- BattleDefinition / BattleResult 新增固定模块奖励与 Hull 奖励字段。
+- stage_001 固定奖励：100 Credits + 轻型装甲×1 + Hull×1。
+- stage_002 固定奖励：150 Credits + 机炮×1。
+- Battle Result Screen 显示 Credits、模块与 Hull 奖励明细。
+
+Run Refit：
+- 安装 Equipment 必须消耗对应 module_inventory。
+- 拆除 Equipment 会返还对应库存。
+- 新增 Hull Cell 必须消耗 hull_stock；拆除空 Hull Cell 会返还 hull_stock。
+- 移动 / 旋转现有模块免费，不消耗库存。
+- Run 模式禁止一键清空飞船，避免绕过库存返还规则。
+- 左侧模块按钮与右侧信息区显示当前库存数量。
+- Run 整备的结构变化会立即同步 RunState.current_ship，避免拆除后通过“加载”复制库存。
+
+数据校验：
+- BattleDefinition 会校验 reward_module_ids 是否存在于 ModuleDatabase。
+- 模块奖励数量与 Hull 奖励禁止负值。
+
+验证：
+- Run regression 增加固定奖励入库、库存原子增减、Run Refit 库存模式、库存数量显示与禁止一键清空等检查。
+- Ship / Combat / Run 回归继续由 tools/verify_project.py 统一执行。
+
+========================================
 v0.33.0 局部维修与战后整备第一版（2026-10-06）
 ========================================
 
