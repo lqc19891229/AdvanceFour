@@ -16,6 +16,9 @@ const RUN_REFIT_META := &"run_refit_mode"
 
 var run_refit_mode := false
 
+func _run_state() -> Node:
+	return get_node_or_null("/root/RunState")
+
 func _ready() -> void:
 	_build_module_buttons()
 	_bind_common_buttons()
@@ -27,12 +30,12 @@ func _ready() -> void:
 	_show_status("先铺船体再安装设备｜左键放置/选中｜右键拆除｜R 旋转｜中键拖动画布")
 	if get_tree().has_meta(RUN_REFIT_META):
 		get_tree().remove_meta(RUN_REFIT_META)
-		run_refit_mode = RunState.run_active and RunState.current_ship != null
+		run_refit_mode = _run_state() != null and _run_state().run_active and _run_state().current_ship != null
 		if run_refit_mode:
 			_load_run_ship()
 			$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "继续下一战"
 			$MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.disabled = true
-			_show_status("Run 整备模式｜Credits：%d｜修改只影响当前 Run" % RunState.currency)
+			_show_status("Run 整备模式｜Credits：%d｜修改只影响当前 Run" % _run_state().currency)
 	elif get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
@@ -102,12 +105,12 @@ func _start_battle() -> void:
 		return
 	var battle_path := FIRST_BATTLE_DEFINITION_PATH
 	if run_refit_mode:
-		battle_path = RunState.advance_to_next_battle()
+		battle_path = _run_state().advance_to_next_battle()
 		if battle_path.is_empty():
 			_show_status("当前 Run 已没有下一场战斗。")
 			return
 	else:
-		if not RunState.start_run(grid.ship, FIRST_BATTLE_DEFINITION_PATH):
+		if not _run_state().start_run(grid.ship, FIRST_BATTLE_DEFINITION_PATH):
 			_show_status("无法创建 Run。")
 			return
 	get_tree().set_meta(BATTLE_DEFINITION_META, battle_path)
@@ -126,7 +129,7 @@ func _save_design_for_departure() -> bool:
 		_show_status("无法出航：%s" % grid.ship.get_design_invalid_reason())
 		return false
 	if run_refit_mode:
-		if not RunState.update_current_ship(grid.ship):
+		if not _run_state().update_current_ship(grid.ship):
 			_show_status("无法保存当前 Run 的整备状态。")
 			return false
 		return true
@@ -138,8 +141,8 @@ func _save_design_for_departure() -> bool:
 
 func _save_ship() -> void:
 	if run_refit_mode:
-		if RunState.update_current_ship(grid.ship):
-			_show_status("当前 Run 整备状态已更新｜Credits：%d" % RunState.currency)
+		if _run_state().update_current_ship(grid.ship):
+			_show_status("当前 Run 整备状态已更新｜Credits：%d" % _run_state().currency)
 		else:
 			_show_status("当前 Run 整备状态保存失败。")
 		return
@@ -162,11 +165,11 @@ func _load_ship() -> void:
 		_show_status("加载失败：%s" % result["error"])
 
 func _load_run_ship() -> void:
-	if not RunState.run_active or RunState.current_ship == null:
+	if _run_state() == null or not _run_state().run_active or _run_state().current_ship == null:
 		_show_status("当前没有可整备的 Run 飞船。")
 		return
 	var cloned := ShipSerializer.from_dictionary(
-		ShipSerializer.to_dictionary(RunState.current_ship),
+		ShipSerializer.to_dictionary(_run_state().current_ship),
 		grid.module_database
 	)
 	if not cloned["ok"]:
