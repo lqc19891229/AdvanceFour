@@ -56,9 +56,17 @@ func _run() -> void:
 	root.add_child(result_screen)
 	await process_frame
 	var result_summary := result_screen.get_node("Center/Panel/Margin/Content/Summary") as Label
-	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/RepairAll") as Button
-	var end_run_button := result_screen.get_node("Center/Panel/Margin/Content/EndRun") as Button
+	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/RepairAll") as Button
+	var end_run_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/EndRun") as Button
 	_check(result_summary.text.contains("+100 Credits") and repair_button.text.contains("12 Credits"), "Battle result screen must expose reward and repair cost")
+	var damage_list := result_screen.get_node("Center/Panel/Margin/Content/DamageScroll/DamageList") as VBoxContainer
+	var repair_selected := result_screen.get_node("Center/Panel/Margin/Content/RepairSelected") as Button
+	var selected_detail := result_screen.get_node("Center/Panel/Margin/Content/SelectedDetail") as Label
+	_check(damage_list.get_child_count() == 1, "One damaged Hull must create one local-repair list entry")
+	var damage_button := damage_list.get_child(0) as Button
+	damage_button.pressed.emit()
+	await process_frame
+	_check(repair_selected.text.contains("12 Credits") and selected_detail.text.contains("12"), "Selecting a damaged Hull must expose its local repair action")
 	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
 	result_screen.queue_free()
 	await process_frame
@@ -82,6 +90,23 @@ func _run() -> void:
 	var hp_before := _first_cell(current_ship).current_hp
 	_check(not bool(run_state.call("repair_all")), "Repair all must fail atomically when Credits are insufficient")
 	_check(int(run_state.get("currency")) == 5 and is_equal_approx(_first_cell(current_ship).current_hp, hp_before), "Failed repair must not change Credits or Hull HP")
+
+	# Local repair must repair exactly one Hull Cell and charge only that cell.
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Local repair test must start a Run")
+	current_ship = run_state.get("current_ship") as ShipData
+	var local_cells := current_ship.get_hull_cells()
+	var local_a := local_cells[0]
+	var local_b := local_cells[1]
+	local_a.current_hp = 8.0
+	local_b.current_hp = 10.0
+	run_state.set("currency", 12)
+	_check(int(run_state.call("get_repair_cost_for_cell", local_a.grid_position)) == 12, "Local repair cost must equal missing Hull HP")
+	_check(bool(run_state.call("repair_cell", local_a.grid_position)), "Local repair must succeed when Credits are sufficient")
+	_check(is_equal_approx(local_a.current_hp, local_a.max_hp) and is_equal_approx(local_b.current_hp, 10.0), "Local repair must not repair other Hull Cells")
+	_check(int(run_state.get("currency")) == 0, "Local repair must deduct only the selected Hull cost")
+	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when Credits are insufficient")
+	_check(is_equal_approx(local_b.current_hp, 10.0) and int(run_state.get("currency")) == 0, "Failed local repair must be atomic")
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "A second Run must start after reset")
@@ -114,8 +139,8 @@ func _run() -> void:
 	result_screen = result_screen_scene.instantiate() as Control
 	root.add_child(result_screen)
 	await process_frame
-	end_run_button = result_screen.get_node("Center/Panel/Margin/Content/EndRun") as Button
-	var next_button := result_screen.get_node("Center/Panel/Margin/Content/NextBattle") as Button
+	end_run_button = result_screen.get_node("Center/Panel/Margin/Content/ActionRow/EndRun") as Button
+	var next_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/NextBattle") as Button
 	_check(end_run_button.visible and not next_button.visible, "Final-stage result must offer End Run instead of a dead Next Battle action")
 	result_screen.queue_free()
 	await process_frame
