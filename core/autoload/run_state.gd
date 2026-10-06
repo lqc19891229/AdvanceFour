@@ -7,6 +7,9 @@ var run_active := false
 var current_ship: ShipData
 var battle_entry_ship: ShipData
 var current_battle_path := ""
+var route_definition: RunRouteDefinition
+var current_route_node_id: StringName = &""
+var completed_route_nodes: Array[StringName] = []
 var currency := 0
 var module_inventory: Dictionary = {}
 var hull_stock := 0
@@ -18,11 +21,88 @@ func reset_run() -> void:
 	current_ship = null
 	battle_entry_ship = null
 	current_battle_path = ""
+	route_definition = null
+	current_route_node_id = &""
+	completed_route_nodes.clear()
 	currency = 0
 	module_inventory.clear()
 	hull_stock = 0
 	completed_battles.clear()
 	last_result = null
+
+
+func start_run_with_route(ship: ShipData, route_path: String) -> bool:
+	if ship == null or not ship.is_design_valid() or route_path.is_empty():
+		return false
+	if not ResourceLoader.exists(route_path):
+		return false
+	var loaded := ResourceLoader.load(route_path)
+	if not (loaded is RunRouteDefinition):
+		return false
+	var route := loaded as RunRouteDefinition
+	if not route.is_valid():
+		return false
+	var copy := _clone_ship(ship)
+	if copy == null:
+		return false
+	reset_run()
+	run_active = true
+	current_ship = copy
+	route_definition = route
+	current_route_node_id = route.start_node_id
+	var start_node := get_current_route_node()
+	if start_node == null:
+		reset_run()
+		return false
+	current_battle_path = start_node.target_path if start_node.node_type == RunRouteNodeDefinition.NodeType.BATTLE else ""
+	return true
+
+func is_route_active() -> bool:
+	return run_active and route_definition != null and current_route_node_id != &""
+
+func get_current_route_node() -> RunRouteNodeDefinition:
+	if route_definition == null or current_route_node_id == &"":
+		return null
+	return route_definition.get_node(current_route_node_id)
+
+func get_current_route_target_path() -> String:
+	var node := get_current_route_node()
+	return "" if node == null else node.target_path
+
+func is_current_route_node_complete() -> bool:
+	return current_route_node_id != &"" and completed_route_nodes.has(current_route_node_id)
+
+func complete_current_route_node() -> bool:
+	if not is_route_active() or is_current_route_node_complete():
+		return false
+	completed_route_nodes.append(current_route_node_id)
+	return true
+
+func get_available_route_node_ids() -> Array[StringName]:
+	var result: Array[StringName] = []
+	var current := get_current_route_node()
+	if current == null or not is_current_route_node_complete() or has_pending_reward_choice():
+		return result
+	for next_id in current.next_node_ids:
+		if route_definition.get_node(next_id) != null:
+			result.append(next_id)
+	return result
+
+func select_route_node(node_id: StringName) -> bool:
+	if not is_route_active() or has_pending_reward_choice():
+		return false
+	if not get_available_route_node_ids().has(node_id):
+		return false
+	var node := route_definition.get_node(node_id)
+	if node == null:
+		return false
+	current_route_node_id = node_id
+	if node.node_type == RunRouteNodeDefinition.NodeType.BATTLE:
+		current_battle_path = node.target_path
+		battle_entry_ship = null
+	else:
+		current_battle_path = ""
+	return true
 
 func start_run(ship: ShipData, first_battle_path: String) -> bool:
 	if ship == null or not ship.is_design_valid() or first_battle_path.is_empty():
@@ -74,6 +154,14 @@ func commit_victory(result: BattleResult) -> bool:
 		completed_battles.append(result.battle_id)
 	last_result = result
 	battle_entry_ship = null
+	if is_route_active():
+		var node := get_current_route_node()
+		if (
+			node != null
+			and node.node_type == RunRouteNodeDefinition.NodeType.BATTLE
+			and node.target_path == result.battle_path
+		):
+			complete_current_route_node()
 	return true
 
 
@@ -202,6 +290,8 @@ func repair_all() -> bool:
 	return true
 
 func get_next_battle_path() -> String:
+	if is_route_active():
+		return ""
 	if last_result == null or not last_result.is_victory() or has_pending_reward_choice():
 		return ""
 	return last_result.next_battle_path
