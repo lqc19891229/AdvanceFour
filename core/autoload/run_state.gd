@@ -76,6 +76,36 @@ func commit_victory(result: BattleResult) -> bool:
 	battle_entry_ship = null
 	return true
 
+
+func has_pending_reward_choice() -> bool:
+	return (
+		last_result != null
+		and last_result.is_victory()
+		and not last_result.reward_choices.is_empty()
+		and not last_result.reward_choice_claimed
+	)
+
+func claim_reward_choice(index: int) -> bool:
+	if not run_active or last_result == null or not last_result.is_victory():
+		return false
+	if last_result.reward_choice_claimed:
+		return false
+	if index < 0 or index >= last_result.reward_choices.size():
+		return false
+	var raw_choice := last_result.reward_choices[index]
+	if not (raw_choice is BattleRewardOption):
+		return false
+	var choice := raw_choice as BattleRewardOption
+	if not choice.is_valid():
+		return false
+	if choice.module_id != &"" and choice.module_count > 0:
+		add_module_to_inventory(choice.module_id, choice.module_count)
+	if choice.hull_cells > 0:
+		add_hull_stock(choice.hull_cells)
+	last_result.reward_choice_claimed = true
+	last_result.selected_reward_choice = index
+	return true
+
 func record_defeat(result: BattleResult) -> void:
 	if not run_active:
 		return
@@ -156,7 +186,7 @@ func repair_all() -> bool:
 	return true
 
 func get_next_battle_path() -> String:
-	if last_result == null or not last_result.is_victory():
+	if last_result == null or not last_result.is_victory() or has_pending_reward_choice():
 		return ""
 	return last_result.next_battle_path
 
