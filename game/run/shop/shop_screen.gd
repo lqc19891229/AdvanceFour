@@ -1,7 +1,10 @@
 extends Control
 
 const RESULT_SCENE_PATH := "res://game/run/battle_result/battle_result_screen.tscn"
-const SHOP := preload("res://data/shops/basic_shop.tres")
+const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
+const FALLBACK_SHOP := preload("res://data/shops/basic_shop.tres")
+
+var shop_definition: ShopDefinition
 
 @onready var title: Label = $Center/Panel/Margin/Content/Title
 @onready var credits_label: Label = $Center/Panel/Margin/Content/Credits
@@ -14,8 +17,19 @@ func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
 
 func _ready() -> void:
-	return_button.pressed.connect(_return_to_result)
+	return_button.pressed.connect(_return_from_shop)
+	shop_definition = _resolve_shop_definition()
 	_refresh()
+
+func _resolve_shop_definition() -> ShopDefinition:
+	var run_state := _run_state()
+	if run_state != null and bool(run_state.call("is_route_active")):
+		var node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
+		if node != null and node.node_type == RunRouteNodeDefinition.NodeType.SHOP and ResourceLoader.exists(node.target_path):
+			var loaded := ResourceLoader.load(node.target_path)
+			if loaded is ShopDefinition:
+				return loaded as ShopDefinition
+	return FALLBACK_SHOP
 
 func _refresh() -> void:
 	var run_state := _run_state()
@@ -24,13 +38,13 @@ func _refresh() -> void:
 		credits_label.text = "当前没有进行中的 Run。"
 		return_button.disabled = false
 		return
-	if not SHOP.is_valid():
+	if not shop_definition.is_valid():
 		title.text = "商店配置错误"
-		credits_label.text = SHOP.get_invalid_reason()
+		credits_label.text = shop_definition.get_invalid_reason()
 		return_button.disabled = false
 		return
 
-	title.text = SHOP.display_name
+	title.text = shop_definition.display_name
 	credits_label.text = "Credits：%d" % int(run_state.get("currency"))
 	_refresh_items()
 	_refresh_inventory()
@@ -43,7 +57,7 @@ func _refresh_items() -> void:
 	var run_state := _run_state()
 	if run_state == null:
 		return
-	for raw_item in SHOP.items:
+	for raw_item in shop_definition.items:
 		var item := raw_item as ShopItemDefinition
 		if item == null:
 			continue
@@ -87,5 +101,12 @@ func _purchase(item: ShopItemDefinition) -> void:
 		status_label.text = "购买失败：Credits 不足或商品无效。"
 	_refresh()
 
-func _return_to_result() -> void:
+func _return_from_shop() -> void:
+	var run_state := _run_state()
+	if run_state != null and bool(run_state.call("is_route_active")):
+		var node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
+		if node != null and node.node_type == RunRouteNodeDefinition.NodeType.SHOP:
+			run_state.call("complete_current_route_node")
+			get_tree().change_scene_to_file(ROUTE_MAP_SCENE_PATH)
+			return
 	get_tree().change_scene_to_file(RESULT_SCENE_PATH)
