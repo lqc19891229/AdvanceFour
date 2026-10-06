@@ -5,6 +5,7 @@ const STAGE_002_PATH := "res://data/battles/stage_002.tres"
 
 var checks := 0
 var failures: Array[String] = []
+var run_state: Node
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -20,12 +21,18 @@ func _first_cell(ship: ShipData) -> ShipHullCell:
 	return null if cells.is_empty() else cells[0]
 
 func _run() -> void:
-	RunState.reset_run()
+	run_state = root.get_node_or_null("RunState")
+	_check(run_state != null, "RunState autoload must be available")
+	if run_state == null:
+		print("Run regression: %d checks, %d failures" % [checks, failures.size()])
+		quit(1)
+		return
+	run_state.reset_run()
 	var design := Battle.build_starter_design()
-	_check(RunState.start_run(design, STAGE_001_PATH), "A valid design must start a Run")
-	_check(RunState.currency == 0 and RunState.current_battle_path == STAGE_001_PATH, "A new Run must start with zero Credits at stage_001")
+	_check(run_state.start_run(design, STAGE_001_PATH), "A valid design must start a Run")
+	_check(run_state.currency == 0 and run_state.current_battle_path == STAGE_001_PATH, "A new Run must start with zero Credits at stage_001")
 
-	var stage_one_ship := RunState.get_ship_for_battle(STAGE_001_PATH)
+	var stage_one_ship := run_state.get_ship_for_battle(STAGE_001_PATH)
 	var stage_one_cell := _first_cell(stage_one_ship)
 	stage_one_cell.current_hp = 8.0
 	var victory := BattleResult.new()
@@ -36,32 +43,32 @@ func _run() -> void:
 	victory.ship_after_battle = stage_one_ship
 	victory.reward_credits = 100
 	victory.enemies_destroyed = 5
-	_check(RunState.commit_victory(victory), "Victory must commit a valid BattleResult")
-	_check(is_equal_approx(_first_cell(RunState.current_ship).current_hp, 8.0), "Victory must persist Hull damage into RunState")
-	_check(RunState.currency == 100 and RunState.completed_battles.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
+	_check(run_state.commit_victory(victory), "Victory must commit a valid BattleResult")
+	_check(is_equal_approx(_first_cell(run_state.current_ship).current_hp, 8.0), "Victory must persist Hull damage into RunState")
+	_check(run_state.currency == 100 and run_state.completed_battles.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
 
-	var next_path := RunState.advance_to_next_battle()
+	var next_path := run_state.advance_to_next_battle()
 	_check(next_path == STAGE_002_PATH, "Run progression must advance to stage_002")
-	var stage_two_ship := RunState.get_ship_for_battle(next_path)
+	var stage_two_ship := run_state.get_ship_for_battle(next_path)
 	_check(is_equal_approx(_first_cell(stage_two_ship).current_hp, 8.0), "The next battle must inherit previous battle Hull damage")
 	_first_cell(stage_two_ship).current_hp = 3.0
-	var retry_ship := RunState.get_ship_for_battle(next_path)
+	var retry_ship := run_state.get_ship_for_battle(next_path)
 	_check(is_equal_approx(_first_cell(retry_ship).current_hp, 8.0), "Retry must restore the stage entry Hull snapshot")
 
-	var repair_cost := RunState.get_total_repair_cost()
+	var repair_cost := run_state.get_total_repair_cost()
 	_check(repair_cost == 12, "Missing 12 base Hull HP must cost 12 Credits")
-	_check(RunState.repair_all(), "Repair all must succeed when Credits are sufficient")
-	_check(RunState.currency == 88 and is_equal_approx(_first_cell(RunState.current_ship).current_hp, 20.0), "Repair all must restore Hull HP and deduct Credits")
+	_check(run_state.repair_all(), "Repair all must succeed when Credits are sufficient")
+	_check(run_state.currency == 88 and is_equal_approx(_first_cell(run_state.current_ship).current_hp, 20.0), "Repair all must restore Hull HP and deduct Credits")
 
-	_first_cell(RunState.current_ship).current_hp = 0.0
-	RunState.currency = 5
-	var hp_before := _first_cell(RunState.current_ship).current_hp
-	_check(not RunState.repair_all(), "Repair all must fail atomically when Credits are insufficient")
-	_check(RunState.currency == 5 and is_equal_approx(_first_cell(RunState.current_ship).current_hp, hp_before), "Failed repair must not change Credits or Hull HP")
+	_first_cell(run_state.current_ship).current_hp = 0.0
+	run_state.currency = 5
+	var hp_before := _first_cell(run_state.current_ship).current_hp
+	_check(not run_state.repair_all(), "Repair all must fail atomically when Credits are insufficient")
+	_check(run_state.currency == 5 and is_equal_approx(_first_cell(run_state.current_ship).current_hp, hp_before), "Failed repair must not change Credits or Hull HP")
 
-	RunState.reset_run()
-	_check(RunState.start_run(design, STAGE_001_PATH), "A second Run must start after reset")
-	var defeat_ship := RunState.get_ship_for_battle(STAGE_001_PATH)
+	run_state.reset_run()
+	_check(run_state.start_run(design, STAGE_001_PATH), "A second Run must start after reset")
+	var defeat_ship := run_state.get_ship_for_battle(STAGE_001_PATH)
 	_first_cell(defeat_ship).current_hp = 1.0
 	var defeat := BattleResult.new()
 	defeat.outcome = BattleResult.Outcome.DEFEAT
@@ -69,10 +76,10 @@ func _run() -> void:
 	defeat.battle_path = STAGE_001_PATH
 	defeat.ship_after_battle = defeat_ship
 	defeat.reward_credits = 100
-	RunState.record_defeat(defeat)
-	_check(is_equal_approx(_first_cell(RunState.current_ship).current_hp, 20.0), "Defeat must not commit battle damage")
-	_check(RunState.currency == 0 and RunState.completed_battles.is_empty(), "Defeat must not grant rewards or completion")
+	run_state.record_defeat(defeat)
+	_check(is_equal_approx(_first_cell(run_state.current_ship).current_hp, 20.0), "Defeat must not commit battle damage")
+	_check(run_state.currency == 0 and run_state.completed_battles.is_empty(), "Defeat must not grant rewards or completion")
 
-	RunState.reset_run()
+	run_state.reset_run()
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
