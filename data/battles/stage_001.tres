@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="BattleDefinition" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="BattleDefinition" format=3 uid="uid://cdb0yjq6l4ber"]
 
-[ext_resource type="Script" path="res://data/definitions/combat/battle_definition.gd" id="1"]
-[ext_resource type="Script" path="res://data/definitions/combat/battle_wave_definition.gd" id="2"]
+[ext_resource type="Script" uid="uid://b84ephdg0h3u3" path="res://data/definitions/combat/battle_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://c16jrj07d3om7" path="res://data/definitions/combat/battle_wave_definition.gd" id="2"]
 [ext_resource type="Resource" path="res://data/enemies/scout.tres" id="3"]
 [ext_resource type="Resource" path="res://data/enemies/gunship.tres" id="4"]
 
@@ -23,13 +23,6 @@ spawn_interval_seconds = 1.0
 
 [resource]
 script = ExtResource("1")
-battle_id = &"stage_001"
-display_name = "第一战"
 waves = Array[Resource]([SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")])
-preparation_seconds = 2.0
-intermission_seconds = 3.0
-spawn_interval_seconds = 1.25
-spawn_radius = 460.0
 reward_credits = 100
 next_battle_path = "res://data/battles/stage_002.tres"
-return_scene_path = "res://game/ship/editor/ship_editor.tscn"
