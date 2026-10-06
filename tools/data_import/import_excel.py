@@ -63,8 +63,8 @@ WEAPON_FIELDS = [
     "turn_speed_degrees",
     "projectile_speed",
     "fire_angle_tolerance_degrees",
+    "firing_arc_degrees",
 ]
-WEAPON_OPTIONAL_FIELDS = ["firing_arc_degrees"]
 WEAPON_TEXTURE_FIELD = "turret_texture_path"
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -225,10 +225,6 @@ def parse_sheet(
         return []
 
     col = {name: headers.index(name) for name in required_columns}
-    if module_type == "WEAPON":
-        for name in WEAPON_OPTIONAL_FIELDS:
-            if name in headers:
-                col[name] = headers.index(name)
     modules: list[dict[str, Any]] = []
 
     for row_idx, row in enumerate(rows[header_idx + 1:], start=header_idx + 2):
@@ -286,21 +282,11 @@ def parse_sheet(
                 value = as_float(get(field), field, sheet_name, row_idx, errors)
                 if value <= 0:
                     errors.append(f"{sheet_name}!第 {row_idx} 行：WEAPON 模块必须填写 {field} > 0")
-                weapon_values[field] = value
-            firing_arc = 180.0
-            if "firing_arc_degrees" in col:
-                firing_arc = as_float(
-                    get("firing_arc_degrees"),
-                    "firing_arc_degrees",
-                    sheet_name,
-                    row_idx,
-                    errors,
-                )
-                if firing_arc <= 0 or firing_arc > 360:
+                if field == "firing_arc_degrees" and value > 360:
                     errors.append(
-                        f"{sheet_name}!第 {row_idx} 行：firing_arc_degrees 必须 > 0 且 <= 360"
+                        f"{sheet_name}!第 {row_idx} 行：firing_arc_degrees 不能大于 360"
                     )
-            weapon_values["firing_arc_degrees"] = firing_arc
+                weapon_values[field] = value
             turret_texture_path = str(get(WEAPON_TEXTURE_FIELD) or "").strip()
             if not turret_texture_path:
                 errors.append(f"{sheet_name}!第 {row_idx} 行：{WEAPON_TEXTURE_FIELD} 不能为空")
