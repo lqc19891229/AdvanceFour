@@ -1,12 +1,20 @@
-[gd_resource type="Resource" script_class="BattleDefinition" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="BattleDefinition" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://game/combat/battle_definition.gd" id="1"]
+[ext_resource type="Script" path="res://game/combat/battle_wave_definition.gd" id="2"]
+[ext_resource type="Resource" path="res://game/combat/enemies/scout.tres" id="3"]
+
+[sub_resource type="Resource" id="CustomWave"]
+script = ExtResource("2")
+enemies = Array[Resource]([ExtResource("3")])
+counts = Array[int]([2])
+spawn_interval_seconds = 0.05
 
 [resource]
 script = ExtResource("1")
 battle_id = &"regression_custom"
 display_name = "自定义回归关卡"
-wave_enemy_counts = Array[int]([2])
+waves = Array[Resource]([SubResource("CustomWave")])
 preparation_seconds = 0.05
 intermission_seconds = 0.05
 spawn_interval_seconds = 0.05
