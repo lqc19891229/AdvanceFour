@@ -39,6 +39,9 @@ var pending_result: BattleResult
 func _init() -> void:
 	process_physics_priority = 100
 
+func _run_state() -> Node:
+	return get_node_or_null("/root/RunState")
+
 func _ready() -> void:
 	$UI/ResultOverlay/Center/Panel/Margin/Content/Retry.pressed.connect(retry)
 	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.pressed.connect(continue_after_victory)
@@ -58,8 +61,8 @@ func _ready() -> void:
 
 	var design: ShipData
 	var active_battle_path := _get_active_battle_path()
-	if RunState.run_active and not active_battle_path.is_empty():
-		design = RunState.get_ship_for_battle(active_battle_path)
+	if _run_state() != null and _run_state().run_active and not active_battle_path.is_empty():
+		design = _run_state().get_ship_for_battle(active_battle_path)
 		if design == null:
 			_show_error("RunState 无法提供本场战斗的飞船状态。")
 			return
@@ -258,8 +261,8 @@ func _finish_battle(victory: bool) -> void:
 		var cloned := ShipSerializer.from_dictionary(ShipSerializer.to_dictionary(player.ship_data), DATABASE)
 		if cloned["ok"]:
 			pending_result.ship_after_battle = cloned["ship"] as ShipData
-	if not victory and RunState.run_active:
-		RunState.record_defeat(pending_result)
+	if not victory and _run_state() != null and _run_state().run_active:
+		_run_state().record_defeat(pending_result)
 
 	result_title.text = "战斗胜利" if victory else "战斗失败"
 	result_summary.text = "%s\n击毁敌舰：%d\n到达波次：%d / %d\n战斗时间：%.1f 秒\n%s\n\n%s" % [
@@ -268,10 +271,10 @@ func _finish_battle(victory: bool) -> void:
 		maxi(wave_index + 1, 0),
 		battle_definition.get_wave_count(),
 		elapsed_seconds,
-		"奖励：%d Credits" % battle_definition.reward_credits if victory and RunState.run_active else "",
+		"奖励：%d Credits" % battle_definition.reward_credits if victory and _run_state() != null and _run_state().run_active else "",
 		"全部波次已清除。" if victory else "核心承载船体被摧毁。"
 	]
-	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.visible = victory and RunState.run_active
+	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.visible = victory and _run_state().run_active
 	result_overlay.show()
 	_update_hud()
 	finished.emit(victory)
@@ -366,9 +369,9 @@ W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % 
 	]
 
 func continue_after_victory() -> void:
-	if phase != Phase.VICTORY or not RunState.run_active or pending_result == null:
+	if phase != Phase.VICTORY or _run_state() == null or not _run_state().run_active or pending_result == null:
 		return
-	if not RunState.commit_victory(pending_result):
+	if not _run_state().commit_victory(pending_result):
 		_show_error("无法提交本场战斗结果。")
 		return
 	get_tree().change_scene_to_file(RESULT_SCENE_PATH)
@@ -381,8 +384,8 @@ func retry() -> void:
 func return_from_battle() -> void:
 	if battle_definition == null or battle_definition.return_scene_path.is_empty():
 		return
-	if RunState.run_active:
-		RunState.reset_run()
+	if _run_state() != null and _run_state().run_active:
+		_run_state().reset_run()
 	if battle_definition.restore_saved_ship_on_return:
 		get_tree().set_meta(&"restore_ship_design", true)
 	get_tree().change_scene_to_file(battle_definition.return_scene_path)
