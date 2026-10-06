@@ -1,34 +1,31 @@
-《前进四》项目目录规划 V0.32.0
+《前进四》项目目录规划 V0.32.1
 
 res://
 ├─ core/                                  # 跨系统基础设施
-│  └─ autoload/                           # 全局数据 / RunState 等跨场景入口
+│  └─ autoload/                           # DataManager / RunState 等跨场景入口
 │
 ├─ data/                                  # Runtime 正式数据与素材
-│  ├─ definitions/                        # 数据结构定义：回答“这种数据是什么”
-│  │  ├─ module/                          # ModuleDefinition / ModuleDatabase 类型
-│  │  ├─ ship/                            # ShipData / Hull / Instance / Serializer
-│  │  ├─ combat/                          # Battle / Wave / Enemy / BattleResult Definition
-│  │  └─ appearance/                      # HullAppearanceDefinition
-│  ├─ assets/                             # Runtime 正式素材
-│  │  ├─ modules/                         # 模块 PNG
-│  │  ├─ run/
-│  │  ├─ battle_result/                   # 战果 / 维修 / 下一战 UI
-│  │  └─ dev/                             # Run 回归
-│  └─ ship/hull/human_basic/           # 16 个 Hull 邻接 Tile
-│  ├─ appearances/                        # 外观配置实例
+│  ├─ definitions/                        # 数据结构定义
+│  │  ├─ module/
+│  │  ├─ ship/
+│  │  ├─ combat/
+│  │  └─ appearance/
+│  ├─ assets/
+│  │  ├─ modules/
+│  │  └─ ship/hull/human_basic/
+│  ├─ appearances/
 │  │  └─ hull/human_basic.tres
-│  ├─ modules/                            # 模块具体 .tres + module_database.tres
+│  ├─ modules/
 │  │  ├─ energy/
 │  │  ├─ propulsion/
 │  │  ├─ weapon/
 │  │  ├─ defense/
 │  │  ├─ function/
 │  │  └─ core/
-│  ├─ enemies/                            # 敌舰蓝图实例
+│  ├─ enemies/
 │  │  ├─ scout.tres
 │  │  └─ gunship.tres
-│  └─ battles/                            # 战斗关卡实例
+│  └─ battles/
 │     ├─ stage_001.tres
 │     └─ stage_002.tres
 │
@@ -37,6 +34,9 @@ res://
 │  │  ├─ battle.gd
 │  │  ├─ battle.tscn
 │  │  ├─ battle_backdrop.gd
+│  │  └─ dev/
+│  ├─ run/
+│  │  ├─ battle_result/
 │  │  └─ dev/
 │  └─ ship/
 │     ├─ appearance/
@@ -48,13 +48,10 @@ res://
 │     ├─ damage/
 │     └─ dev/
 │
-├─ tools/                                 # 内容制作输入与开发工具
+├─ tools/
 │  ├─ data_source/
-│  │  └─ game_data.xlsx
 │  ├─ cache/
-│  │  └─ modules.json
 │  ├─ import/
-│  │  └─ import_excel.py
 │  └─ verify_project.py
 │
 ├─ addons/
