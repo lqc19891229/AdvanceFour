@@ -143,6 +143,22 @@ func take_hull_stock(count: int = 1) -> bool:
 	hull_stock -= count
 	return true
 
+
+func can_purchase_shop_item(item: ShopItemDefinition) -> bool:
+	if not run_active or item == null or not item.is_valid():
+		return false
+	return currency >= item.price_credits
+
+func purchase_shop_item(item: ShopItemDefinition) -> bool:
+	if not can_purchase_shop_item(item):
+		return false
+	currency -= item.price_credits
+	if item.module_id != &"" and item.module_count > 0:
+		add_module_to_inventory(item.module_id, item.module_count)
+	elif item.hull_cells > 0:
+		add_hull_stock(item.hull_cells)
+	return true
+
 func get_repair_cost_for_cell(position: Vector2i) -> int:
 	if current_ship == null:
 		return 0
