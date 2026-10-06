@@ -274,13 +274,30 @@ func _finish_battle(victory: bool) -> void:
 		maxi(wave_index + 1, 0),
 		battle_definition.get_wave_count(),
 		elapsed_seconds,
-		"奖励：%d Credits" % battle_definition.reward_credits if victory and _run_state() != null and _run_state().run_active else "",
+		_format_battle_reward() if victory and _run_state() != null and _run_state().run_active else "",
 		"全部波次已清除。" if victory else "核心承载船体被摧毁。"
 	]
 	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.visible = victory and _run_state().run_active
 	result_overlay.show()
 	_update_hud()
 	finished.emit(victory)
+
+
+func _format_battle_reward() -> String:
+	var parts: Array[String] = []
+	if battle_definition.reward_credits > 0:
+		parts.append("%d Credits" % battle_definition.reward_credits)
+	if battle_definition.reward_hull_cells > 0:
+		parts.append("%d Hull" % battle_definition.reward_hull_cells)
+	for index in range(battle_definition.reward_module_ids.size()):
+		var module_id := battle_definition.reward_module_ids[index]
+		var count := 1
+		if index < battle_definition.reward_module_counts.size():
+			count = battle_definition.reward_module_counts[index]
+		var definition := DATABASE.get_by_id(module_id)
+		var name := String(module_id) if definition == null else definition.display_name
+		parts.append("%s ×%d" % [name, count])
+	return "奖励：" + ("无" if parts.is_empty() else " / ".join(parts))
 
 func _show_error(message: String) -> void:
 	phase = Phase.ERROR
