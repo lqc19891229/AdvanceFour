@@ -8,6 +8,8 @@ var current_ship: ShipData
 var battle_entry_ship: ShipData
 var current_battle_path := ""
 var currency := 0
+var module_inventory: Dictionary = {}
+var hull_stock := 0
 var completed_battles: Array[StringName] = []
 var last_result: BattleResult
 
@@ -17,6 +19,8 @@ func reset_run() -> void:
 	battle_entry_ship = null
 	current_battle_path = ""
 	currency = 0
+	module_inventory.clear()
+	hull_stock = 0
 	completed_battles.clear()
 	last_result = null
 
@@ -59,6 +63,13 @@ func commit_victory(result: BattleResult) -> bool:
 		return false
 	current_ship = copy
 	currency += maxi(result.reward_credits, 0)
+	hull_stock += maxi(result.reward_hull_cells, 0)
+	for index in range(result.reward_module_ids.size()):
+		var module_id := result.reward_module_ids[index]
+		var count := 1
+		if index < result.reward_module_counts.size():
+			count = maxi(result.reward_module_counts[index], 0)
+		add_module_to_inventory(module_id, count)
 	if result.battle_id != &"" and not completed_battles.has(result.battle_id):
 		completed_battles.append(result.battle_id)
 	last_result = result
@@ -69,6 +80,38 @@ func record_defeat(result: BattleResult) -> void:
 	if not run_active:
 		return
 	last_result = result
+
+
+func get_module_inventory_count(module_id: StringName) -> int:
+	return int(module_inventory.get(module_id, 0))
+
+func has_module_in_inventory(module_id: StringName, count: int = 1) -> bool:
+	return count >= 0 and get_module_inventory_count(module_id) >= count
+
+func add_module_to_inventory(module_id: StringName, count: int = 1) -> void:
+	if module_id == &"" or count <= 0:
+		return
+	module_inventory[module_id] = get_module_inventory_count(module_id) + count
+
+func take_module_from_inventory(module_id: StringName, count: int = 1) -> bool:
+	if module_id == &"" or count <= 0 or not has_module_in_inventory(module_id, count):
+		return false
+	var remaining := get_module_inventory_count(module_id) - count
+	if remaining <= 0:
+		module_inventory.erase(module_id)
+	else:
+		module_inventory[module_id] = remaining
+	return true
+
+func add_hull_stock(count: int = 1) -> void:
+	if count > 0:
+		hull_stock += count
+
+func take_hull_stock(count: int = 1) -> bool:
+	if count <= 0 or hull_stock < count:
+		return false
+	hull_stock -= count
+	return true
 
 func get_repair_cost_for_cell(position: Vector2i) -> int:
 	if current_ship == null:
