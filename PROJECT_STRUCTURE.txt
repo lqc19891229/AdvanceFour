@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.31.13
+《前进四》项目目录规划 V0.31.14
 
 res://
 ├─ core/                                  # 全项目共享底层系统
@@ -9,8 +9,14 @@ res://
 │  │  ├─ README.txt
 │  │  ├─ battle.gd                       # 通用战斗状态机与关卡执行器
 │  │  ├─ battle.tscn                     # 所有关卡复用的正式战斗场景
-│  │  ├─ battle_definition.gd            # BattleDefinition Resource
+│  │  ├─ battle_definition.gd            # BattleDefinition：关卡级配置与 Wave 列表
+│  │  ├─ battle_wave_definition.gd       # BattleWaveDefinition：单波敌舰组成
+│  │  ├─ enemy_ship_definition.gd        # EnemyShipDefinition：敌舰蓝图 → ShipData
 │  │  ├─ battle_backdrop.gd              # 世界固定星点与网格参照
+│  │  ├─ enemies/                        # 正式敌舰蓝图
+│  │  │  ├─ README.txt
+│  │  │  ├─ scout.tres
+│  │  │  └─ gunship.tres
 │  │  ├─ definitions/                    # 关卡战斗配置，不复制 battle.tscn
 │  │  │  ├─ README.txt
 │  │  │  └─ stage_001.tres
@@ -118,14 +124,26 @@ res://
 10. BattleDefinition 当前管理：
     - battle_id
     - display_name
-    - wave_enemy_counts
+    - waves
     - preparation_seconds
     - intermission_seconds
     - spawn_interval_seconds
     - spawn_radius
     - return_scene_path
     - restore_saved_ship_on_return
-11. 敌舰蓝图 / 波次敌舰组合 / Boss / 奖励目前尚未进入 BattleDefinition；后续应继续数据化，不写死进 battle.gd。
+11. BattleWaveDefinition 管理：
+    - enemies
+    - counts
+    - spawn_interval_seconds（-1 表示继承 BattleDefinition）
+12. EnemyShipDefinition 管理：
+    - enemy_id
+    - display_name
+    - module_ids
+    - module_positions
+    - module_rotations
+13. Battle 不再定义敌舰布局；它只执行 BattleDefinition → Wave → EnemyShipDefinition。
+14. 显式指定的 battle_definition_path 若为空、缺失或类型错误，必须进入 ERROR，禁止静默回退默认关卡。
+15. Boss / 奖励仍待后续数据化。
 
 
 ========================================
@@ -306,7 +324,9 @@ game/combat/dev/combat_regression_test.gd
 - 残留弹丸
 - 同帧失败优先
 - 阵营碰撞隔离
-- 非法关卡配置
+- 非法关卡配置与非法 battle_definition_path
+- 自定义 BattleDefinition 加载与 Retry 保持配置
+- 波次敌舰蓝图解析
 - 编辑器 → 正式战斗 → 重试 / 返回
 
 
