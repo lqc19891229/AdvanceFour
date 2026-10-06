@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="HullAppearanceDefinition" load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/appearance/hull_appearance_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0000.png" id="2"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0001.png" id="3"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0010.png" id="4"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0011.png" id="5"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0100.png" id="6"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0101.png" id="7"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0110.png" id="8"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_0111.png" id="9"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1000.png" id="10"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1001.png" id="11"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1010.png" id="12"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1011.png" id="13"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1100.png" id="14"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1101.png" id="15"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1110.png" id="16"]
+[ext_resource type="Texture2D" path="res://data/assets/ship/hull/human_basic/hull_1111.png" id="17"]
+
+[resource]
+script = ExtResource("1")
+appearance_id = &"human_basic"
+tiles = Array[Texture2D]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17")])
