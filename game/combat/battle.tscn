@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://game/combat/battle.gd" id="1"]
 [ext_resource type="Script" path="res://game/combat/battle_backdrop.gd" id="2"]
+[ext_resource type="Resource" path="res://game/combat/definitions/stage_001.tres" id="3"]
 
 [sub_resource type="StyleBoxFlat" id="HUDStyle"]
 bg_color = Color(0.055, 0.075, 0.105, 0.92)
@@ -24,6 +25,7 @@ corner_radius_bottom_right = 12
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1")
+battle_definition = ExtResource("3")
 
 [node name="BackgroundLayer" type="CanvasLayer" parent="."]
 layer = -1
@@ -79,7 +81,7 @@ offset_right = -16.0
 offset_bottom = -16.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "返回改船（Esc）"
+text = "退出战斗（Esc）"
 
 [node name="ResultOverlay" type="Control" parent="UI"]
 visible = false
@@ -146,4 +148,4 @@ text = "重新挑战（R）"
 [node name="Return" type="Button" parent="UI/ResultOverlay/Center/Panel/Margin/Content"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
-text = "返回飞船编辑器"
+text = "离开战斗"
