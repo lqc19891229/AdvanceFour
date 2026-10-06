@@ -17,8 +17,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def run(command: list[str], environment: dict[str, str]) -> str:
-    result = subprocess.run(command, cwd=ROOT, env=environment, text=True,
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=90)
+    try:
+        result = subprocess.run(command, cwd=ROOT, env=environment, text=True,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=90)
+    except subprocess.TimeoutExpired as error:
+        output = error.stdout or ""
+        if isinstance(output, bytes):
+            output = output.decode("utf-8", errors="replace")
+        raise RuntimeError(
+            f"Command timed out: {command[0]}\n{output}"
+        ) from error
     if result.returncode or "SCRIPT ERROR:" in result.stdout or re.search(r"^ERROR:", result.stdout, re.M):
         raise RuntimeError(result.stdout or f"Command failed: {command[0]}")
     return result.stdout
