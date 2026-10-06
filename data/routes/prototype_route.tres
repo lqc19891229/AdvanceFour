@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="RunRouteDefinition" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/run/run_route_definition.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/run/run_route_node_definition.gd" id="2"]
+
+[sub_resource type="Resource" id="Battle1"]
+script = ExtResource("2")
+node_id = &"battle_001"
+display_name = "第一战"
+node_type = 0
+target_path = "res://data/battles/stage_001.tres"
+next_node_ids = Array[StringName]([&"shop_001", &"refit_001"])
+map_position = Vector2(275, 40)
+
+[sub_resource type="Resource" id="Shop1"]
+script = ExtResource("2")
+node_id = &"shop_001"
+display_name = "补给商店"
+node_type = 1
+target_path = "res://data/shops/basic_shop.tres"
+next_node_ids = Array[StringName]([&"battle_002"])
+map_position = Vector2(120, 180)
+
+[sub_resource type="Resource" id="Refit1"]
+script = ExtResource("2")
+node_id = &"refit_001"
+display_name = "整备站"
+node_type = 2
+next_node_ids = Array[StringName]([&"battle_002"])
+map_position = Vector2(430, 180)
+
+[sub_resource type="Resource" id="Battle2"]
+script = ExtResource("2")
+node_id = &"battle_002"
+display_name = "第二战"
+node_type = 0
+target_path = "res://data/battles/stage_002.tres"
+next_node_ids = Array[StringName]([&"end"])
+map_position = Vector2(275, 320)
+
+[sub_resource type="Resource" id="End"]
+script = ExtResource("2")
+node_id = &"end"
+display_name = "航线终点"
+node_type = 3
+map_position = Vector2(275, 460)
+
+[resource]
+script = ExtResource("1")
+route_id = &"prototype_route"
+display_name = "Prototype 星系航线"
+start_node_id = &"battle_001"
+nodes = Array[Resource]([SubResource("Battle1"), SubResource("Shop1"), SubResource("Refit1"), SubResource("Battle2"), SubResource("End")])
