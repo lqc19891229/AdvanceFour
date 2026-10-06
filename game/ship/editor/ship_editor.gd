@@ -5,6 +5,7 @@ const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const FIRST_BATTLE_DEFINITION_PATH := "res://data/battles/stage_001.tres"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
+const RUN_REFIT_META := &"run_refit_mode"
 
 @onready var grid: ShipGridView = $MainLayout/Center/Grid
 @onready var module_buttons: VBoxContainer = $MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons
@@ -12,6 +13,8 @@ const BATTLE_DEFINITION_META := &"battle_definition_path"
 @onready var speed_label: Label = $MainLayout/RightPanel/RightMargin/RightVBox/SpeedLabel
 @onready var status_label: Label = $BottomBar/BottomMargin/StatusLabel
 @onready var selected_label: Label = $MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
+
+var run_refit_mode := false
 
 func _ready() -> void:
 	_build_module_buttons()
@@ -22,7 +25,15 @@ func _ready() -> void:
 	_refresh_selected_label()
 	_refresh_stats()
 	_show_status("先铺船体再安装设备｜左键放置/选中｜右键拆除｜R 旋转｜中键拖动画布")
-	if get_tree().has_meta(&"restore_ship_design"):
+	if get_tree().has_meta(RUN_REFIT_META):
+		get_tree().remove_meta(RUN_REFIT_META)
+		run_refit_mode = RunState.run_active and RunState.current_ship != null
+		if run_refit_mode:
+			_load_run_ship()
+			$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "继续下一战"
+			$MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.disabled = true
+			_show_status("Run 整备模式｜Credits：%d｜修改只影响当前 Run" % RunState.currency)
+	elif get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
 			_load_ship()
@@ -89,7 +100,17 @@ func _bind_common_buttons() -> void:
 func _start_battle() -> void:
 	if not _save_design_for_departure():
 		return
-	get_tree().set_meta(BATTLE_DEFINITION_META, FIRST_BATTLE_DEFINITION_PATH)
+	var battle_path := FIRST_BATTLE_DEFINITION_PATH
+	if run_refit_mode:
+		battle_path = RunState.advance_to_next_battle()
+		if battle_path.is_empty():
+			_show_status("当前 Run 已没有下一场战斗。")
+			return
+	else:
+		if not RunState.start_run(grid.ship, FIRST_BATTLE_DEFINITION_PATH):
+			_show_status("无法创建 Run。")
+			return
+	get_tree().set_meta(BATTLE_DEFINITION_META, battle_path)
 	get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
 
 func _start_ai_test() -> void:
@@ -104,6 +125,11 @@ func _save_design_for_departure() -> bool:
 	if not grid.ship.is_design_valid():
 		_show_status("无法出航：%s" % grid.ship.get_design_invalid_reason())
 		return false
+	if run_refit_mode:
+		if not RunState.update_current_ship(grid.ship):
+			_show_status("无法保存当前 Run 的整备状态。")
+			return false
+		return true
 	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)
 	if not result["ok"]:
 		_show_status("保存失败：%s" % result["error"])
@@ -111,6 +137,12 @@ func _save_design_for_departure() -> bool:
 	return true
 
 func _save_ship() -> void:
+	if run_refit_mode:
+		if RunState.update_current_ship(grid.ship):
+			_show_status("当前 Run 整备状态已更新｜Credits：%d" % RunState.currency)
+		else:
+			_show_status("当前 Run 整备状态保存失败。")
+		return
 	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)
 	if result["ok"]:
 		_show_status("飞船设计已保存：%s" % SAVE_PATH)
@@ -118,6 +150,9 @@ func _save_ship() -> void:
 		_show_status("保存失败：%s" % result["error"])
 
 func _load_ship() -> void:
+	if run_refit_mode:
+		_load_run_ship()
+		return
 	var result := ShipSerializer.load_from_file(SAVE_PATH, grid.module_database)
 	if result["ok"]:
 		var loaded_ship := result["ship"] as ShipData
@@ -125,6 +160,19 @@ func _load_ship() -> void:
 		_show_status("飞船设计已加载：%s" % SAVE_PATH)
 	else:
 		_show_status("加载失败：%s" % result["error"])
+
+func _load_run_ship() -> void:
+	if not RunState.run_active or RunState.current_ship == null:
+		_show_status("当前没有可整备的 Run 飞船。")
+		return
+	var cloned := ShipSerializer.from_dictionary(
+		ShipSerializer.to_dictionary(RunState.current_ship),
+		grid.module_database
+	)
+	if not cloned["ok"]:
+		_show_status("Run 飞船加载失败：%s" % cloned["error"])
+		return
+	grid.set_ship(cloned["ship"] as ShipData)
 
 func _select(id: String) -> void:
 	grid.select_definition(id)
