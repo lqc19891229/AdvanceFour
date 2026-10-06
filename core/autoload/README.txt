@@ -10,6 +10,7 @@
   规则：胜利提交战损与奖励；失败不提交；Retry 使用 battle_entry_ship；战后维修通过 Hull Cell 缺失 HP 扣除 Credits。
   Run Inventory：module_inventory 保存模块数量，hull_stock 保存可新增 Hull Cell 数量。
   Reward Choice：has_pending_reward_choice() 判断是否还有未领取成长奖励；claim_reward_choice(index) 负责一次性领取并写入 Inventory。
+  Shop：can_purchase_shop_item(item) 检查 Credits；purchase_shop_item(item) 原子扣款并把商品内容写入 Run Inventory。
 
   维修接口：
   - get_repair_cost_for_cell(position)：查询单格维修费用。
