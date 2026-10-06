@@ -49,3 +49,10 @@ v0.34.0：
 - 战果页显示完整奖励明细。
 - Run Refit 中安装模块/Hull 消耗库存，拆除返还，移动/旋转免费。
 - Run Refit 禁止一键清空，结构修改会立即同步 current_ship。
+
+
+v0.35.0：
+- 战果页新增成长奖励多选一。
+- Credits 先自动结算；成长奖励候选领取 1 项后才允许进入整备 / 下一战 / 结束 Run。
+- RunState 负责 pending reward choice 与单次领取约束。
+- 当前 stage_001：轻型装甲×1 / 机炮×1 / Hull×2 三选一。
