@@ -246,6 +246,87 @@ func _run() -> void:
 	result_screen.queue_free()
 	await process_frame
 
+	# v0.37 route graph must branch through Shop / Refit and converge on stage_002.
+	run_state.call("reset_run")
+	var route_path := "res://data/routes/prototype_route.tres"
+	var route_definition := load(route_path) as RunRouteDefinition
+	_check(route_definition != null and route_definition.is_valid() and route_definition.nodes.size() == 5, "Prototype route must contain five valid nodes")
+	_check(bool(run_state.call("start_run_with_route", design, route_path)), "A valid design must start the prototype route")
+	_check(bool(run_state.call("is_route_active")), "Route Run must report active route state")
+	var route_node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
+	_check(route_node != null and route_node.node_id == &"battle_001" and route_node.target_path == STAGE_001_PATH, "Route must start at stage_001 battle node")
+
+	var route_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
+	var route_victory := BattleResult.new()
+	route_victory.outcome = BattleResult.Outcome.VICTORY
+	route_victory.battle_id = &"stage_001"
+	route_victory.battle_path = STAGE_001_PATH
+	route_victory.ship_after_battle = route_ship
+	route_victory.reward_credits = 100
+	var route_stage_one := load(STAGE_001_PATH) as BattleDefinition
+	route_victory.reward_choices.assign(route_stage_one.reward_choices)
+	_check(bool(run_state.call("commit_victory", route_victory)), "Route battle victory must commit")
+	_check(bool(run_state.call("is_current_route_node_complete")), "Committed route battle must mark current node complete")
+	_check(bool(run_state.call("has_pending_reward_choice")), "Route progression must still respect pending reward choices")
+	_check((run_state.call("get_available_route_node_ids") as Array).is_empty(), "Pending reward choice must hide route branches")
+	_check(bool(run_state.call("claim_reward_choice", 0)), "Route reward choice must be claimable")
+	var branch_ids: Array = run_state.call("get_available_route_node_ids")
+	_check(branch_ids.size() == 2 and branch_ids.has(&"shop_001") and branch_ids.has(&"refit_001"), "stage_001 route must branch to Shop and Refit")
+	_check(not bool(run_state.call("select_route_node", &"battle_002")), "Route must reject skipping directly to stage_002")
+
+	var map_scene := load("res://game/run/route/route_map_screen.tscn") as PackedScene
+	var map_screen := map_scene.instantiate() as Control
+	root.add_child(map_screen)
+	await process_frame
+	var map_area := map_screen.get_node("Margin/Layout/MapFrame/MapArea") as Control
+	var route_buttons := 0
+	var enabled_route_buttons := 0
+	for child in map_area.get_children():
+		if child is Button:
+			route_buttons += 1
+			if not (child as Button).disabled:
+				enabled_route_buttons += 1
+	_check(route_buttons == 5 and enabled_route_buttons == 2, "Route map must render five nodes with two selectable branches")
+	map_screen.queue_free()
+	await process_frame
+
+	_check(bool(run_state.call("select_route_node", &"shop_001")), "Shop branch must be selectable")
+	route_node = run_state.call("get_current_route_node") as RunRouteNodeDefinition
+	_check(route_node.node_type == RunRouteNodeDefinition.NodeType.SHOP and route_node.target_path == "res://data/shops/basic_shop.tres", "Shop branch must target the data-driven shop")
+	_check(bool(run_state.call("complete_current_route_node")), "Shop route node must be completable")
+	branch_ids = run_state.call("get_available_route_node_ids")
+	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Shop node must converge on stage_002")
+	_check(bool(run_state.call("select_route_node", &"battle_002")), "stage_002 route node must be selectable after Shop")
+	route_node = run_state.call("get_current_route_node") as RunRouteNodeDefinition
+	_check(route_node.target_path == STAGE_002_PATH, "Second battle node must target stage_002")
+
+	var route_stage_two_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_002_PATH) as ShipData
+	var route_final_victory := BattleResult.new()
+	route_final_victory.outcome = BattleResult.Outcome.VICTORY
+	route_final_victory.battle_id = &"stage_002"
+	route_final_victory.battle_path = STAGE_002_PATH
+	route_final_victory.ship_after_battle = route_stage_two_ship
+	_check(bool(run_state.call("commit_victory", route_final_victory)), "Second route battle must commit")
+	branch_ids = run_state.call("get_available_route_node_ids")
+	_check(branch_ids.size() == 1 and branch_ids[0] == &"end", "stage_002 must unlock the route end")
+	_check(bool(run_state.call("select_route_node", &"end")), "Route end must be selectable")
+	route_node = run_state.call("get_current_route_node") as RunRouteNodeDefinition
+	_check(route_node.node_type == RunRouteNodeDefinition.NodeType.END, "Selected terminal route node must be END")
+
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run_with_route", design, route_path)), "Route must restart cleanly for Refit branch")
+	route_ship = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
+	route_victory = BattleResult.new()
+	route_victory.outcome = BattleResult.Outcome.VICTORY
+	route_victory.battle_id = &"stage_001"
+	route_victory.battle_path = STAGE_001_PATH
+	route_victory.ship_after_battle = route_ship
+	_check(bool(run_state.call("commit_victory", route_victory)), "Refit branch setup battle must commit")
+	_check(bool(run_state.call("select_route_node", &"refit_001")), "Refit branch must be selectable")
+	_check(bool(run_state.call("complete_current_route_node")), "Refit route node must be completable")
+	branch_ids = run_state.call("get_available_route_node_ids")
+	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Refit node must converge on stage_002")
+
 	run_state.call("reset_run")
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
