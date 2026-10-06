@@ -4,6 +4,7 @@ const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
+const DATABASE := preload("res://data/modules/module_database.tres")
 
 @onready var title: Label = $Center/Panel/Margin/Content/Title
 @onready var summary: Label = $Center/Panel/Margin/Content/Summary
@@ -57,9 +58,9 @@ func _refresh() -> void:
 
 	var repair_cost := int(run_state.call("get_total_repair_cost"))
 	title.text = "战斗胜利"
-	summary.text = "%s\n奖励：+%d Credits｜当前 Credits：%d\nHull 完整：%d  受损：%d  摧毁：%d｜全部维修：%d Credits" % [
+	summary.text = "%s\n%s｜当前 Credits：%d\nHull 完整：%d  受损：%d  摧毁：%d｜全部维修：%d Credits" % [
 		String(result.battle_id),
-		result.reward_credits,
+		_build_reward_text(result),
 		run_state.currency,
 		intact,
 		damaged,
@@ -78,6 +79,25 @@ func _refresh() -> void:
 	next_button.disabled = not has_next
 	end_run_button.visible = not has_next
 	end_run_button.disabled = has_next
+
+
+func _build_reward_text(result: BattleResult) -> String:
+	var parts: Array[String] = []
+	if result.reward_credits > 0:
+		parts.append("+%d Credits" % result.reward_credits)
+	if result.reward_hull_cells > 0:
+		parts.append("+%d Hull" % result.reward_hull_cells)
+	for index in range(result.reward_module_ids.size()):
+		var module_id := result.reward_module_ids[index]
+		var count := 1
+		if index < result.reward_module_counts.size():
+			count = maxi(result.reward_module_counts[index], 0)
+		if count <= 0:
+			continue
+		var definition := DATABASE.get_by_id(module_id)
+		var name := String(module_id) if definition == null else definition.display_name
+		parts.append("+%s ×%d" % [name, count])
+	return "奖励：" + ("无" if parts.is_empty() else "｜".join(parts))
 
 func _refresh_damage_list() -> void:
 	_clear_damage_list()
