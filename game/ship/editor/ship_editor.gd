@@ -87,21 +87,28 @@ func _bind_common_buttons() -> void:
 	$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.pressed.connect(_start_battle)
 
 func _start_battle() -> void:
+	if not _save_design_for_departure():
+		return
 	get_tree().set_meta(BATTLE_DEFINITION_META, FIRST_BATTLE_DEFINITION_PATH)
-	_start_scene_with_design(BATTLE_SCENE_PATH)
+	get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
 
 func _start_ai_test() -> void:
 	_start_scene_with_design("res://game/ship/dev/ship_ai_test.tscn")
 
 func _start_scene_with_design(scene_path: String) -> void:
+	if not _save_design_for_departure():
+		return
+	get_tree().change_scene_to_file(scene_path)
+
+func _save_design_for_departure() -> bool:
 	if not grid.ship.is_design_valid():
 		_show_status("无法出航：%s" % grid.ship.get_design_invalid_reason())
-		return
+		return false
 	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)
 	if not result["ok"]:
 		_show_status("保存失败：%s" % result["error"])
-		return
-	get_tree().change_scene_to_file(scene_path)
+		return false
+	return true
 
 func _save_ship() -> void:
 	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)
