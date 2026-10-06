@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="DefenseModuleDefinition" format=3 uid="uid://d3cgij15dxy60"]
 
-[ext_resource type="Script" uid="uid://dw8g3d8ctmge3" path="res://game/ship/definitions/defense_module_definition.gd" id="1_notj0"]
-[ext_resource type="Texture2D" uid="uid://cooehl8ssh6d" path="res://game/ship/art/modules/defense_lightarmor.png" id="2_udwdu"]
+[ext_resource type="Script" uid="uid://dw8g3d8ctmge3" path="res://data/definitions/module/defense_module_definition.gd" id="1_notj0"]
+[ext_resource type="Texture2D" uid="uid://cooehl8ssh6d" path="res://data/assets/modules/defense_lightarmor.png" id="2_udwdu"]
 
 [resource]
 script = ExtResource("1_notj0")
