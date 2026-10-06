@@ -4,7 +4,8 @@
 负责一轮 Run 中跨战斗的战果展示、维修/整备入口与开发回归。
 
 主要内容：
-- battle_result/：战斗胜利后的结果页，显示 Credits、受损 Hull 列表、覆盖模块、效率变化与维修费用。
+- battle_result/：战斗胜利后的结果页，显示 Credits、受损 Hull、成长奖励选择与维修。
+- shop/：补给商店，使用 Credits 购买模块 / Hull 并写入 Run Inventory。
 - dev/run_regression_test.gd：验证战损持久化、Retry 战前恢复、跨关卡继承、奖励与维修。
 
 状态来源：
@@ -17,7 +18,7 @@ Ship Editor
 → Victory
 → BattleResult
 → Result Screen
-→ Repair / Refit / Next Battle
+→ Repair / Reward Choice / Shop / Refit / Next Battle
 
 边界：
 - game/run 不定义具体关卡内容。
@@ -56,3 +57,12 @@ v0.35.0：
 - Credits 先自动结算；成长奖励候选领取 1 项后才允许进入整备 / 下一战 / 结束 Run。
 - RunState 负责 pending reward choice 与单次领取约束。
 - 当前 stage_001：轻型装甲×1 / 机炮×1 / Hull×2 三选一。
+
+
+v0.36.0：
+- 新增独立补给商店场景。
+- 商店从 data/shops/basic_shop.tres 读取数据化商品与价格。
+- 购买模块 / Hull 会直接进入 Run Inventory。
+- Credits 不足时购买原子失败。
+- 未领取 Reward Choice 时商店入口锁定。
+- 只有仍有下一战的战果页显示商店，当前最终关不开放商店。
