@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.31.16
+《前进四》项目目录规划 V0.31.17
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -47,9 +47,6 @@ res://
 ├─ tools/                                 # 内容制作输入与开发工具
 │  ├─ data_source/
 │  │  └─ game_data.xlsx
-│  ├─ art_source/                         # 源美术；.gdignore
-│  │  ├─ modules/
-│  │  └─ ship/hull/human_basic/
 │  ├─ cache/
 │  │  └─ modules.json
 │  ├─ import/
@@ -65,10 +62,9 @@ res://
 一、四个核心目录的边界
 ========================================
 
-1. tools：生产内容
-   - 策划源表、源素材、缓存、导入脚本、验证工具。
-   - 不作为游戏 Runtime 的正式资源路径。
-   - art_source 使用 .gdignore，防止重复导入。
+1. tools：生产与验证内容
+   - 策划源表、缓存、导入脚本、验证工具。
+   - 不保存 PNG / 音频等正式游戏素材，也不作为游戏 Runtime 的正式资源路径。
 
 2. data：描述内容
    - 游戏运行时加载的数据结构、配置实例和正式素材。
@@ -105,10 +101,13 @@ tools/data_source/game_data.xlsx
 → data/modules/module_database.tres
 
 模块素材：
-tools/art_source/modules/
-→ 正式 Runtime 版本
-→ data/assets/modules/
+data/assets/modules/
 → ModuleDefinition.texture / Weapon.turret_texture
+
+Hull 素材：
+data/assets/ship/hull/human_basic/
+→ HullAppearanceDefinition
+→ ShipAppearanceRenderer
 
 说明：
 Excel 的 texture_path / turret_texture_path 直接填写 data/assets 下的 Runtime 正式素材路径；
@@ -240,3 +239,14 @@ UP=1、RIGHT=2、DOWN=4、LEFT=8。
 ShipAppearanceRenderer 根据 Hull Layout 计算 mask，直接使用 tiles[mask]。
 Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
 第一版默认 human_basic，不修改 ShipData / ShipSerializer。
+
+
+========================================
+九、素材唯一来源规则
+========================================
+
+1. PNG、音频等游戏素材只保存在 data/assets。
+2. tools 不再保存 art_source，也不维护与 data/assets 重复的素材副本。
+3. game 与 data Resource 统一引用 data/assets。
+4. 当前仓库内素材采用“单份正式文件”策略。
+5. 未来若出现 PSD / Aseprite / Blender 等制作工程文件，再单独设计源码素材管理，不与 Runtime PNG 混为一谈。
