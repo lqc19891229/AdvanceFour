@@ -71,6 +71,7 @@ def main() -> int:
         for label, script in [
             ("Ship", "game/ship/dev/ship_regression_test.gd"),
             ("Combat", "game/combat/dev/combat_regression_test.gd"),
+            ("Run", "game/run/dev/run_regression_test.gd"),
         ]:
             result = run([args.godot, "--headless", "--path", str(ROOT), "--script", script], environment)
             summary = re.search(rf"{label} regression: \d+ checks, 0 failures", result)
