@@ -1,95 +1,43 @@
 《前进四》game/ship/weapon 目录说明
 
-用途：
-- 存放飞船武器进入实际游戏世界后的运行时逻辑。
-- WeaponRuntime 是 ShipData 中武器模块的运行时执行对象。
-- 当前版本实现可旋转炮塔、自动选敌、自动瞄准和自动触发 fired；Projectile 由 RuntimeShip 根据 fired 事件生成。
+职责：
+保存 Weapon Equipment 的 Runtime 炮塔、自动选敌、瞄准和开火逻辑。
 
-当前文件：
-- weapon_runtime.gd：单个武器模块的运行时炮塔节点；1×1 武器可加载独立 turret Sprite2D。
-- weapon_runtime.tscn：WeaponRuntime 场景。
+主要文件：
+- weapon_runtime.gd / .tscn：单个武器的 Runtime 执行对象。
 
-运行时关系：
-ShipData
-  ↓
-ShipModuleInstance（WeaponModuleDefinition）
-  ↓
-WeaponRuntime
-  ↓
-自动搜索目标 / 炮塔转向 / 自动开火
-  ↓
-fired 信号
+数据来源：
+WeaponModuleDefinition 位于 data/definitions/module/。
+具体武器数据由 tools/data_source/game_data.xlsx 生成到 data/modules/weapon/。
+正式贴图位于 data/assets/modules/。
 
 目标规则：
-- 每个 WeaponRuntime 独立选择目标。
-- 默认目标组为 enemy_targets。
-- RuntimeShip.weapon_target_group 可以在 setup 前配置，因此玩家飞船、敌方飞船以后可以使用不同敌对目标组。
-- 当前目标无效、离开攻击范围或退出场景后，WeaponRuntime 会重新搜索。
-- 搜索规则为：攻击范围内距离该炮塔最近的目标。
-- attack_range 同时决定弹丸最大飞行距离；RuntimeShip 在开火时将该值传给 ProjectileRuntime，每颗弹丸独立记录，不跟随发射者后续移动。
-- 如果目标实现 get_aim_point()，WeaponRuntime 会瞄准其返回的存活模块位置，而不是固定瞄准 RuntimeShip 原点。
-- RuntimeShip 当前返回距离该炮塔最近的未 destroyed 模块中心。
-- 目标飞船没有任何存活模块时，会视为无效目标，并在重新搜索阶段直接跳过，避免反复重新选中已完全摧毁目标。
-- 同一艘飞船上的不同武器允许选择不同目标。
+- 每个 WeaponRuntime 独立在 target_group 中寻找目标。
+- 如果目标实现 get_aim_point()，武器使用其返回点。
+- ShipRuntime.get_aim_point() 当前从仍存活的 HullCellRuntime 中选择距离炮塔最近的 Hull Cell。
+- 目标无有效 Hull、离开射程或离开射界后重新选敌。
+- attack_range 同时决定选敌距离和 Projectile 最大飞行距离。
 
-炮塔视觉：
-- 武器贴图正式拆为底座和炮塔：{module_id}_base.png 由 ShipModuleRuntime 显示，{module_id}_turret.png 由 WeaponRuntime 显示。
-- 炮塔贴图以 WeaponRuntime 原点为旋转中心，默认朝向 Vector2.UP；当前 1×1 目标显示区域约 32×32 px。
-- 如果 turret PNG 尚未提供，WeaponRuntime 继续绘制原有白色圆心 + 炮管线作为 fallback。
+射界与炮塔：
+- module.rotation_quarters 是安装方向与射界中心。
+- firing_arc_degrees 限制搜索、旋转与开火。
+- turn_speed_degrees × efficiency 决定炮塔转速。
+- fire_angle_tolerance_degrees 决定允许开火的角误差。
+- Weapon base 由 ShipModuleRuntime 显示，turret 由 WeaponRuntime 独立旋转。
 
-炮塔瞄准与射界：
-- module.rotation_quarters 定义武器安装朝向，同时作为 firing_arc_degrees 的射界中心。
-- 射界中心会随 RuntimeShip 的世界旋转同步变化；飞船转弯时射界一起转动。
-- WeaponRuntime 搜索目标时直接排除射界外目标，当前目标因飞船转向离开射界后也会立即失效。
-- 战斗中炮塔只能在安装朝向 ± firing_arc_degrees / 2 范围内旋转，不允许跨过射界边界追踪。
-- desired direction = 目标世界坐标 - 炮塔世界坐标。
-- 炮塔使用 turn_speed_degrees 逐步转向目标，不瞬间锁定。
-- 开火前再次校验目标仍位于射界内；当炮口方向与目标方向误差小于 fire_angle_tolerance_degrees 时，才视为瞄准完成。
-- 手动调试接口 fire_once() 同样不能绕过射界。
+效率与供电：
+- Weapon 没有独立 HP。
+- efficiency 来自其覆盖 Hull Cell health ratio 平均值。
+- firepower = definition.firepower × efficiency。
+- 冷却间隔 = definition.fire_interval / efficiency。
+- efficiency <= 0 时结构失效。
+- powered 由 ShipRuntime 能源分配决定。
+- is_active() = operational && powered && efficiency > 0。
+- operational 是 Runtime 生命周期开关；整船退出战斗时会被关闭，不代表“武器模块拥有独立 destroyed HP”。
 
-自动开火：
-- WeaponRuntime 在物理帧更新。
-- 有有效目标、已经瞄准且冷却结束时自动触发 fired。
-- fire_interval 控制当前 Prototype 的射击间隔。
-- fired 信号包含：
-  - ShipModuleInstance
-  - firepower
-  - 世界坐标发射点
-  - 世界坐标发射方向
-- RuntimeShip 继续通过 weapon_fired 向上转发事件。
+开火：
+WeaponRuntime fired
+→ ShipRuntime
+→ ProjectileRuntime
 
-当前武器数据：
-- firepower：单发基础火力。
-- attack_range：自动选敌范围，同时作为弹丸最大飞行距离。
-- fire_interval：两次开火之间的秒数。
-- turn_speed_degrees：炮塔旋转速度（度/秒）。
-- projectile_speed：弹丸飞行速度（px/s）。
-- firing_arc_degrees：炮塔围绕模块安装朝向允许覆盖的总射界角度，范围 0～360°。
-- fire_angle_tolerance_degrees：炮口与目标方向允许的开火角误差。
-
-这些参数全部来自 WeaponModuleDefinition，并由 Excel Weapon Sheet 经过 JSON cache / Godot 导入插件生成。
-WeaponRuntime 在 setup() 时读取当前模块自己的定义，所以不同武器可以拥有独立射程、射速、转速、弹速和开火角容差。
-当前 weapon_cannon 的数值为 firepower=5、attack_range=500、fire_interval=0.5、turn_speed_degrees=180、projectile_speed=700、firing_arc_degrees=180、fire_angle_tolerance_degrees=6。
-
-手动发射：
-- RuntimeShip.request_fire() / WeaponRuntime.fire_once() 暂时保留为调试接口。
-- PlayerShipController 已不再读取 Space 开火；正式玩家控制目前只负责飞船移动。
-- 正式武器行为是自动选敌、自动瞄准、自动开火。
-
-职责边界：
-- WeaponRuntime 不读取玩家输入。
-- WeaponRuntime 不负责玩家移动。
-- WeaponRuntime 本身不直接创建 Projectile；它只发出 fired，RuntimeShip 负责生成 ProjectileRuntime。
-- WeaponRuntime 不计算命中或伤害。
-- WeaponRuntime 将“结构存活”与“模块供电”分开：operational 表示武器模块是否已 destroyed，powered 表示该具体武器模块当前是否被 RuntimeShip 能源分配系统供电。
-- 对应武器模块 destroyed 后，RuntimeShip 会调用 set_operational(false)，该状态不会因能源恢复而复活。
-- 能源不足时不再统一关闭全部武器；RuntimeShip 按模块供电优先级逐个分配，只有未获供电的武器 set_powered(false)。
-- 后续供能变化导致该模块重新获得电力时，只要 operational 仍为 true，就可以重新搜索、瞄准和开火。
-- is_active() = operational and powered。
-- firepower 继续来自 WeaponModuleDefinition，不复制另一套武器静态数据。
-- ShipData.grid_position / rotation_quarters 不因炮塔运行时旋转而改变。
-
-飞船结构原则：
-- 武器模块可以与其他模块分开放置。
-- 武器模块不要求与核心或其他模块相邻或连通。
-- 空格不会影响炮塔坐标、选敌或瞄准。
+ProjectileRuntime 负责移动、连续 ray 命中和 overkill；WeaponRuntime 不负责实际伤害结算。
