@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.33.0
+《前进四》项目目录规划 V0.34.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -277,6 +277,13 @@ Ship Editor
 → RunState.commit_victory()
 → Battle Result Screen
 → 维修 / Run Refit / stage_002
+
+Run Inventory：
+- RunState.module_inventory：module_id → 数量。
+- RunState.hull_stock：可新增 Hull Cell 数量。
+- BattleDefinition / BattleResult 支持固定模块与 Hull 奖励。
+- Run Refit 安装消耗库存，拆除返还库存，移动 / 旋转免费。
+- 普通设计模式不受 Run Inventory 限制。
 
 局部维修：
 - RunState.get_repair_cost_for_cell(position)：按单格缺失 Hull HP 计算费用。
