@@ -1,6 +1,6 @@
 extends SceneTree
 
-const DATABASE := preload("res://data/generated/module_database.tres")
+const DATABASE := preload("res://data/modules/module_database.tres")
 const RUNTIME := preload("res://game/ship/runtime/ship_runtime.tscn")
 const AI_TEST := preload("res://game/ship/dev/ship_ai_test.tscn")
 const MOVEMENT_TEST := preload("res://game/ship/dev/ship_movement_test.tscn")
