@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://game/ship/art/modules/function_radar.png"
+source_file="res://data/assets/modules/function_radar.png"
 dest_files=["res://.godot/imported/function_radar.png-947829e454aadd7f7506b52c6f15529f.ctex"]
 
 [params]
