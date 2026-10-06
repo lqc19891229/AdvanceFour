@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.32.1
+《前进四》项目目录规划 V0.33.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -254,7 +254,7 @@ Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
 
 
 ========================================
-十、v0.32 Run / 战后闭环
+十、v0.33 Run / 战后闭环
 ========================================
 
 core/autoload/run_state.gd
@@ -277,6 +277,12 @@ Ship Editor
 → RunState.commit_victory()
 → Battle Result Screen
 → 维修 / Run Refit / stage_002
+
+局部维修：
+- RunState.get_repair_cost_for_cell(position)：按单格缺失 Hull HP 计算费用。
+- RunState.repair_cell(position)：只维修选中 Hull Cell。
+- Battle Result Screen：显示受损 Hull、覆盖 Equipment、当前效率与修复后预计效率。
+- 当前规则：1 缺失 Hull HP = 1 Credit；资金不足时不改变 Credits 或 Hull HP。
 
 规则：
 - Victory：提交战损并发放奖励。
