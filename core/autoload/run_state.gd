@@ -52,6 +52,8 @@ func update_current_ship(ship: ShipData) -> bool:
 func commit_victory(result: BattleResult) -> bool:
 	if not run_active or result == null or not result.is_victory() or result.ship_after_battle == null:
 		return false
+	if result.battle_id != &"" and completed_battles.has(result.battle_id):
+		return false
 	var copy := _clone_ship(result.ship_after_battle)
 	if copy == null:
 		return false
