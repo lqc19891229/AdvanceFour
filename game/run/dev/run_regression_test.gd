@@ -65,9 +65,10 @@ func _run() -> void:
 	_check(result_summary.text.contains("+100 Credits") and repair_button.text.contains("12 Credits"), "Battle result screen must expose fixed Credits and repair cost")
 	var reward_choice_row := result_screen.get_node("Center/Panel/Margin/Content/RewardChoiceRow") as HBoxContainer
 	var next_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/NextBattle") as Button
+	var shop_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/Shop") as Button
 	var refit_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/Refit") as Button
 	_check(reward_choice_row.get_child_count() == 3, "stage_001 must expose three reward choices")
-	_check(next_button_first.disabled and refit_button_first.disabled, "Pending reward choice must block refit and next battle")
+	_check(next_button_first.disabled and shop_button_first.disabled and refit_button_first.disabled, "Pending reward choice must block shop, refit and next battle")
 	var damage_list := result_screen.get_node("Center/Panel/Margin/Content/DamageScroll/DamageList") as VBoxContainer
 	var repair_selected := result_screen.get_node("Center/Panel/Margin/Content/RepairSelected") as Button
 	var selected_detail := result_screen.get_node("Center/Panel/Margin/Content/SelectedDetail") as Label
@@ -83,7 +84,7 @@ func _run() -> void:
 	_check(not bool(run_state.call("has_pending_reward_choice")), "Claiming one reward must clear the pending reward state")
 	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Selected module reward must enter inventory")
 	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0 and int(run_state.get("hull_stock")) == 0, "Unselected rewards must not enter inventory")
-	_check(not next_button_first.disabled and not refit_button_first.disabled, "Claimed reward must unlock refit and next battle")
+	_check(not next_button_first.disabled and not shop_button_first.disabled and not refit_button_first.disabled, "Claimed reward must unlock shop, refit and next battle")
 	_check(not bool(run_state.call("claim_reward_choice", 0)), "Reward choice can only be claimed once")
 	result_screen.queue_free()
 	await process_frame
@@ -124,6 +125,46 @@ func _run() -> void:
 	_check(int(run_state.get("currency")) == 0, "Local repair must deduct only the selected Hull cost")
 	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when Credits are insufficient")
 	_check(is_equal_approx(local_b.current_hp, 10.0) and int(run_state.get("currency")) == 0, "Failed local repair must be atomic")
+
+	# Shop purchases must deduct Credits atomically and add to Run inventory.
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Shop test must start a Run")
+	run_state.set("currency", 100)
+	var shop_definition := load("res://data/shops/basic_shop.tres") as ShopDefinition
+	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 6, "Basic shop data must expose six valid products")
+	var shop_scene := load("res://game/run/shop/shop_screen.tscn") as PackedScene
+	var shop_screen := shop_scene.instantiate() as Control
+	root.add_child(shop_screen)
+	await process_frame
+	var shop_item_list := shop_screen.get_node("Center/Panel/Margin/Content/ItemScroll/ItemList") as VBoxContainer
+	var shop_credits := shop_screen.get_node("Center/Panel/Margin/Content/Credits") as Label
+	_check(shop_item_list.get_child_count() == 6 and shop_credits.text.contains("100"), "Shop screen must show all products and current Credits")
+	var cannon_button: Button
+	var hull_button: Button
+	for child in shop_item_list.get_children():
+		if child is Button:
+			var button := child as Button
+			if button.text.contains("机炮"):
+				cannon_button = button
+			elif button.text.contains("基础船体"):
+				hull_button = button
+	_check(cannon_button != null and hull_button != null, "Shop UI must expose cannon and Hull products")
+	cannon_button.pressed.emit()
+	await process_frame
+	_check(int(run_state.get("currency")) == 30 and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Buying a cannon must deduct 70 Credits and add one cannon")
+	# Buttons are rebuilt after purchase.
+	shop_item_list = shop_screen.get_node("Center/Panel/Margin/Content/ItemScroll/ItemList") as VBoxContainer
+	for child in shop_item_list.get_children():
+		if child is Button and (child as Button).text.contains("基础船体"):
+			hull_button = child as Button
+	hull_button.pressed.emit()
+	await process_frame
+	_check(int(run_state.get("currency")) == 5 and int(run_state.get("hull_stock")) == 1, "Buying Hull must deduct 25 Credits and add one Hull stock")
+	var armor_item := shop_definition.items[0] as ShopItemDefinition
+	_check(not bool(run_state.call("purchase_shop_item", armor_item)), "Insufficient Credits must reject a shop purchase")
+	_check(int(run_state.get("currency")) == 5 and int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0, "Failed shop purchase must preserve Credits and inventory")
+	shop_screen.queue_free()
+	await process_frame
 
 	# Inventory primitives must be atomic.
 	run_state.call("add_module_to_inventory", &"weapon_cannon", 2)
