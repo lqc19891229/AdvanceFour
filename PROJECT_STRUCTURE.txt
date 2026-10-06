@@ -106,8 +106,8 @@ tools/art_source/modules/
 → ModuleDefinition.texture / Weapon.turret_texture
 
 说明：
-Excel 当前旧行若仍含历史 game/ship/art/modules 路径，Python importer 会规范化为 data/assets/modules；
-新数据应直接填写 data/assets 路径。
+Excel 的 texture_path / turret_texture_path 直接填写 data/assets 下的 Runtime 正式素材路径；
+导入器不再依赖旧 game/ship/art/modules 路径。
 
 
 ========================================
