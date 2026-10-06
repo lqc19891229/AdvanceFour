@@ -31,4 +31,6 @@ intermission_seconds = 3.0
 spawn_interval_seconds = 1.1
 spawn_radius = 500.0
 reward_credits = 150
+reward_module_ids = Array[StringName]([&"weapon_cannon"])
+reward_module_counts = Array[int]([1])
 return_scene_path = "res://game/ship/editor/ship_editor.tscn"
