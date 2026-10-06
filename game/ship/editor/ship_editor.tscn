@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dji5vr47x2qff" path="res://game/ship/editor/ship_editor.gd" id="1"]
 [ext_resource type="Script" uid="uid://b5tkl1ifddsfk" path="res://game/ship/editor/ship_grid_view.gd" id="2"]
-[ext_resource type="Resource" uid="uid://bldmgjoufd6v" path="res://data/generated/module_database.tres" id="3_db"]
+[ext_resource type="Resource" uid="uid://bldmgjoufd6v" path="res://data/modules/module_database.tres" id="3_db"]
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
 bg_color = Color(0.07, 0.085, 0.11, 1)
