@@ -57,6 +57,7 @@ func _run() -> void:
 	var had_save := FileAccess.file_exists(SAVE_PATH)
 	await _test_module_art_data()
 	await _test_ai_and_damage()
+	await _test_weapon_firing_arc()
 	await _test_projectile_range()
 	if had_save:
 		DirAccess.remove_absolute(SAVE_PATH)
@@ -186,6 +187,107 @@ func _test_module_art_data() -> void:
 	await process_frame
 
 
+func _test_weapon_firing_arc() -> void:
+	var world := Node2D.new()
+	root.add_child(world)
+	var owner := Node2D.new()
+	world.add_child(owner)
+	owner.rotation = deg_to_rad(170.0)
+	var weapon := WeaponRuntime.new()
+	owner.add_child(weapon)
+	weapon.set_physics_process(false)
+	var definition := DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
+	var shots: Array[Vector2] = []
+	weapon.fired.connect(func(_module, _power, _position, direction): shots.append(direction))
+	var target := Node2D.new()
+	world.add_child(target)
+	target.add_to_group(&"arc_test_targets")
+
+	# Exercise all editor installation orientations with a rotated ship and real texture.
+	var local_directions := [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]
+	for quarters in range(4):
+		var module := ShipModuleInstance.new(quarters, definition, Vector2i.ZERO, quarters)
+		weapon.setup(owner, module, Vector2.ZERO, &"arc_test_targets")
+		var center := weapon.get_firing_arc_center_global_rotation()
+		var expected_direction: Vector2 = local_directions[quarters].rotated(owner.rotation)
+		_check(weapon.get_muzzle_world_direction().is_equal_approx(expected_direction), "Installation %d must point along the editor's visible muzzle" % quarters)
+		for arc in [0.0, 60.0, 180.0, 270.0, 359.0, 360.0]:
+			weapon.firing_arc_degrees = arc
+			var half_arc := deg_to_rad(arc * 0.5)
+			_check(weapon.is_world_direction_inside_firing_arc(expected_direction), "Installation %d / arc %.0f must contain its mounted muzzle direction" % [quarters, arc])
+			_check(weapon.is_world_direction_inside_firing_arc(expected_direction.rotated(half_arc)) and weapon.is_world_direction_inside_firing_arc(expected_direction.rotated(-half_arc)), "Installation %d / arc %.0f must include both boundaries" % [quarters, arc])
+			if arc < 360.0:
+				_check(not weapon.is_world_direction_inside_firing_arc(expected_direction.rotated(half_arc + deg_to_rad(0.1))), "Installation %d / arc %.0f must reject angles just outside the boundary" % [quarters, arc])
+		weapon.firing_arc_degrees = 180.0
+		weapon.global_rotation = center + deg_to_rad(20.0)
+		shots.clear()
+		weapon.fire_once()
+		var visual_direction := Vector2.RIGHT.rotated(weapon.turret_visual.global_rotation)
+		_check(shots.size() == 1 and shots[0].is_equal_approx(visual_direction), "Installation %d must fire along the actual rotated turret texture" % quarters)
+		_check(is_equal_approx(weapon.get_firing_arc_center_global_rotation(), center), "Aiming must not move the installation's fixed firing arc center")
+
+	# A 270-degree mount must travel through its center, even across the world's +/- PI.
+	weapon.firing_arc_degrees = 270.0
+	weapon.turn_speed_degrees = 180.0
+	var center := weapon.get_firing_arc_center_global_rotation()
+	for sign_value in [-1.0, 1.0]:
+		weapon.global_rotation = center + deg_to_rad(130.0 * sign_value)
+		target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center - deg_to_rad(130.0 * sign_value)) * 100.0
+		weapon.target = target
+		weapon._aim_at_target(0.05)
+		var first_relative := wrapf(weapon.global_rotation - center, -PI, PI)
+		_check(is_equal_approx(first_relative, deg_to_rad(121.0 * sign_value)), "Wide-arc turn must begin toward the allowed center, not the forbidden shortest path")
+		var stayed_inside := true
+		var respected_speed := true
+		for step in range(40):
+			var before := weapon.global_rotation
+			weapon._aim_at_target(0.05)
+			stayed_inside = stayed_inside and weapon.is_world_direction_inside_firing_arc(weapon.get_muzzle_world_direction())
+			respected_speed = respected_speed and absf(wrapf(weapon.global_rotation - before, -PI, PI)) <= deg_to_rad(9.0) + 0.00001
+		_check(stayed_inside and respected_speed and weapon._is_aimed_at_target(), "Both directions of a wide-arc turn must stay inside, respect speed and reach the target")
+
+	weapon.firing_arc_degrees = 360.0
+	weapon.global_rotation = center + deg_to_rad(175.0)
+	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center - deg_to_rad(175.0)) * 100.0
+	var before := weapon.global_rotation
+	weapon._aim_at_target(0.05)
+	_check(is_equal_approx(wrapf(weapon.global_rotation - before, -PI, PI), deg_to_rad(9.0)), "A full-circle turret must keep circular shortest-path turning")
+
+	weapon.firing_arc_degrees = 0.0
+	weapon.global_rotation = center
+	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center + 0.5) * 100.0
+	weapon._aim_at_target(1.0)
+	_check(absf(wrapf(weapon.global_rotation - center, -PI, PI)) < 0.00001, "A zero-degree turret must remain locked to its installation")
+
+	weapon.firing_arc_degrees = 180.0
+	weapon.global_rotation = center + deg_to_rad(93.0)
+	weapon.cooldown_remaining = 0.0
+	shots.clear()
+	weapon.fire_once()
+	_check(shots.is_empty(), "Manual firing must reject a muzzle outside the mount arc")
+	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center + deg_to_rad(89.0)) * 100.0
+	weapon.target = target
+	weapon._physics_process(0.0)
+	_check(shots.size() == 1 and weapon.is_world_direction_inside_firing_arc(shots[0]), "Automatic firing must clamp an invalid muzzle before emitting a shot, even within the aiming tolerance")
+	weapon._physics_process(0.0)
+	_check(shots.size() == 1, "Automatic firing must obey the same cooldown as manual firing")
+	weapon.cooldown_remaining = 0.0
+	weapon.set_powered(false)
+	weapon.fire_once()
+	weapon._physics_process(1.0)
+	_check(shots.size() == 1, "An unpowered turret must not emit manual or automatic shots")
+	weapon.set_powered(true)
+	weapon.global_rotation = center
+	weapon.target = null
+	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center + PI) * 100.0
+	weapon._physics_process(1.0)
+	_check(weapon.target == null and shots.size() == 1, "Targets outside the installation arc must not be selected or fired at")
+	weapon.global_rotation = center + PI
+	weapon._physics_process(0.0)
+	_check(weapon.is_world_direction_inside_firing_arc(weapon.get_muzzle_world_direction()), "A turret with no valid target must still remain inside its mechanical range")
+	world.queue_free()
+	await process_frame
+
 func _range_target(world: Node2D, location: Vector2, hp: float) -> HullCellRuntime:
 	var data := ShipData.new()
 	var cell := data.add_hull_cell(Vector2i.ZERO, &"test_hull", hp, 0.0, hp)
@@ -273,15 +375,15 @@ func _test_projectile_range() -> void:
 	weapon.set_physics_process(false)
 	weapon.attack_range = 1600.0
 	_check(
-		weapon.is_world_direction_inside_firing_arc(Vector2.UP)
-		and weapon.is_world_direction_inside_firing_arc(Vector2.RIGHT)
-		and not weapon.is_world_direction_inside_firing_arc(Vector2.DOWN),
-		"A 180-degree forward weapon must include its side boundary and reject targets behind the mount"
+		weapon.is_world_direction_inside_firing_arc(Vector2.RIGHT)
+		and weapon.is_world_direction_inside_firing_arc(Vector2.UP)
+		and not weapon.is_world_direction_inside_firing_arc(Vector2.LEFT),
+		"A zero-rotation turret must use the right-facing texture muzzle as its arc center"
 	)
 	owner.rotation = PI / 2.0
 	_check(
-		weapon.is_world_direction_inside_firing_arc(Vector2.RIGHT)
-		and not weapon.is_world_direction_inside_firing_arc(Vector2.LEFT),
+		weapon.is_world_direction_inside_firing_arc(Vector2.DOWN)
+		and not weapon.is_world_direction_inside_firing_arc(Vector2.UP),
 		"Weapon firing arc must rotate with the owning ship"
 	)
 	owner.rotation = 0.0
@@ -296,13 +398,14 @@ func _test_projectile_range() -> void:
 		shots.is_empty(),
 		"Manual firing must not bypass the weapon firing arc"
 	)
-	weapon.global_rotation = PI / 2.0
+	weapon.global_rotation = 0.0
 	owner.request_fire()
 	_check(
 		shots.size() == 1
 		and is_equal_approx(shots[0].max_distance, 1600.0)
-		and is_equal_approx(shots[0].speed, 700.0),
-		"ShipRuntime must pass the firing weapon's range and projectile speed into its projectile"
+		and is_equal_approx(shots[0].speed, 700.0)
+		and shots[0].direction.is_equal_approx(Vector2.RIGHT),
+		"ShipRuntime must preserve the muzzle direction, range and speed in the actual projectile"
 	)
 	if not shots.is_empty():
 		projectile = shots[0]
@@ -530,10 +633,11 @@ func _test_saved_design_and_editor() -> void:
 	_check(runtime.get_speed() < cruising_speed, "Releasing throttle must decelerate using the independent deceleration rate")
 	var armored := _design()
 	var armor_cell := armored.add_hull_cell(Vector2i(8, 8))
-	armored.place(DATABASE.get_by_id(&"defense_lightarmor"), Vector2i(8, 8), 0)
+	var armor_definition := DATABASE.get_by_id(&"defense_lightarmor") as DefenseModuleDefinition
+	armored.place(armor_definition, Vector2i(8, 8), 0)
 	editor.grid.set_ship(armored)
 	_check(
-		is_equal_approx(armored.get_hull_cell_effective_max_hp(armor_cell), 40.0),
+		is_equal_approx(armored.get_hull_cell_effective_max_hp(armor_cell), armor_cell.max_hp + armor_definition.hp),
 		"Defense HP must add to the supporting Hull region HP"
 	)
 	_check(

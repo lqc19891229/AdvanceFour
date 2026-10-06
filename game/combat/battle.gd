@@ -126,7 +126,7 @@ static func build_starter_design() -> ShipData:
 		[&"energy_smallreactor", Vector2i(2, 1), 0],
 		[&"propulsion_smallengine", Vector2i(0, 2), 0],
 		[&"propulsion_smallengine", Vector2i(1, 2), 0],
-		[&"weapon_cannon", Vector2i(0, -1), 0]
+		[&"weapon_cannon", Vector2i(0, -1), 3]
 	]
 	for placement in placements:
 		var definition := DATABASE.get_by_id(placement[0])

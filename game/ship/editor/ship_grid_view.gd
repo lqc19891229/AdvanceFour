@@ -338,7 +338,7 @@ func _draw_module_texture(
 func _draw_weapon_turret_fallback(rect: Rect2, rotation_radians: float) -> void:
 	draw_set_transform(rect.get_center(), rotation_radians, Vector2.ONE)
 	draw_circle(Vector2.ZERO, 4.0, Color.WHITE, false, 1.0)
-	draw_line(Vector2.ZERO, Vector2.UP * 16.0, Color.WHITE, 2.0)
+	draw_line(Vector2.ZERO, ModuleArtLibrary.WEAPON_FORWARD * 16.0, Color.WHITE, 2.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_module_fallback(module: ShipModuleInstance, rect: Rect2) -> void:
