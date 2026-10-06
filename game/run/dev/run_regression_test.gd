@@ -50,6 +50,16 @@ func _run() -> void:
 	var completed: Array = run_state.get("completed_battles")
 	_check(int(run_state.get("currency")) == 100 and completed.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
 
+	var result_screen_scene := load("res://game/run/battle_result/battle_result_screen.tscn") as PackedScene
+	var result_screen := result_screen_scene.instantiate() as Control
+	root.add_child(result_screen)
+	await process_frame
+	var result_summary := result_screen.get_node("Center/Panel/Margin/Content/Summary") as Label
+	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/RepairAll") as Button
+	_check(result_summary.text.contains("+100 Credits") and repair_button.text.contains("12 Credits"), "Battle result screen must expose reward and repair cost")
+	result_screen.queue_free()
+	await process_frame
+
 	var next_path := String(run_state.call("advance_to_next_battle"))
 	_check(next_path == STAGE_002_PATH, "Run progression must advance to stage_002")
 	var stage_two_ship: ShipData = run_state.call("get_ship_for_battle", next_path) as ShipData
