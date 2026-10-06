@@ -279,7 +279,6 @@ def parse_sheet(
             else 0.0
         )
         texture_path = str(get("texture_path") or "").strip()
-        texture_path = texture_path.replace("res://game/ship/art/modules/", "res://data/assets/modules/")
 
         if not ID_PATTERN.match(raw_id):
             errors.append(f"{sheet_name}!第 {row_idx} 行：id '{raw_id}' 只能使用小写英文、数字和下划线，并以字母开头")
@@ -318,7 +317,6 @@ def parse_sheet(
                     )
                 weapon_values[field] = value
             turret_texture_path = str(get(WEAPON_TEXTURE_FIELD) or "").strip()
-            turret_texture_path = turret_texture_path.replace("res://game/ship/art/modules/", "res://data/assets/modules/")
             if not turret_texture_path:
                 errors.append(f"{sheet_name}!第 {row_idx} 行：{WEAPON_TEXTURE_FIELD} 不能为空")
             elif not turret_texture_path.startswith("res://"):
