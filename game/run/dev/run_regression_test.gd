@@ -43,17 +43,16 @@ func _run() -> void:
 	victory.next_battle_path = STAGE_002_PATH
 	victory.ship_after_battle = stage_one_ship
 	victory.reward_credits = 100
-	victory.reward_module_ids.assign([&"defense_lightarmor"])
-	victory.reward_module_counts.assign([1])
-	victory.reward_hull_cells = 1
+	var stage_one_definition := load(STAGE_001_PATH) as BattleDefinition
+	victory.reward_choices.assign(stage_one_definition.reward_choices)
 	victory.enemies_destroyed = 5
 	_check(bool(run_state.call("commit_victory", victory)), "Victory must commit a valid BattleResult")
 	var current_ship := run_state.get("current_ship") as ShipData
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 8.0), "Victory must persist Hull damage into RunState")
 	var completed: Array = run_state.get("completed_battles")
 	_check(int(run_state.get("currency")) == 100 and completed.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
-	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 1, "Victory must add fixed module rewards to Run inventory")
-	_check(int(run_state.get("hull_stock")) == 1, "Victory must add fixed Hull rewards to Run inventory")
+	_check(bool(run_state.call("has_pending_reward_choice")), "Victory with reward choices must remain pending until one choice is claimed")
+	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0 and int(run_state.get("hull_stock")) == 0, "Unclaimed reward choices must not enter inventory")
 	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("currency")) == 100, "The same victory must not be committed twice")
 
 	var result_screen_scene := load("res://game/run/battle_result/battle_result_screen.tscn") as PackedScene
@@ -63,7 +62,12 @@ func _run() -> void:
 	var result_summary := result_screen.get_node("Center/Panel/Margin/Content/Summary") as Label
 	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/RepairAll") as Button
 	var end_run_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/EndRun") as Button
-	_check(result_summary.text.contains("+100 Credits") and result_summary.text.contains("轻型装甲") and result_summary.text.contains("+1 Hull") and repair_button.text.contains("12 Credits"), "Battle result screen must expose all rewards and repair cost")
+	_check(result_summary.text.contains("+100 Credits") and repair_button.text.contains("12 Credits"), "Battle result screen must expose fixed Credits and repair cost")
+	var reward_choice_row := result_screen.get_node("Center/Panel/Margin/Content/RewardChoiceRow") as HBoxContainer
+	var next_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/NextBattle") as Button
+	var refit_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/Refit") as Button
+	_check(reward_choice_row.get_child_count() == 3, "stage_001 must expose three reward choices")
+	_check(next_button_first.disabled and refit_button_first.disabled, "Pending reward choice must block refit and next battle")
 	var damage_list := result_screen.get_node("Center/Panel/Margin/Content/DamageScroll/DamageList") as VBoxContainer
 	var repair_selected := result_screen.get_node("Center/Panel/Margin/Content/RepairSelected") as Button
 	var selected_detail := result_screen.get_node("Center/Panel/Margin/Content/SelectedDetail") as Label
@@ -73,6 +77,14 @@ func _run() -> void:
 	await process_frame
 	_check(repair_selected.text.contains("12 Credits") and selected_detail.text.contains("8 / 20"), "Selecting a damaged Hull must expose its local repair action")
 	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
+	var choice_weapon := reward_choice_row.get_child(1) as Button
+	choice_weapon.pressed.emit()
+	await process_frame
+	_check(not bool(run_state.call("has_pending_reward_choice")), "Claiming one reward must clear the pending reward state")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Selected module reward must enter inventory")
+	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0 and int(run_state.get("hull_stock")) == 0, "Unselected rewards must not enter inventory")
+	_check(not next_button_first.disabled and not refit_button_first.disabled, "Claimed reward must unlock refit and next battle")
+	_check(not bool(run_state.call("claim_reward_choice", 0)), "Reward choice can only be claimed once")
 	result_screen.queue_free()
 	await process_frame
 
