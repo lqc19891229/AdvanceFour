@@ -261,7 +261,7 @@ func _test_errors() -> void:
 	invalid.queue_free()
 	await process_frame
 
-	get_tree().set_meta(Battle.BATTLE_DEFINITION_META, INVALID_BATTLE_DEFINITION_PATH)
+	set_meta(Battle.BATTLE_DEFINITION_META, INVALID_BATTLE_DEFINITION_PATH)
 	invalid = BATTLE_SCENE.instantiate() as Battle
 	root.add_child(invalid)
 	_check(invalid.phase == Battle.Phase.ERROR, "Explicit invalid battle definition path must enter ERROR")
@@ -281,7 +281,7 @@ func _test_custom_definition_retry() -> void:
 	var design := Battle.build_starter_design()
 	var saved := ShipSerializer.save_to_file(design, SAVE_PATH)
 	_check(saved["ok"], "Custom battle retry test must save a valid player design")
-	get_tree().set_meta(Battle.BATTLE_DEFINITION_META, CUSTOM_BATTLE_DEFINITION_PATH)
+	set_meta(Battle.BATTLE_DEFINITION_META, CUSTOM_BATTLE_DEFINITION_PATH)
 	change_scene_to_file("res://game/combat/battle.tscn")
 	await scene_changed
 	var battle := current_scene as Battle
