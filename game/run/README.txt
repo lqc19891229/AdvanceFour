@@ -40,3 +40,12 @@ v0.33.0：
 - 单格维修只修改选中 ShipHullCell；其他 Hull 战损保持不变。
 - 当前费用为 1 缺失 Hull HP = 1 Credit；Credits 不足时操作原子失败。
 - Equipment 继续没有独立 HP，维修 Hull 即恢复其覆盖模块效率。
+
+
+v0.34.0：
+- RunState 新增 module_inventory 与 hull_stock。
+- 胜利结算除 Credits 外可发放固定模块与 Hull 奖励。
+- stage_001：轻型装甲×1、Hull×1；stage_002：机炮×1。
+- 战果页显示完整奖励明细。
+- Run Refit 中安装模块/Hull 消耗库存，拆除返还，移动/旋转免费。
+- Run Refit 禁止一键清空，结构修改会立即同步 current_ship。
