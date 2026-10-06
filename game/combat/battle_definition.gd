@@ -3,7 +3,7 @@ extends Resource
 
 @export var battle_id: StringName = &"stage_001"
 @export var display_name := "第一战"
-@export var waves: Array[BattleWaveDefinition] = []
+@export var waves: Array[Resource] = []
 @export var preparation_seconds := 2.0
 @export var intermission_seconds := 3.0
 @export var spawn_interval_seconds := 1.25
@@ -19,7 +19,7 @@ func is_valid() -> bool:
 	if waves.is_empty():
 		return false
 	for wave in waves:
-		if wave == null or not wave.is_valid():
+		if not (wave is BattleWaveDefinition) or not (wave as BattleWaveDefinition).is_valid():
 			return false
 	if preparation_seconds < 0.0 or intermission_seconds < 0.0 or spawn_interval_seconds < 0.0:
 		return false
@@ -38,10 +38,11 @@ func get_invalid_reason() -> String:
 		return "战斗至少需要一波敌舰。"
 	for index in range(waves.size()):
 		var wave := waves[index]
-		if wave == null:
-			return "第 %d 波配置为空。" % (index + 1)
-		if not wave.is_valid():
-			return "第 %d 波：%s" % [index + 1, wave.get_invalid_reason()]
+		if not (wave is BattleWaveDefinition):
+			return "第 %d 波配置无效。" % (index + 1)
+		var typed_wave := wave as BattleWaveDefinition
+		if not typed_wave.is_valid():
+			return "第 %d 波：%s" % [index + 1, typed_wave.get_invalid_reason()]
 	if preparation_seconds < 0.0 or intermission_seconds < 0.0 or spawn_interval_seconds < 0.0:
 		return "战斗计时参数不能为负数。"
 	if spawn_radius <= 0.0:
@@ -56,4 +57,4 @@ func get_wave_count() -> int:
 func get_wave(index: int) -> BattleWaveDefinition:
 	if index < 0 or index >= waves.size():
 		return null
-	return waves[index]
+	return waves[index] as BattleWaveDefinition
