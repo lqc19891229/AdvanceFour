@@ -1,7 +1,7 @@
 《前进四》game/combat 目录说明
 
 职责：
-负责正式战斗的“执行逻辑”：玩家/敌舰 Runtime 生成、波次调度、胜负判定、HUD、结算与退出。
+负责正式战斗的“执行逻辑”：玩家/敌舰 Runtime 生成、波次调度、胜负判定、HUD、BattleResult 生成与退出。正式 Run 的跨场景状态由 core/autoload/run_state.gd 管理。
 
 主要文件：
 - battle.gd / battle.tscn：所有关卡复用的正式战斗容器。
@@ -26,3 +26,11 @@
 3. 新关卡新增 data/battles/*.tres，不复制 battle.tscn。
 4. 新敌舰蓝图新增 data/enemies/*.tres。
 5. Boss 行为若需要新 Gameplay 能力才进入 game；Boss 的具体配置继续放 data。
+
+
+v0.32 Run 规则：
+- 正式 Run 战斗从 RunState 的 battle_entry_ship 快照生成玩家飞船。
+- 胜利先生成 pending BattleResult；玩家点击“结算并继续”后才提交战损与 Credits，避免 Retry 重复领取奖励。
+- Retry 不提交 pending result，重新使用本场战前快照。
+- Defeat 仅记录失败结果，不写回 current_ship。
+- 独立 F6 / 开发测试在没有 active Run 时继续使用保存设计 / debug fallback。
