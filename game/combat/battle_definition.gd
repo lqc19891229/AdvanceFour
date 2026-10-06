@@ -9,6 +9,7 @@ extends Resource
 @export var spawn_interval_seconds := 1.25
 @export var spawn_radius := 460.0
 @export_file("*.tscn") var return_scene_path := "res://game/ship/editor/ship_editor.tscn"
+@export var restore_saved_ship_on_return := true
 
 func is_valid() -> bool:
 	if battle_id == &"":
