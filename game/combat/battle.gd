@@ -25,6 +25,7 @@ var elapsed_seconds := 0.0
 var countdown := 0.0
 var spawn_countdown := 0.0
 var design_source := ""
+var battle_definition_error := ""
 
 @onready var world: Node2D = $World
 @onready var camera: Camera2D = $Camera2D
@@ -42,6 +43,9 @@ func _ready() -> void:
 	$UI/Return.pressed.connect(return_from_battle)
 
 	_resolve_battle_definition()
+	if not battle_definition_error.is_empty():
+		_show_error(battle_definition_error)
+		return
 	if battle_definition == null:
 		_show_error("没有指定战斗配置。")
 		return
@@ -82,10 +86,16 @@ func _resolve_battle_definition() -> void:
 	var definition_path := String(get_tree().get_meta(BATTLE_DEFINITION_META))
 	get_tree().remove_meta(BATTLE_DEFINITION_META)
 	if definition_path.is_empty():
+		battle_definition_error = "指定的战斗配置路径为空。"
 		return
-	var loaded := load(definition_path)
-	if loaded is BattleDefinition:
-		battle_definition = loaded as BattleDefinition
+	if not ResourceLoader.exists(definition_path):
+		battle_definition_error = "指定的战斗配置不存在：%s" % definition_path
+		return
+	var loaded := ResourceLoader.load(definition_path)
+	if not (loaded is BattleDefinition):
+		battle_definition_error = "指定资源不是 BattleDefinition：%s" % definition_path
+		return
+	battle_definition = loaded as BattleDefinition
 
 static func build_starter_design() -> ShipData:
 	var design := ShipData.new()
