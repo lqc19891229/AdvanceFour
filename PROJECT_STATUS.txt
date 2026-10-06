@@ -1,4 +1,4 @@
-《前进四》开发状态 v0.31.12
+《前进四》开发状态 v0.31.13
 
 当前阶段：模块化飞船战斗 Prototype，尚未形成完整 Roguelike 游戏。
 
@@ -19,7 +19,8 @@
 - 飞船编辑器属性顶部显示预计最高速度，随模块布局变化更新，并提示供能不足。
 - 飞船编辑器支持 Hull/Equipment 分层操作：Hull 格独立放置/拆除；Equipment 只能完整安装在 Hull 上，并支持选中、移动、旋转，保留实例 uid。
 - 战斗世界固定星点 / 网格参照，HUD 显示实时速度与坐标，明确前进 / 倒车 / 转向操作。
-- 单场战斗：有限波次、逐个生成敌舰、HUD、胜负结算、重开 / 返回编辑器。
+- 单场战斗：有限波次、逐个生成敌舰、HUD、胜负结算、重开 / 返回。
+- v0.31.13 将 battle.tscn 正式化为所有关卡共用的战斗容器；新增 BattleDefinition Resource 与 definitions/stage_001.tres。飞船编辑器只负责验证/保存设计并选择关卡配置，不再承载战斗规则。后续普通关卡、精英战与 Boss 战均应复用 battle.tscn，通过 BattleDefinition 数据化差异。
 - 最终清场后等待空中弹丸结束；核心 Equipment 所覆盖 Hull 全部损毁时判定失败，失败优先于同帧胜利。
 - 自动检查源表完整性、源表与缓存一致性、generated 贴图引用以及 Godot 物理 / 场景回归；模块重新导入后 ModuleDatabase 已同步持有 Texture2D 引用。
 - v0.31.8 完成数据导入技术收口：Excel 解析前强制清理旧 cache，避免解析失败时误读历史 modules.json；全部模块先构建验证后再替换 generated 资源，写入失败会恢复导入前的模块 .tres 与 ModuleDatabase。
@@ -28,7 +29,7 @@
 当前入口：
 1. F5 运行默认飞船编辑器，完成合法设计，点击“出航战斗”。
 2. WASD / 方向键驾驶，清除三波敌舰后结算；R 重开，Esc 返回编辑器。
-3. 可 F6 单独运行 game/combat/battle.tscn；无存档时使用数据驱动示例船。
+3. 可 F6 单独运行 game/combat/battle.tscn；默认使用 definitions/stage_001.tres，无存档时使用调试示例船。
 4. “敌舰 AI 测试”和旧 ship_movement_test.tscn 保留为独立诊断入口。
 
 下一阶段：
