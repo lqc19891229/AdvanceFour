@@ -43,8 +43,8 @@ func _run() -> void:
 	victory.next_battle_path = STAGE_002_PATH
 	victory.ship_after_battle = stage_one_ship
 	victory.reward_credits = 100
-	victory.reward_module_ids = Array[StringName]([&"defense_lightarmor"])
-	victory.reward_module_counts = Array[int]([1])
+	victory.reward_module_ids.assign([&"defense_lightarmor"])
+	victory.reward_module_counts.assign([1])
 	victory.reward_hull_cells = 1
 	victory.enemies_destroyed = 5
 	_check(bool(run_state.call("commit_victory", victory)), "Victory must commit a valid BattleResult")
@@ -177,8 +177,8 @@ func _run() -> void:
 	final_victory.next_battle_path = ""
 	final_victory.ship_after_battle = final_ship
 	final_victory.reward_credits = 150
-	final_victory.reward_module_ids = Array[StringName]([&"weapon_cannon"])
-	final_victory.reward_module_counts = Array[int]([1])
+	final_victory.reward_module_ids.assign([&"weapon_cannon"])
+	final_victory.reward_module_counts.assign([1])
 	_check(bool(run_state.call("commit_victory", final_victory)), "Final-stage victory must commit")
 	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Final-stage module reward must enter inventory")
 	result_screen = result_screen_scene.instantiate() as Control
