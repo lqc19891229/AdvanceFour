@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="CoreModuleDefinition" format=3 uid="uid://cvyytwixan6ed"]
 
-[ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://game/ship/definitions/core_module_definition.gd" id="1_j1ief"]
-[ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://game/ship/art/modules/core_bridge.png" id="2_ovdck"]
+[ext_resource type="Script" uid="uid://dr7ahptrr2ara" path="res://data/definitions/module/core_module_definition.gd" id="1_j1ief"]
+[ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://data/assets/modules/core_bridge.png" id="2_ovdck"]
 
 [resource]
 script = ExtResource("1_j1ief")
