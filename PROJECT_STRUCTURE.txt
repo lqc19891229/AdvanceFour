@@ -1,140 +1,327 @@
-《前进四》项目目录规划 V0.31.7
+《前进四》项目目录规划 V0.31.13
 
 res://
-├─ core/                         # 全项目共享底层系统
-│  └─ autoload/                 # AutoLoad 单例
+├─ core/                                  # 全项目共享底层系统
+│  └─ autoload/                           # 后续 Run / Session 等全局状态入口
 │
-├─ game/                         # 核心玩法
-│  ├─ combat/                  # 单场战斗调度、波次、HUD 和结算
+├─ game/                                  # 核心玩法
+│  ├─ combat/                             # 正式关卡战斗系统
 │  │  ├─ README.txt
-│  │  ├─ battle_backdrop.gd   # 世界固定星点与网格参照
-│  │  ├─ battle.gd / .tscn
-│  │  └─ dev/                  # 战斗流程独立回归
-│  │     ├─ README.txt
-│  │     └─ combat_regression_test.gd
+│  │  ├─ battle.gd                       # 通用战斗状态机与关卡执行器
+│  │  ├─ battle.tscn                     # 所有关卡复用的正式战斗场景
+│  │  ├─ battle_definition.gd            # BattleDefinition Resource
+│  │  ├─ battle_backdrop.gd              # 世界固定星点与网格参照
+│  │  ├─ definitions/                    # 关卡战斗配置，不复制 battle.tscn
+│  │  │  ├─ README.txt
+│  │  │  └─ stage_001.tres
+│  │  └─ dev/
+│  │     └─ combat_regression_test.gd    # 正式战斗流程回归
+│  │
 │  └─ ship/
-│     ├─ art/                   # 模块贴图与统一加载规则
-│     │  ├─ README.txt
-│     │  ├─ module_art_library.gd
-│     │  └─ modules/            # 1×1 模块 PNG；武器使用 base + turret
-│     ├─ definitions/           # 六类模块 Resource 定义
-│     ├─ data/                  # ShipData / ModuleInstance / Database / Serializer
-│     ├─ editor/                # 飞船编辑器场景与逻辑
-│     ├─ runtime/               # ShipRuntime 场景与运行逻辑
-│     │  ├─ README.txt
-│     │  ├─ SHIP_MODULE_RUNTIME_README.txt
-│     │  ├─ ship_runtime.gd
-│     │  ├─ ship_runtime.tscn
-│     │  └─ ship_module_runtime.gd
-│     ├─ controller/            # 玩家 / AI 等飞船控制来源
-│     │  ├─ README.txt
-│     │  ├─ player_ship_controller.gd
-│     │  ├─ player_ship_controller.tscn
-│     │  ├─ ai_ship_controller.gd
-│     │  └─ ai_ship_controller.tscn
-│     ├─ weapon/                # 武器模块运行时节点与发射事件
-│     │  ├─ README.txt
-│     │  ├─ weapon_runtime.gd
-│     │  └─ weapon_runtime.tscn
-│     ├─ projectile/            # 弹丸生成、飞行、碰撞与命中
-│     │  ├─ README.txt
-│     │  ├─ projectile_runtime.gd
-│     │  └─ projectile_runtime.tscn
-│     ├─ damage/                # 通用 HP / 受伤 / destroyed 组件
-│     │  ├─ README.txt
-│     │  └─ damage_receiver.gd
-│     └─ dev/                   # 飞船系统独立开发测试
-│        ├─ README.txt
-│        ├─ ship_movement_test.gd
-│        ├─ ship_movement_test.tscn
-│        ├─ ship_ai_test.gd / .tscn
-│        ├─ ship_regression_test.gd
-│        └─ weapon_target_dummy.gd
+│     ├─ appearance/                      # Runtime 外观策略与船壳绘制
+│     ├─ art/                             # 模块贴图与统一加载规则
+│     │  └─ modules/                      # 普通模块 PNG；武器 base + turret
+│     ├─ definitions/                     # 六类 Equipment Definition
+│     ├─ data/                            # ShipData / Hull Cell / ModuleInstance / Serializer
+│     ├─ editor/                          # 飞船工程编辑器；不是战斗逻辑宿主
+│     ├─ runtime/                         # ShipData 在战斗世界中的 Runtime 表现
+│     ├─ controller/                      # 玩家 / AI 控制输入
+│     ├─ weapon/                          # 武器运行时、炮塔瞄准与发射
+│     ├─ projectile/                      # 弹丸移动、swept ray、命中与穿透
+│     ├─ damage/                          # 通用受伤组件
+│     └─ dev/                             # 飞船子系统独立测试
 │
 ├─ addons/
 │  └─ advance_four_data_importer/
-│     ├─ plugin.cfg             # Godot EditorPlugin 注册入口
-│     └─ plugin.gd              # Godot 编辑器菜单与 .tres 生成入口
+│     ├─ plugin.cfg
+│     └─ plugin.gd
 │
-├─ PROJECT_STATUS.txt           # 当前进度、运行入口与后续阶段
-├─ .github/workflows/project-checks.yml # 数据完整性与 Godot 回归 CI
 ├─ tools/
-│  ├─ verify_project.py         # 统一自动检查入口
-│  └─ data_import/              # 数据导入系统
+│  ├─ verify_project.py                   # 统一自动检查入口
+│  └─ data_import/
 │     ├─ source/
-│     │  └─ game_data.xlsx      # 策划数据唯一真源
-│     │     ├─ Energy
-│     │     ├─ Propulsion
-│     │     ├─ Weapon
-│     │     ├─ Defense
-│     │     ├─ Function
-│     │     └─ Core
+│     │  └─ game_data.xlsx                # 策划数据唯一真源；标题行使用中文
 │     ├─ cache/
-│     │  └─ modules.json        # Excel -> JSON 中间缓存
-│     └─ import_excel.py        # Excel 解析与数据校验
+│     │  └─ modules.json                  # 中文表头转换后的英文内部字段缓存
+│     └─ import_excel.py                  # Excel 解析、中文字段映射与校验
 │
-└─ data/
-   └─ generated/                # 自动生成，禁止手动修改
-      ├─ modules/
-      │  ├─ energy/
-      │  ├─ propulsion/
-      │  ├─ weapon/
-      │  ├─ defense/
-      │  ├─ function/
-      │  └─ core/
-      └─ module_database.tres
+├─ data/
+│  └─ generated/                          # 自动生成，禁止手动修改
+│     ├─ modules/
+│     └─ module_database.tres
+│
+├─ PROJECT_STATUS.txt
+├─ PROJECT_STRUCTURE.txt
+├─ VERSION_HISTORY.txt
+├─ WORKFLOW.txt
+└─ project.godot
 
-目录文档规则：
-- 每个主要功能目录都放 README.txt。
-- README.txt 说明目录职责、内部文件/场景/脚本功能与基本用法。
-- 新增或删除重要文件时，同步更新所在目录 README.txt。
 
-数据原则：
-1. Excel 是策划数据唯一真源。
-2. 六类模块分别维护在六个 Sheet，不重复填写 module_type。
-3. Python 根据 Sheet 名确定 module_type，并负责校验和生成 JSON cache。
-4. addons 仅作为 Godot 插件入口，不承载数据源或解析逻辑。
-5. tools/data_import 集中管理 Excel、Python、JSON cache 和导入逻辑。
-6. data/generated 只保存最终运行时 .tres，不手动修改。
-7. 游戏系统通过 ModuleDatabase / DataManager 访问模块数据。
-8. 飞船设计存档只记录稳定 module_id、位置和旋转；运行时通过 ModuleDatabase 恢复定义。
-9. 飞船模块允许分开放置，不要求相邻、连通或填满所有格子；只禁止占用格重叠。
-10. 开发测试按功能归属放置；飞船相关测试统一放在 game/ship/dev/。
-11. ShipData 负责飞船结构数据；ShipRuntime 负责该数据进入游戏世界后的运行表现，不重复维护另一套模块结构。
-12. RuntimeShip 的移动以自身朝向为基础：推进沿舰首方向，转向改变运行时 rotation；当前转向参数仍属于 Prototype 基础参数。
-13. RuntimeShip 的局部原点与旋转中心统一使用核心模块（舰桥核心）的几何中心；只调整运行时显示偏移，不修改 ShipData 中的模块网格坐标。
+========================================
+一、核心分层
+========================================
 
-14. 飞船控制来源与运行实体分离：PlayerShipController 与 AIShipController 只提供控制输入，RuntimeShip 负责执行运动；控制器与运动均在物理帧更新。
-15. 武器静态数据继续由 ShipData / WeaponModuleDefinition 提供；RuntimeShip 为每个武器模块创建 WeaponRuntime，WeaponRuntime 只负责运行时发射事件，不复制静态模块数据。
-16. 武器运行时采用可旋转炮塔：rotation_quarters 只定义初始朝向，战斗中 WeaponRuntime 可独立转向目标。
-17. WeaponRuntime 默认在 RuntimeShip.weapon_target_group 指定的组中搜索攻击范围内最近目标，并在瞄准完成、冷却结束后自动开火；玩家控制器不负责武器瞄准或开火。
-18. firepower / attack_range / fire_interval / turn_speed_degrees / projectile_speed / fire_angle_tolerance_degrees 已纳入 Weapon Excel 数据真源并进入 WeaponModuleDefinition。
-19. WeaponRuntime fired 后由 RuntimeShip 创建 ProjectileRuntime；Projectile 作为 RuntimeShip 同级节点进入世界，独立直线飞行并按生命周期自动销毁。
-20. ProjectileRuntime 使用 Area2D 基础碰撞；首次有效碰撞时发出 hit(target, firepower) 并销毁，RuntimeShip 通过 projectile_hit 向上转发。
-21. Projectile 保存 source_owner，并忽略发射者自身及其子节点；当前只做基础自伤过滤，尚未建立正式阵营系统。
-22. DamageReceiver 独立负责 max_hp / current_hp、damaged 与 destroyed；ProjectileRuntime 不直接维护目标生命值。
-23. 当前 v0.20 由战斗层 / 测试层决定如何把 projectile_hit.firepower 交给 DamageReceiver；开发测试暂时直接使用 firepower 作为伤害值。
-24. RuntimeShip 会为每个 ShipModuleInstance 创建独立 ShipModuleRuntime；其碰撞体严格按该模块实际网格位置与旋转后尺寸生成，因此分离模块之间的空格保持不可碰撞。
-25. ShipModuleRuntime 组合 DamageReceiver，并把 Projectile 命中直接映射到具体 ShipModuleInstance；RuntimeShip 通过 module_damaged / module_destroyed 向上转发。
-26. 所有模块的最大 HP 统一来自 ShipModuleDefinition.hp；hp 是六个 Excel Sheet 的共同基础字段，并通过 Python → JSON cache → Godot importer → .tres 数据链进入运行时。Defense.protection 只负责百分比减伤，不增加 max HP。
-27. WeaponRuntime 对支持 get_aim_point() 的目标使用运行时瞄准点；RuntimeShip 返回距离炮塔最近的未 destroyed 模块中心，已摧毁模块不再作为瞄准点。
-28. 武器模块 destroyed 后，RuntimeShip 通过 module uid 找到对应 WeaponRuntime 并 set_operational(false)，停止搜索、瞄准与开火。
-29. RuntimeShip.get_effective_thrust() 只统计未 destroyed 的动力模块；get_effective_acceleration_score() 使用 effective_thrust / 总质量，因此动力模块摧毁会降低实际推进能力。
-30. RuntimeShip 核心模块 destroyed 后视作整船战斗失败：进入 removed_from_battle，停止移动与全部武器，发出 destroyed，并 queue_free() 从战斗场景移除。
-31. 核心击毁只结束当前 RuntimeShip 战斗实例，不改写 ShipData 或飞船设计存档；分离模块、空格与不连通结构规则保持不变。
-32. ProjectileRuntime 首次有效命中支持 apply_damage() 的对象时，会直接调用 apply_damage(firepower)；RuntimeShip.projectile_hit 只保留为观察 / 调试事件。
-33. Projectile 作为 RuntimeShip 同级独立节点，其伤害逻辑不依赖 source_owner 存活，因此发射者核心摧毁并 queue_free() 后，已发射弹丸仍可继续命中和造成伤害。
-34. RuntimeShip.get_effective_energy_output() 只统计未 destroyed 的能源模块；get_effective_energy_cost() 只统计未 destroyed 模块的 energy_cost。
-35. 当有效供能低于有效耗能时，RuntimeShip 进入能源不足状态并执行模块级部分负载切除；不再统一关闭全部武器或全部动力，飞船也不会因此直接退出战斗。
-36. WeaponRuntime 将 operational（结构是否存活）与 powered（是否有能源）分离，能源恢复不会复活已经 destroyed 的武器。
-37. RuntimeShip 使用 module_powered_by_uid 记录每个存活模块的运行时供电状态；供能不足时按 核心 > 能源 > 动力 > 防护 > 功能 > 武器 的 Prototype 固定优先级逐个分配能源，同类型按 module.uid 升序稳定分配。
-38. is_energy_sufficient() 只表示是否足以覆盖全部存活模块需求；即使为 false，仍可能有部分模块保持 powered=true。
-39. get_powered_energy_cost() 返回当前实际已供电负载；动力只统计 powered 的存活动力模块，WeaponRuntime.powered 也按对应武器模块单独设置。
-40. RuntimeShip 的武器计数语义明确拆分：get_weapon_count() = 总 WeaponRuntime；get_operational_weapon_count() = 未 destroyed 的武器；get_active_weapon_count() = 未 destroyed 且当前 powered 的可工作武器。
-41. DefenseModuleDefinition.protection 的正式战斗语义改为“该块 Defense 模块每次受 Projectile 命中时的百分比减伤值”；protection = 5 表示减伤 5%，运行时 clamp 到 0%~100%；protection 不再增加 max HP，也不会被消耗。
-42. 防护采用空间掩体 + 百分比减伤规则：Defense 命中先计算 damage_after_protection = incoming_damage * (1 - clamp(protection, 0, 100) / 100)，之后才扣模块 HP；如果模块被摧毁且仍有 overkill，则返回 leftover = damage_after_protection - hp_before，Projectile 同一发继续向内穿透。
-43. 装甲是逐块独立失效，不要求全船装甲全部 destroyed；飞船结构仍允许分离、不相邻、不连通和任意空格。
-44. ProjectileRuntime 每物理帧使用 PhysicsRayQueryParameters2D / intersect_ray() 沿本帧整段路径做 swept hit，按弹道最近顺序处理碰撞；任意 ShipModuleRuntime 被本次伤害摧毁且仍有 overkill 时，都会继续查询同一路径后方模块。
-45. DamageReceiver.damaged(amount, current_hp) 的 amount 现在表示实际扣除 HP，不包含超过目标剩余 HP 的 overkill 部分。
-46. 当前 v0.29 已将模块最大 HP 正式数据化到 ShipModuleDefinition.hp，并保留所有飞船模块的 HP-overkill 连续穿透、Defense.protection 百分比减伤、source_owner 整船预排除、核心摧毁边界；v0.31.3 使用开火时 attack_range 的距离限制替代 lifetime 步长限制；尚未实现有限半径 shape cast、独立穿甲系数 / 穿深 / 材质抗性、爆炸 / 溅射、正式伤害类型或玩家自定义供电优先级；ShipData 存档格式继续保持不变。
-47. v0.31.7 新增 ModuleArtLibrary：首批只接 1×1 模块视觉，普通模块按 {module_id}.png 读取；武器按 {module_id}_base.png + {module_id}_turret.png 拆分。ShipModuleRuntime 负责底座 / 普通模块贴图，WeaponRuntime 负责炮塔贴图及独立瞄准旋转；贴图缺失时对应层回退旧 Prototype 绘制，不修改 Excel / JSON / .tres / 存档格式。
+项目当前按四层理解：
+
+1. 策划数据层
+   game_data.xlsx
+   ↓
+   Python
+   ↓
+   modules.json
+   ↓
+   Godot importer
+   ↓
+   .tres / ModuleDatabase
+
+2. 飞船设计数据层
+   ShipData
+   ├─ Hull Layout
+   │  └─ ShipHullCell
+   └─ Equipment
+      └─ ShipModuleInstance
+
+3. Runtime 战斗实体层
+   ShipRuntime
+   ├─ HullCellRuntime
+   ├─ WeaponRuntime
+   ├─ ProjectileRuntime
+   ├─ PlayerShipController / AIShipController
+   └─ Appearance Layer
+
+4. 关卡战斗层
+   BattleDefinition
+   ↓
+   battle.tscn / Battle
+   ↓
+   生成玩家与敌舰、调度波次、判定胜负、结算
+
+飞船编辑器只负责设计飞船与发起出航，不承担正式关卡战斗规则。
+
+
+========================================
+二、正式战斗场景原则
+========================================
+
+1. res://game/combat/battle.tscn 是正式战斗容器。
+2. 后续普通关卡、精英战、Boss 战默认全部复用 battle.tscn。
+3. 不因为增加新关卡而复制 battle.tscn。
+4. 不在 battle.gd 中持续堆叠“第几关”的专用 if / match。
+5. 不同关卡通过 BattleDefinition Resource 提供配置。
+6. 当前第一份正式配置为：
+   res://game/combat/definitions/stage_001.tres
+7. 上层系统通过 SceneTree meta：
+   battle_definition_path
+   指定下一场 BattleDefinition，然后统一进入 battle.tscn。
+8. 若没有提供外部配置，battle.tscn 使用自身绑定的 stage_001.tres。
+9. 重新挑战时必须继续使用当前 BattleDefinition。
+10. BattleDefinition 当前管理：
+    - battle_id
+    - display_name
+    - wave_enemy_counts
+    - preparation_seconds
+    - intermission_seconds
+    - spawn_interval_seconds
+    - spawn_radius
+    - return_scene_path
+    - restore_saved_ship_on_return
+11. 敌舰蓝图 / 波次敌舰组合 / Boss / 奖励目前尚未进入 BattleDefinition；后续应继续数据化，不写死进 battle.gd。
+
+
+========================================
+三、Hull 与 Equipment 数据规则
+========================================
+
+1. Hull Layout 与 Equipment 是两层独立数据。
+2. ShipHullCell 保存：
+   - grid_position
+   - hull_type
+   - max_hp
+   - current_hp
+   - mass
+3. 第一版 basic_hull：
+   - max_hp = 20
+   - mass = 2
+4. Equipment 必须完整覆盖已有 Hull Cell。
+5. Hull 当前允许：
+   - 不相邻
+   - 不连通
+   - 中间空格
+6. Hull Cell 上有 Equipment 时不能直接拆除该 Hull Cell。
+7. ShipHullCell.mass 当前保留为结构数据，不参与移动计算。
+8. Equipment Definition 已取消共通 hp 与 mass。
+9. Energy / Propulsion / Weapon / Function / Core 不拥有独立 hp。
+10. Defense 单独保留 hp 与 protection。
+11. 多格 Equipment 的运行效率取覆盖 Hull Cell 健康比例平均值。
+12. 核心覆盖的 Hull Cell 全部损毁时，整船判定沉没。
+
+
+========================================
+四、区域耐久与伤害规则
+========================================
+
+1. 战斗碰撞基础单位是 Hull Cell，不是整个 Equipment 外框。
+2. 区域最大 HP =
+   ShipHullCell.max_hp + 覆盖该格的 Defense hp 分配值。
+3. 多格 Defense.hp 平均分配到它覆盖的 Hull Cell。
+4. 区域 current HP 最终映射回 ShipHullCell.current_hp。
+5. Defense.protection 是百分比减伤，不是额外独立运行时血条。
+6. Projectile 使用本物理帧整段 swept ray 处理高速命中。
+7. 当前伤害支持 HP-overkill 穿透：
+   前方 Hull 区域被击穿并仍有剩余伤害时，继续沿弹道查询后方区域。
+8. 发射者被摧毁后，已经生成的 Projectile 继续独立存在与造成伤害。
+9. 当前没有：
+   - 独立穿甲系数
+   - 材质抗性
+   - 爆炸 / 溅射
+   - 正式伤害类型
+
+
+========================================
+五、武器规则
+========================================
+
+Weapon 数据当前由 Excel 正式提供：
+- firepower
+- attack_range
+- fire_interval
+- turn_speed_degrees
+- projectile_speed
+- firing_arc_degrees
+- fire_angle_tolerance_degrees
+- texture_path
+- turret_texture_path
+
+规则：
+1. rotation_quarters 定义武器安装方向，也是射界中心基准。
+2. WeaponRuntime 独立旋转炮塔。
+3. 自动选敌、炮塔转向和开火都受 firing_arc_degrees 约束。
+4. attack_range 同时限制选敌距离与弹丸最大飞行距离。
+5. Projectile 在开火时记录本发自己的射程和速度。
+6. WeaponRuntime 的 operational 与 powered 分离。
+7. 武器对应结构失效后不可恢复工作；单纯恢复供能不会复活已失效武器。
+
+
+========================================
+六、能源与推进规则
+========================================
+
+1. RuntimeShip 记录 module_powered_by_uid。
+2. 供能不足时使用当前 Prototype 固定优先级：
+   核心 > 能源 > 动力 > 防护 > 功能 > 武器
+3. 同类型按 module.uid 升序稳定分配。
+4. is_energy_sufficient() 只表示能否覆盖全部存活负载。
+5. 供能不足不代表所有模块都停止工作。
+6. 推进只统计当前仍有效且已供电的 Propulsion。
+7. 当前运动模型不计算 Hull / Equipment 质量。
+8. 当前最高速度、加速度、松油减速度由有效推力乘各自 scale 决定。
+9. 动力所在 Hull 受损会通过效率降低有效推力。
+
+
+========================================
+七、Appearance Layer
+========================================
+
+1. Appearance 只负责 Runtime 战斗显示，不修改 ShipData。
+2. 编辑器继续完整显示 Hull + Equipment 工程视图。
+3. 战斗中根据 Hull Layout 生成连续外壳。
+4. Core / Weapon / Propulsion 外露。
+5. Energy / Defense / Function 默认被船壳包覆。
+6. 武器视觉拆为 base + turret，炮塔贴图跟随 WeaponRuntime 独立转动。
+7. 后续舰首、舰尾、推进开孔、装甲蒙皮属于 Appearance 扩展，不应改变底层飞船数据结构。
+
+
+========================================
+八、存档与战斗状态
+========================================
+
+1. ShipSerializer 当前 FORMAT_VERSION = 2。
+2. 存档保存 Hull Cell：
+   - position
+   - hull_type
+   - max_hp
+   - current_hp
+   - mass
+3. Equipment 保存：
+   - module_id
+   - position
+   - rotation
+4. 运行时 uid 不作为长期存档稳定标识。
+5. 旧 v1 存档继续兼容读取。
+6. 当前正式战斗仍从 user://ships/test_ship.json 读取玩家设计。
+7. 同一场 battle 内战损跨波次保留。
+8. 当前退出 / 重试仍重新从存档建立 RuntimeShip。
+9. 下一阶段 v0.32 应建立正式战后状态写回：
+   Runtime 战损
+   → BattleResult / Run State
+   → 战损持久化
+   → 维修 / 奖励 / 下一战
+
+
+========================================
+九、编辑器职责
+========================================
+
+飞船编辑器负责：
+- Hull 铺设 / 拆除
+- Equipment 安装 / 移动 / 旋转
+- 设计合法性
+- 属性预览
+- 保存 / 载入设计
+- 发起正式战斗
+- 发起独立 AI 开发测试
+
+飞船编辑器不负责：
+- 波次逻辑
+- 战斗胜负
+- 敌舰生成
+- 关卡配置
+- 奖励
+- Boss 流程
+
+点击“出航战斗”当前执行：
+验证设计
+→ 保存玩家设计
+→ 指定 stage_001.tres
+→ 切换到统一 battle.tscn。
+
+
+========================================
+十、测试与验证
+========================================
+
+统一验证入口：
+python3 tools/verify_project.py --godot /path/to/godot
+
+当前 Godot 版本：
+4.6.1
+
+战斗回归位于：
+game/combat/dev/combat_regression_test.gd
+
+至少覆盖：
+- 玩家真实输入与移动反馈
+- 波次与波间
+- 胜利 / 失败
+- 残留弹丸
+- 同帧失败优先
+- 阵营碰撞隔离
+- 非法关卡配置
+- 编辑器 → 正式战斗 → 重试 / 返回
+
+
+========================================
+十一、目录文档规则
+========================================
+
+1. 主要功能目录放 README.txt。
+2. README 说明：
+   - 目录职责
+   - 主要文件
+   - 使用方法
+   - 依赖
+   - 当前边界
+3. 新增 / 删除重要文件、改变核心职责或使用方式时同步更新 README。
+4. data/generated 禁止手动修改。
+5. Excel 是模块策划数据唯一真源。
+6. 中文 Excel 表头仅服务策划可读性；导入阶段转换为稳定英文内部字段。
