@@ -29,10 +29,14 @@ func _wait_until(predicate: Callable, frames := 120) -> bool:
 
 func _new_battle(counts: Array[int]) -> Battle:
 	var battle := BATTLE_SCENE.instantiate() as Battle
-	battle.wave_enemy_counts = counts
-	battle.preparation_seconds = 0.03
-	battle.intermission_seconds = 0.03
-	battle.spawn_interval_seconds = 0.12
+	var definition := BattleDefinition.new()
+	definition.battle_id = &"regression_test"
+	definition.display_name = "战斗回归测试"
+	definition.wave_enemy_counts = counts
+	definition.preparation_seconds = 0.03
+	definition.intermission_seconds = 0.03
+	definition.spawn_interval_seconds = 0.12
+	battle.battle_definition = definition
 	root.add_child(battle)
 	if is_instance_valid(battle.player):
 		_silence(battle.player)
