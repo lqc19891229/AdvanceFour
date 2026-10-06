@@ -1,11 +1,22 @@
 《前进四》data 目录说明
 
-用途：Godot 运行/导入产生的数据，不是策划直接编辑的源数据。
+职责：
+data 保存游戏运行时需要加载和理解的“正式内容”，回答“游戏里有什么数据、这些数据是什么”。
 
 子目录：
-- import_cache/：Excel 转换后的中间 JSON。
-- generated/：由导入工具自动生成的 .tres 和数据库。
+- definitions/：运行时数据结构定义。
+  - module/：ModuleDefinition 各类型与 ModuleDatabase 类型。
+  - ship/：ShipData、ShipHullCell、ShipModuleInstance、ShipSerializer。
+  - combat/：BattleDefinition、BattleWaveDefinition、EnemyShipDefinition。
+- assets/：Godot Runtime 正式加载素材。
+- modules/：具体模块 .tres 与 module_database.tres。
+- enemies/：具体敌舰蓝图资源。
+- battles/：具体关卡战斗配置。
 
-重要：
-- 策划数据只修改 tools/data_import/source/game_data.xlsx。
-- data/generated 下的文件原则上禁止手工修改。
+原则：
+1. data 按“内容类型”分类，不按“生成方式”分类。
+2. 不再使用 data/generated。
+3. 自动生成的模块资源直接写入 data/modules 对应类型目录。
+4. 自动生成属性由 README / 导入工作流说明，不通过 generated 目录表达。
+5. game 只引用 data 下的正式运行时数据与素材。
+6. tools 保存源数据、源素材和生产工具，不作为 Runtime 数据源。
