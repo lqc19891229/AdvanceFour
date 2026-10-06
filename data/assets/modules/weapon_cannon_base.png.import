@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://game/ship/art/modules/weapon_cannon_base.png"
+source_file="res://data/assets/modules/weapon_cannon_base.png"
 dest_files=["res://.godot/imported/weapon_cannon_base.png-fc80d28391d05f236f38a50b2057bfc9.ctex"]
 
 [params]
