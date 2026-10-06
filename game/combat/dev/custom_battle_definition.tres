@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="BattleDefinition" load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://game/combat/battle_definition.gd" id="1"]
-[ext_resource type="Script" path="res://game/combat/battle_wave_definition.gd" id="2"]
-[ext_resource type="Resource" path="res://game/combat/enemies/scout.tres" id="3"]
+[ext_resource type="Script" path="res://data/definitions/combat/battle_definition.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/combat/battle_wave_definition.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/scout.tres" id="3"]
 
 [sub_resource type="Resource" id="CustomWave"]
 script = ExtResource("2")
