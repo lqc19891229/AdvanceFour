@@ -1,18 +1,21 @@
-《前进四》项目目录规划 V0.31.17
+《前进四》项目目录规划 V0.32.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
-│  └─ autoload/                           # 全局数据 / Session 等入口
+│  └─ autoload/                           # 全局数据 / RunState 等跨场景入口
 │
 ├─ data/                                  # Runtime 正式数据与素材
 │  ├─ definitions/                        # 数据结构定义：回答“这种数据是什么”
 │  │  ├─ module/                          # ModuleDefinition / ModuleDatabase 类型
 │  │  ├─ ship/                            # ShipData / Hull / Instance / Serializer
-│  │  ├─ combat/                          # Battle / Wave / Enemy Definition
+│  │  ├─ combat/                          # Battle / Wave / Enemy / BattleResult Definition
 │  │  └─ appearance/                      # HullAppearanceDefinition
 │  ├─ assets/                             # Runtime 正式素材
 │  │  ├─ modules/                         # 模块 PNG
-│  │  └─ ship/hull/human_basic/           # 16 个 Hull 邻接 Tile
+│  │  ├─ run/
+│  │  ├─ battle_result/                   # 战果 / 维修 / 下一战 UI
+│  │  └─ dev/                             # Run 回归
+│  └─ ship/hull/human_basic/           # 16 个 Hull 邻接 Tile
 │  ├─ appearances/                        # 外观配置实例
 │  │  └─ hull/human_basic.tres
 │  ├─ modules/                            # 模块具体 .tres + module_database.tres
@@ -26,7 +29,8 @@ res://
 │  │  ├─ scout.tres
 │  │  └─ gunship.tres
 │  └─ battles/                            # 战斗关卡实例
-│     └─ stage_001.tres
+│     ├─ stage_001.tres
+│     └─ stage_002.tres
 │
 ├─ game/                                  # Gameplay 执行逻辑与场景
 │  ├─ combat/
@@ -250,3 +254,35 @@ Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
 3. game 与 data Resource 统一引用 data/assets。
 4. 当前仓库内素材采用“单份正式文件”策略。
 5. 未来若出现 PSD / Aseprite / Blender 等制作工程文件，再单独设计源码素材管理，不与 Runtime PNG 混为一谈。
+
+
+========================================
+十、v0.32 Run / 战后闭环
+========================================
+
+core/autoload/run_state.gd
+- 当前 Run 的跨场景状态。
+- current_ship：当前真实飞船状态。
+- battle_entry_ship：当前战斗开场快照，用于 Retry。
+- currency：当前 Credits。
+- completed_battles：已完成战斗。
+- last_result：最近一次已记录战斗结果。
+
+data/definitions/combat/battle_result.gd
+- 战斗结果数据：胜负、battle_id、战后 ShipData、奖励、击毁数、下一战路径。
+
+正式流程：
+Ship Editor
+→ RunState.start_run()
+→ stage_001
+→ Victory
+→ BattleResult
+→ RunState.commit_victory()
+→ Battle Result Screen
+→ 维修 / Run Refit / stage_002
+
+规则：
+- Victory：提交战损并发放奖励。
+- Defeat：不提交战损，不发奖励。
+- Retry：从 battle_entry_ship 重新开始。
+- Run Refit：只修改 RunState.current_ship，不覆盖 user://ships/test_ship.json。
