@@ -32,18 +32,16 @@ tools/data_source/game_data.xlsx
 → data/modules/module_database.tres
 
 美术素材：
-tools/art_source/
-→ 制作 / 处理 / 导入
-→ data/assets/
-→ .tres / Scene / Runtime 引用
+data/assets/
+→ .tres / Scene / Runtime 直接引用
 
 规则：
-1. tools 中保存源数据与源素材。
-2. data 中保存 Runtime 正式版本。
+1. tools 中保存策划源数据、缓存、导入与验证工具。
+2. PNG、音频等游戏素材只保存在 data/assets，作为唯一正式文件。
 3. game 不直接引用 tools。
 4. data 不按“generated/manual”分目录，只按内容类型分类。
 5. 自动生成文件可以直接位于 data/modules 等业务目录，但必须在对应 README 中标注来源和禁止手工修改范围。
-6. tools/art_source 使用 .gdignore，避免 Godot 将源素材重复导入。
+6. 不维护 tools/data 两套重复 PNG。未来若出现真正的美术工程源文件，再单独设计其管理方式。
 
 ========================================
 功能开发工作流
