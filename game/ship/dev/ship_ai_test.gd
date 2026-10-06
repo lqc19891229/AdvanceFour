@@ -3,7 +3,7 @@ extends Node2D
 const SAVE_PATH := "user://ships/test_ship.json"
 const EDITOR_SCENE := "res://game/ship/editor/ship_editor.tscn"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
-const MODULE_DATABASE := preload("res://data/generated/module_database.tres")
+const MODULE_DATABASE := preload("res://data/modules/module_database.tres")
 
 var player: ShipRuntime
 var enemy: ShipRuntime
