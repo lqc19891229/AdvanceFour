@@ -24,3 +24,10 @@ Ship Editor
 - BattleDefinition 与 BattleResult 数据结构属于 data。
 - 当前 Run 状态属于 core/autoload/RunState。
 - 永久设计模板仍由 ShipSerializer 写入 user://ships/test_ship.json。
+
+
+v0.32.1：
+- 有 next_battle_path 时显示“下一战”。
+- 当前最终战没有 next_battle_path 时显示“结束 Run 并返回设计器”。
+- 结束 Run 会清空 RunState，并恢复永久设计模板进入 Ship Editor。
+- 同一个 battle_id 的 Victory 不能重复 commit，防止重复领取 Credits。
