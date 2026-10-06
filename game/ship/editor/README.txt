@@ -56,3 +56,15 @@ v0.32 Run 整备模式：
 - 保存 / 加载按钮在整备模式下只读写 RunState.current_ship，不覆盖永久设计模板。
 - “继续下一战”保存本次改装后，使用 BattleResult.next_battle_path 进入下一场。
 - 当前版本没有库存/购买成本系统，因此整备仍允许自由改装；经济约束仅应用于 Hull 全部维修。
+
+
+v0.34 Run Inventory：
+- 普通 DESIGN_MODE 仍可自由设计，不使用 Run 库存。
+- RUN_REFIT_MODE 启用库存约束：
+  - Equipment 安装消耗对应 module_inventory。
+  - Equipment 拆除返还库存。
+  - Hull 新增消耗 hull_stock，拆除空 Hull 返还库存。
+  - 已安装模块移动 / 旋转免费。
+  - 禁止一键清空飞船。
+- 左侧模块按钮显示库存数量；右侧属性区显示当前 Run 库存汇总。
+- 每次结构变化立即同步 RunState.current_ship，避免 Load 导致库存与船体状态脱节。
