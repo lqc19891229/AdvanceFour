@@ -1,6 +1,8 @@
-《前进四》开发状态 v0.32.0
+《前进四》开发状态 v0.32.1
 
 当前阶段：模块化飞船战斗 Prototype，已建立第一版连续战斗 / 战后整备闭环，尚未形成完整 Roguelike 游戏。
+
+v0.32.1 修正 Run 末端流程与文档结构：stage_002 胜利后的战果页新增“结束 Run 并返回设计器”，避免当前最终关卡出现无可用下一步；Victory 提交增加重复结算保护；PROJECT_STRUCTURE 目录树修正。
 
 v0.32.0 完成战后闭环第一版：新增 RunState 与 BattleResult，正式战斗从 Run 战前快照生成玩家飞船；胜利确认结算后保留 Hull 战损并发放 Credits，Retry 恢复本场战前快照，失败不提交战损或奖励。新增 Battle Result Screen、全部维修、Run 整备模式与 stage_002；编辑器在整备模式只修改 RunState.current_ship，不覆盖永久设计。自动验证新增 Run regression。
 
