@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://game/ship/art/modules/core_bridge.png"
+source_file="res://data/assets/modules/core_bridge.png"
 dest_files=["res://.godot/imported/core_bridge.png-45a75506199ca2ba5e6ced9b777f9a03.ctex"]
 
 [params]
