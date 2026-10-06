@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="EnergyModuleDefinition" format=3 uid="uid://cmcvn2lj2g03n"]
 
-[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://game/ship/definitions/energy_module_definition.gd" id="1_qc0em"]
-[ext_resource type="Texture2D" uid="uid://dpfiyc0mafs0g" path="res://game/ship/art/modules/energy_smallreactor.png" id="2_bvuiq"]
+[ext_resource type="Script" uid="uid://djensrm51ikqf" path="res://data/definitions/module/energy_module_definition.gd" id="1_qc0em"]
+[ext_resource type="Texture2D" uid="uid://dpfiyc0mafs0g" path="res://data/assets/modules/energy_smallreactor.png" id="2_bvuiq"]
 
 [resource]
 script = ExtResource("1_qc0em")
