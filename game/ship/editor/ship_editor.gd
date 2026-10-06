@@ -22,7 +22,7 @@ func _run_state() -> Node:
 func _ready() -> void:
 	_build_module_buttons()
 	_bind_common_buttons()
-	grid.ship_changed.connect(_refresh_stats)
+	grid.ship_changed.connect(_on_grid_ship_changed)
 	grid.selected_module_changed.connect(_on_selected_module_changed)
 	grid.status_message.connect(_show_status)
 	_refresh_selected_label()
@@ -32,20 +32,71 @@ func _ready() -> void:
 		get_tree().remove_meta(RUN_REFIT_META)
 		run_refit_mode = _run_state() != null and _run_state().run_active and _run_state().current_ship != null
 		if run_refit_mode:
+			grid.set_run_inventory_enabled(true)
 			_load_run_ship()
 			$MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "继续下一战"
 			$MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.disabled = true
-			_show_status("Run 整备模式｜Credits：%d｜修改只影响当前 Run" % _run_state().currency)
+			$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.disabled = true
+			_refresh_inventory_button_labels()
+			_show_status("Run 整备模式｜Credits：%d｜模块/Hull 安装受库存限制" % _run_state().currency)
 	elif get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
 			_load_ship()
+
+
+func _on_grid_ship_changed() -> void:
+	if run_refit_mode and _run_state() != null:
+		_run_state().call("update_current_ship", grid.ship)
+	_refresh_stats()
+	_refresh_inventory_button_labels()
+
+func _refresh_inventory_button_labels() -> void:
+	if not run_refit_mode or _run_state() == null:
+		return
+	for child in module_buttons.get_children():
+		if not (child is Button):
+			continue
+		var button := child as Button
+		var kind := StringName(button.get_meta(&"inventory_kind", &""))
+		if kind == &"hull":
+			button.text = "船体｜基础船体格｜库存 %d" % int(_run_state().get("hull_stock"))
+		elif kind == &"module":
+			var module_id := StringName(button.get_meta(&"module_id", &""))
+			var definition := grid.definitions.get(String(module_id), null) as ShipModuleDefinition
+			if definition != null:
+				button.text = "%s｜%s｜库存 %d" % [
+					definition.get_type_name(),
+					definition.display_name,
+					int(_run_state().call("get_module_inventory_count", module_id))
+				]
+
+func _build_inventory_summary() -> String:
+	if not run_refit_mode or _run_state() == null:
+		return ""
+	var lines: Array[String] = []
+	lines.append("Run 库存")
+	lines.append("Hull：%d" % int(_run_state().get("hull_stock")))
+	var inventory: Dictionary = _run_state().get("module_inventory")
+	if inventory.is_empty():
+		lines.append("模块：无")
+	else:
+		lines.append("模块：")
+		var ids := inventory.keys()
+		ids.sort()
+		for raw_id in ids:
+			var module_id := StringName(raw_id)
+			var definition := grid.definitions.get(String(module_id), null) as ShipModuleDefinition
+			var display_name := String(module_id) if definition == null else definition.display_name
+			lines.append("- %s ×%d" % [display_name, int(inventory[module_id])])
+	return "\n".join(lines)
 
 func _build_module_buttons() -> void:
 	for child in module_buttons.get_children():
 		child.queue_free()
 
 	var hull_button := Button.new()
+	hull_button.set_meta(&"inventory_kind", &"hull")
 	hull_button.custom_minimum_size = Vector2(0, 44)
 	hull_button.text = "船体｜基础船体格"
 	hull_button.tooltip_text = "Hull Layout：每格独立 20 HP、质量 2。设备必须完整安装在船体格上。"
@@ -54,6 +105,8 @@ func _build_module_buttons() -> void:
 
 	for definition in grid.get_all_definitions():
 		var button := Button.new()
+		button.set_meta(&"inventory_kind", &"module")
+		button.set_meta(&"module_id", definition.id)
 		button.custom_minimum_size = Vector2(0, 44)
 		button.text = "%s｜%s" % [definition.get_type_name(), definition.display_name]
 		button.tooltip_text = _build_module_tooltip(definition)
@@ -250,6 +303,9 @@ func _refresh_stats() -> void:
 	speed_label.tooltip_text = "完整船体、供能充足时，最高速度只由有效引擎推力 × speed_scale 决定。\nHull 受损会降低对应引擎效率，从而降低速度与加速度。"
 
 	var selected_details := _build_installed_module_details(grid.selected_module)
+	var inventory_summary := _build_inventory_summary()
+	if not inventory_summary.is_empty():
+		selected_details += "\n\n" + inventory_summary
 	stats_label.text = """%s
 
 ────────────
