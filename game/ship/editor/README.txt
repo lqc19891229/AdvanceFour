@@ -23,7 +23,7 @@
 - 已有 Equipment 覆盖的 Hull Cell 不能直接拆除，需先拆设备。
 - 中键拖动：平移编辑区。
 - 保存 / 加载：使用 ShipSerializer v2，同时保存 hull_cells 与 modules。
-- 出航战斗：合法性检查通过后进入 battle.tscn。
+- 出航战斗：普通设计模式下先保存设计模板并创建 Run，然后进入 stage_001。
 - 敌舰 AI 测试：使用相同 Hull / Equipment 设计进入测试场景。
 
 预览：
@@ -48,3 +48,10 @@
 - 编辑阶段允许临时供能不足；出航时要求总耗能不高于设计供能。
 - 第一版 basic_hull 固定 max_hp = 20；其 mass 数据暂保留，但不参与移动。
 - 区域最大 HP = ShipHullCell.max_hp + 覆盖 Defense.hp。
+
+
+v0.32 Run 整备模式：
+- 战果页选择“进入整备”后，以 RunState.current_ship 的副本打开编辑器。
+- 保存 / 加载按钮在整备模式下只读写 RunState.current_ship，不覆盖永久设计模板。
+- “继续下一战”保存本次改装后，使用 BattleResult.next_battle_path 进入下一场。
+- 当前版本没有库存/购买成本系统，因此整备仍允许自由改装；经济约束仅应用于 Hull 全部维修。
