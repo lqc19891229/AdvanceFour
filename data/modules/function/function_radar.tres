@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="FunctionModuleDefinition" format=3 uid="uid://c508upumj0tfq"]
 
-[ext_resource type="Script" uid="uid://vt1mdpchd5pw" path="res://game/ship/definitions/function_module_definition.gd" id="1_c30yf"]
-[ext_resource type="Texture2D" uid="uid://c1b4u0nqfqlsy" path="res://game/ship/art/modules/function_radar.png" id="2_dk6gv"]
+[ext_resource type="Script" uid="uid://vt1mdpchd5pw" path="res://data/definitions/module/function_module_definition.gd" id="1_c30yf"]
+[ext_resource type="Texture2D" uid="uid://c1b4u0nqfqlsy" path="res://data/assets/modules/function_radar.png" id="2_dk6gv"]
 
 [resource]
 script = ExtResource("1_c30yf")
