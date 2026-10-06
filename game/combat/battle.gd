@@ -5,19 +5,15 @@ signal finished(victory: bool)
 
 enum Phase { PREPARING, FIGHTING, INTERMISSION, RESOLVING, VICTORY, DEFEAT, ERROR }
 
-const SAVE_PATH := "user://ships/test_ship.json"
-const EDITOR_SCENE := "res://game/ship/editor/ship_editor.tscn"
+const PLAYER_SHIP_SAVE_PATH := "user://ships/test_ship.json"
+const BATTLE_DEFINITION_META := &"battle_definition_path"
 const SHIP_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const DATABASE := preload("res://data/generated/module_database.tres")
 const PLAYER_LAYER := 4
 const ENEMY_LAYER := 8
 
-# Encounter tuning remains Prototype scene data; module statistics still come from Excel.
-@export var wave_enemy_counts: Array[int] = [1, 1, 2]
-@export var preparation_seconds := 2.0
-@export var intermission_seconds := 3.0
-@export var spawn_interval_seconds := 1.25
-@export var spawn_radius := 460.0
+@export var battle_definition: BattleDefinition
+@export var allow_debug_fallback_design := true
 
 var phase := Phase.PREPARING
 var player: ShipRuntime
@@ -38,28 +34,36 @@ var design_source := ""
 @onready var result_summary: Label = $UI/ResultOverlay/Center/Panel/Margin/Content/Summary
 
 func _init() -> void:
-	# Evaluate outcomes after ships and projectiles have applied this physics frame's damage.
 	process_physics_priority = 100
 
 func _ready() -> void:
 	$UI/ResultOverlay/Center/Panel/Margin/Content/Retry.pressed.connect(retry)
-	$UI/ResultOverlay/Center/Panel/Margin/Content/Return.pressed.connect(return_to_editor)
-	$UI/Return.pressed.connect(return_to_editor)
-	if wave_enemy_counts.is_empty() or wave_enemy_counts.any(func(count: int): return count <= 0):
-		_show_error("波次必须至少包含一波，且每波敌舰数量必须大于零。")
+	$UI/ResultOverlay/Center/Panel/Margin/Content/Return.pressed.connect(return_from_battle)
+	$UI/Return.pressed.connect(return_from_battle)
+
+	_resolve_battle_definition()
+	if battle_definition == null:
+		_show_error("没有指定战斗配置。")
+		return
+	if not battle_definition.is_valid():
+		_show_error(battle_definition.get_invalid_reason())
 		return
 
 	var design: ShipData
-	if FileAccess.file_exists(SAVE_PATH):
-		var loaded := ShipSerializer.load_from_file(SAVE_PATH, DATABASE)
+	if FileAccess.file_exists(PLAYER_SHIP_SAVE_PATH):
+		var loaded := ShipSerializer.load_from_file(PLAYER_SHIP_SAVE_PATH, DATABASE)
 		if not loaded["ok"]:
 			_show_error(loaded["error"])
 			return
 		design = loaded["ship"] as ShipData
 		design_source = "已保存设计"
-	else:
+	elif allow_debug_fallback_design:
 		design = build_starter_design()
-		design_source = "示例设计"
+		design_source = "调试示例设计"
+	else:
+		_show_error("没有可用于出航的玩家飞船。")
+		return
+
 	if not design.is_design_valid():
 		_show_error(design.get_design_invalid_reason())
 		return
@@ -69,8 +73,19 @@ func _ready() -> void:
 	player.add_child(controller)
 	controller.setup(player)
 	player.destroyed.connect(_on_player_destroyed)
-	countdown = maxf(preparation_seconds, 0.0)
+	countdown = battle_definition.preparation_seconds
 	_update_hud()
+
+func _resolve_battle_definition() -> void:
+	if not get_tree().has_meta(BATTLE_DEFINITION_META):
+		return
+	var definition_path := String(get_tree().get_meta(BATTLE_DEFINITION_META))
+	get_tree().remove_meta(BATTLE_DEFINITION_META)
+	if definition_path.is_empty():
+		return
+	var loaded := load(definition_path)
+	if loaded is BattleDefinition:
+		battle_definition = loaded as BattleDefinition
 
 static func build_starter_design() -> ShipData:
 	var design := ShipData.new()
@@ -103,7 +118,6 @@ func _spawn_ship(design: ShipData, location: Vector2, is_player: bool) -> ShipRu
 	return ship
 
 func _configure_projectile(projectile: ProjectileRuntime, from_player: bool) -> void:
-	# Keep the mask on the projectile, including after the firing ship is destroyed.
 	projectile.collision_layer = 0
 	projectile.collision_mask = ENEMY_LAYER if from_player else PLAYER_LAYER
 
@@ -121,15 +135,15 @@ func _physics_process(delta: float) -> void:
 				_start_next_wave()
 		Phase.FIGHTING:
 			spawn_countdown -= delta
-			if spawned_in_wave < wave_enemy_counts[wave_index] and spawn_countdown <= 0.0:
+			if spawned_in_wave < battle_definition.wave_enemy_counts[wave_index] and spawn_countdown <= 0.0:
 				_spawn_enemy()
-				spawn_countdown = maxf(spawn_interval_seconds, 0.0)
-			if spawned_in_wave == wave_enemy_counts[wave_index] and enemies.is_empty():
-				if wave_index == wave_enemy_counts.size() - 1:
+				spawn_countdown = maxf(battle_definition.spawn_interval_seconds, 0.0)
+			if spawned_in_wave == battle_definition.wave_enemy_counts[wave_index] and enemies.is_empty():
+				if wave_index == battle_definition.wave_enemy_counts.size() - 1:
 					phase = Phase.RESOLVING
 				else:
 					phase = Phase.INTERMISSION
-					countdown = maxf(intermission_seconds, 0.0)
+					countdown = maxf(battle_definition.intermission_seconds, 0.0)
 		Phase.RESOLVING:
 			if not _has_live_projectiles():
 				_finish_battle(true)
@@ -140,11 +154,12 @@ func _start_next_wave() -> void:
 	spawn_countdown = 0.0
 	phase = Phase.FIGHTING
 	_spawn_enemy()
-	spawn_countdown = maxf(spawn_interval_seconds, 0.0)
+	spawn_countdown = maxf(battle_definition.spawn_interval_seconds, 0.0)
 
 func _spawn_enemy() -> void:
-	var angle := float(wave_index) * 1.1 + TAU * float(spawned_in_wave) / float(wave_enemy_counts[wave_index])
-	var location := player.global_position + Vector2.RIGHT.rotated(angle) * maxf(spawn_radius, 180.0)
+	var wave_count := battle_definition.wave_enemy_counts[wave_index]
+	var angle := float(wave_index) * 1.1 + TAU * float(spawned_in_wave) / float(wave_count)
+	var location := player.global_position + Vector2.RIGHT.rotated(angle) * maxf(battle_definition.spawn_radius, 180.0)
 	var enemy := _spawn_ship(build_starter_design(), location, false)
 	enemy.rotation = Vector2.UP.angle_to(player.global_position - location)
 	var controller := AIShipController.new()
@@ -181,8 +196,12 @@ func _finish_battle(victory: bool) -> void:
 	phase = Phase.VICTORY if victory else Phase.DEFEAT
 	world.process_mode = Node.PROCESS_MODE_DISABLED
 	result_title.text = "战斗胜利" if victory else "战斗失败"
-	result_summary.text = "击毁敌舰：%d\n到达波次：%d / %d\n战斗时间：%.1f 秒\n\n%s" % [
-		defeated_enemies, maxi(wave_index + 1, 0), wave_enemy_counts.size(), elapsed_seconds,
+	result_summary.text = "%s\n击毁敌舰：%d\n到达波次：%d / %d\n战斗时间：%.1f 秒\n\n%s" % [
+		battle_definition.display_name,
+		defeated_enemies,
+		maxi(wave_index + 1, 0),
+		battle_definition.wave_enemy_counts.size(),
+		elapsed_seconds,
 		"全部波次已清除。" if victory else "核心承载船体被摧毁。"
 	]
 	result_overlay.show()
@@ -205,6 +224,8 @@ func _process(_delta: float) -> void:
 	_update_hud()
 
 func _update_hud() -> void:
+	if battle_definition == null:
+		return
 	var hull_hp := 0.0
 	var hull_max_hp := 0.0
 	var core_efficiency := 0.0
@@ -228,6 +249,7 @@ func _update_hud() -> void:
 		thrust = player.get_effective_thrust()
 		speed = player.get_speed()
 		location = player.global_position
+
 	var status := "交战中"
 	match phase:
 		Phase.PREPARING:
@@ -240,29 +262,48 @@ func _update_hud() -> void:
 			status = "战斗胜利"
 		Phase.DEFEAT:
 			status = "战斗失败"
+
 	var remaining := 0
 	if wave_index >= 0 and phase in [Phase.FIGHTING, Phase.RESOLVING]:
-		remaining = maxi(wave_enemy_counts[wave_index] - spawned_in_wave, 0)
-	hud.text = """前进四｜%s
+		remaining = maxi(battle_definition.wave_enemy_counts[wave_index] - spawned_in_wave, 0)
+
+	hud.text = """前进四｜%s｜%s
 %s  波次 %d / %d
 场上敌舰：%d  本波待生成：%d  击毁：%d
 Hull HP：%.0f / %.0f  核心效率：%.0f%%  可用设备：%d
 可用武器：%d  供能 / 需求：%.0f / %.0f  有效推力：%.0f
 速度：%.1f px/s  坐标：(%.1f, %.1f)
 W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % [
-		design_source, status, maxi(wave_index + 1, 0), wave_enemy_counts.size(),
-		enemies.size(), remaining, defeated_enemies,
-		hull_hp, hull_max_hp, core_efficiency * 100.0, active_equipment,
-		weapons, energy_output, energy_cost, thrust,
-		speed, location.x, location.y
+		battle_definition.display_name,
+		design_source,
+		status,
+		maxi(wave_index + 1, 0),
+		battle_definition.wave_enemy_counts.size(),
+		enemies.size(),
+		remaining,
+		defeated_enemies,
+		hull_hp,
+		hull_max_hp,
+		core_efficiency * 100.0,
+		active_equipment,
+		weapons,
+		energy_output,
+		energy_cost,
+		thrust,
+		speed,
+		location.x,
+		location.y
 	]
 
 func retry() -> void:
 	get_tree().reload_current_scene()
 
-func return_to_editor() -> void:
-	get_tree().set_meta(&"restore_ship_design", true)
-	get_tree().change_scene_to_file(EDITOR_SCENE)
+func return_from_battle() -> void:
+	if battle_definition == null or battle_definition.return_scene_path.is_empty():
+		return
+	if battle_definition.restore_saved_ship_on_return:
+		get_tree().set_meta(&"restore_ship_design", true)
+	get_tree().change_scene_to_file(battle_definition.return_scene_path)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not (event is InputEventKey) or not event.pressed or event.echo:
@@ -270,4 +311,4 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event.keycode == KEY_R:
 		retry()
 	elif event.keycode == KEY_ESCAPE:
-		return_to_editor()
+		return_from_battle()
