@@ -7,6 +7,7 @@ enum Phase { PREPARING, FIGHTING, INTERMISSION, RESOLVING, VICTORY, DEFEAT, ERRO
 
 const PLAYER_SHIP_SAVE_PATH := "user://ships/test_ship.json"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
+const RESULT_SCENE_PATH := "res://game/run/battle_result/battle_result_screen.tscn"
 const SHIP_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const DATABASE := preload("res://data/modules/module_database.tres")
 const PLAYER_LAYER := 4
@@ -26,6 +27,7 @@ var countdown := 0.0
 var spawn_countdown := 0.0
 var design_source := ""
 var battle_definition_error := ""
+var pending_result: BattleResult
 
 @onready var world: Node2D = $World
 @onready var camera: Camera2D = $Camera2D
@@ -39,6 +41,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	$UI/ResultOverlay/Center/Panel/Margin/Content/Retry.pressed.connect(retry)
+	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.pressed.connect(continue_after_victory)
 	$UI/ResultOverlay/Center/Panel/Margin/Content/Return.pressed.connect(return_from_battle)
 	$UI/Return.pressed.connect(return_from_battle)
 
@@ -54,7 +57,14 @@ func _ready() -> void:
 		return
 
 	var design: ShipData
-	if FileAccess.file_exists(PLAYER_SHIP_SAVE_PATH):
+	var active_battle_path := _get_active_battle_path()
+	if RunState.run_active and not active_battle_path.is_empty():
+		design = RunState.get_ship_for_battle(active_battle_path)
+		if design == null:
+			_show_error("RunState 无法提供本场战斗的飞船状态。")
+			return
+		design_source = "Run 战损状态"
+	elif FileAccess.file_exists(PLAYER_SHIP_SAVE_PATH):
 		var loaded := ShipSerializer.load_from_file(PLAYER_SHIP_SAVE_PATH, DATABASE)
 		if not loaded["ok"]:
 			_show_error(loaded["error"])
@@ -79,6 +89,11 @@ func _ready() -> void:
 	player.destroyed.connect(_on_player_destroyed)
 	countdown = battle_definition.preparation_seconds
 	_update_hud()
+
+func _get_active_battle_path() -> String:
+	if battle_definition == null:
+		return ""
+	return battle_definition.resource_path
 
 func _resolve_battle_definition() -> void:
 	if not get_tree().has_meta(BATTLE_DEFINITION_META):
@@ -231,15 +246,32 @@ func _finish_battle(victory: bool) -> void:
 		return
 	phase = Phase.VICTORY if victory else Phase.DEFEAT
 	world.process_mode = Node.PROCESS_MODE_DISABLED
+	pending_result = BattleResult.new()
+	pending_result.outcome = BattleResult.Outcome.VICTORY if victory else BattleResult.Outcome.DEFEAT
+	pending_result.battle_id = battle_definition.battle_id
+	pending_result.battle_path = _get_active_battle_path()
+	pending_result.next_battle_path = battle_definition.next_battle_path
+	pending_result.reward_credits = battle_definition.reward_credits if victory else 0
+	pending_result.enemies_destroyed = defeated_enemies
+	pending_result.elapsed_seconds = elapsed_seconds
+	if victory and is_instance_valid(player):
+		var cloned := ShipSerializer.from_dictionary(ShipSerializer.to_dictionary(player.ship_data), DATABASE)
+		if cloned["ok"]:
+			pending_result.ship_after_battle = cloned["ship"] as ShipData
+	if not victory and RunState.run_active:
+		RunState.record_defeat(pending_result)
+
 	result_title.text = "战斗胜利" if victory else "战斗失败"
-	result_summary.text = "%s\n击毁敌舰：%d\n到达波次：%d / %d\n战斗时间：%.1f 秒\n\n%s" % [
+	result_summary.text = "%s\n击毁敌舰：%d\n到达波次：%d / %d\n战斗时间：%.1f 秒\n%s\n\n%s" % [
 		battle_definition.display_name,
 		defeated_enemies,
 		maxi(wave_index + 1, 0),
 		battle_definition.get_wave_count(),
 		elapsed_seconds,
+		"奖励：%d Credits" % battle_definition.reward_credits if victory and RunState.run_active else "",
 		"全部波次已清除。" if victory else "核心承载船体被摧毁。"
 	]
+	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.visible = victory and RunState.run_active
 	result_overlay.show()
 	_update_hud()
 	finished.emit(victory)
@@ -333,6 +365,14 @@ W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % 
 		location.y
 	]
 
+func continue_after_victory() -> void:
+	if phase != Phase.VICTORY or not RunState.run_active or pending_result == null:
+		return
+	if not RunState.commit_victory(pending_result):
+		_show_error("无法提交本场战斗结果。")
+		return
+	get_tree().change_scene_to_file(RESULT_SCENE_PATH)
+
 func retry() -> void:
 	if battle_definition != null and not battle_definition.resource_path.is_empty():
 		get_tree().set_meta(BATTLE_DEFINITION_META, battle_definition.resource_path)
@@ -341,6 +381,8 @@ func retry() -> void:
 func return_from_battle() -> void:
 	if battle_definition == null or battle_definition.return_scene_path.is_empty():
 		return
+	if RunState.run_active:
+		RunState.reset_run()
 	if battle_definition.restore_saved_ship_on_return:
 		get_tree().set_meta(&"restore_ship_design", true)
 	get_tree().change_scene_to_file(battle_definition.return_scene_path)
