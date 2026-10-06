@@ -1,6 +1,7 @@
 extends SceneTree
 
 const DATABASE := preload("res://data/modules/module_database.tres")
+const HULL_APPEARANCE := preload("res://data/appearances/hull/human_basic.tres")
 const RUNTIME := preload("res://game/ship/runtime/ship_runtime.tscn")
 const AI_TEST := preload("res://game/ship/dev/ship_ai_test.tscn")
 const MOVEMENT_TEST := preload("res://game/ship/dev/ship_movement_test.tscn")
@@ -151,10 +152,35 @@ func _test_module_art_data() -> void:
 	world.add_child(appearance)
 	appearance.setup(appearance_data, 36.0, Vector2.ZERO)
 	_check(
-		appearance.get_neighbor_mask(Vector2i.ZERO) == 2
+		HULL_APPEARANCE is HullAppearanceDefinition
+		and HULL_APPEARANCE.is_valid()
+		and HULL_APPEARANCE.tiles.size() == 16,
+		"Default Hull appearance must provide all 16 adjacency textures"
+	)
+	_check(
+		appearance.is_using_tile_appearance()
+		and appearance.hull_sprites.size() == 2
+		and appearance.get_neighbor_mask(Vector2i.ZERO) == 2
 		and appearance.get_neighbor_mask(Vector2i.RIGHT) == 8
+		and appearance.get_hull_texture_for_cell(Vector2i.ZERO) == HULL_APPEARANCE.get_tile(2)
+		and appearance.get_hull_texture_for_cell(Vector2i.RIGHT) == HULL_APPEARANCE.get_tile(8)
 		and appearance.is_exterior_cell(Vector2i.ZERO),
-		"Appearance hull adjacency must derive its outer shell from Hull Layout only"
+		"Appearance must select Hull textures from the four-direction adjacency mask"
+	)
+	var cross_data := ShipData.new()
+	cross_data.add_hull_cell(Vector2i.ZERO)
+	cross_data.add_hull_cell(Vector2i.UP)
+	cross_data.add_hull_cell(Vector2i.RIGHT)
+	cross_data.add_hull_cell(Vector2i.DOWN)
+	cross_data.add_hull_cell(Vector2i.LEFT)
+	var cross_appearance := ShipAppearanceRenderer.new()
+	world.add_child(cross_appearance)
+	cross_appearance.setup(cross_data, 36.0, Vector2.ZERO)
+	_check(
+		cross_appearance.get_neighbor_mask(Vector2i.ZERO) == 15
+		and not cross_appearance.is_exterior_cell(Vector2i.ZERO)
+		and cross_appearance.get_hull_texture_for_cell(Vector2i.ZERO) == HULL_APPEARANCE.get_tile(15),
+		"A four-neighbor Hull cell must use tile 1111"
 	)
 	world.queue_free()
 	await process_frame
