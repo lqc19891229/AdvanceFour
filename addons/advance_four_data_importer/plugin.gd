@@ -126,6 +126,7 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 			defense.protection = float(row["protection"])
 		"FUNCTION":
 			d = FunctionDef.new()
+			(d as FunctionModuleDefinition).storage_capacity = int(row.get("storage_capacity", 0))
 		"CORE":
 			d = CoreDef.new()
 		_:
