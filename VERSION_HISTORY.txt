@@ -1,3 +1,11 @@
+v0.41.1
+- data/battles 改为按 battle_id 组织战斗配置包。
+- stage_001 / stage_002 现在各自包含 battle.tres 与 loot.tres。
+- 删除独立 data/loot_tables/ 目录。
+- BattleDefinition 与 LootTableDefinition 保持独立 Resource，仅调整物理目录归档方式。
+- 更新 Prototype Route、battle.tscn 默认战斗、Run regression 等全部资源路径。
+- 明确普通战 / 精英战 / Boss 可通过 battle.tres + loot.tres 的数据差异表现，不需要独立战斗运行时代码。
+
 v0.41.0
 - 明确 v0.41 暂不引入装备稀有度、随机词条或实例品质；weight 只控制掉落概率。
 - 新增 LootTableEntry：module_id、weight、min_count、max_count。
