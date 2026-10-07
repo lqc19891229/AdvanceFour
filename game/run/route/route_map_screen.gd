@@ -3,6 +3,7 @@ extends Control
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const SHOP_SCENE_PATH := "res://game/run/shop/shop_screen.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
+const STATION_SCENE_PATH := "res://game/run/station/station_screen.tscn"
 const WAREHOUSE_SCENE_PATH := "res://game/run/warehouse/warehouse_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
@@ -95,7 +96,7 @@ func _get_node_tooltip(node: RunRouteNodeDefinition) -> String:
 		RunRouteNodeDefinition.NodeType.SHOP:
 			return "进入补给商店，用能量结晶购买模块或 Hull。"
 		RunRouteNodeDefinition.NodeType.REFIT:
-			return "进入整备站，使用当前 Run Inventory 改装飞船。"
+			return "进入维修改装空间站：免费维修至满血，可用零件制造模块并进入飞船改装。"
 		RunRouteNodeDefinition.NodeType.END:
 			return "完成当前 Prototype 航线并返回飞船编辑器。"
 	return ""
@@ -114,8 +115,7 @@ func _select_node(node_id: StringName) -> void:
 		RunRouteNodeDefinition.NodeType.SHOP:
 			get_tree().change_scene_to_file(SHOP_SCENE_PATH)
 		RunRouteNodeDefinition.NodeType.REFIT:
-			get_tree().set_meta(RUN_REFIT_META, true)
-			get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
+			get_tree().change_scene_to_file(STATION_SCENE_PATH)
 		RunRouteNodeDefinition.NodeType.END:
 			run_state.call("complete_current_route_node")
 			run_state.call("reset_run")
