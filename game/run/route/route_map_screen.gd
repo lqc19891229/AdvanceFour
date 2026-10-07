@@ -3,6 +3,7 @@ extends Control
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const SHOP_SCENE_PATH := "res://game/run/shop/shop_screen.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
+const WAREHOUSE_SCENE_PATH := "res://game/run/warehouse/warehouse_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
 
@@ -10,11 +11,13 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var status: Label = $Margin/Layout/Header/Status
 @onready var map_area: Control = $Margin/Layout/MapFrame/MapArea
 @onready var hint: Label = $Margin/Layout/Hint
+@onready var warehouse_button: Button = $Margin/Layout/Actions/Warehouse
 
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
 
 func _ready() -> void:
+	warehouse_button.pressed.connect(_open_warehouse)
 	_refresh()
 
 func _refresh() -> void:
@@ -27,8 +30,10 @@ func _refresh() -> void:
 	var route := run_state.get("route_definition") as RunRouteDefinition
 	var current := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 	title.text = route.display_name
-	status.text = "Credits：%d｜当前节点：%s" % [
+	status.text = "Credits：%d｜仓库：%d / %d｜当前节点：%s" % [
 		int(run_state.get("currency")),
+		int(run_state.call("get_warehouse_used")),
+		int(run_state.call("get_warehouse_capacity")),
 		"无" if current == null else current.display_name
 	]
 	hint.text = "选择高亮节点继续前进。路线一旦选择，本层另一分支将不可返回。"
@@ -115,3 +120,10 @@ func _select_node(node_id: StringName) -> void:
 			run_state.call("reset_run")
 			get_tree().set_meta(&"restore_ship_design", true)
 			get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
+
+
+func _open_warehouse() -> void:
+	var run_state := _run_state()
+	if run_state == null or not bool(run_state.call("is_route_active")):
+		return
+	get_tree().change_scene_to_file(WAREHOUSE_SCENE_PATH)
