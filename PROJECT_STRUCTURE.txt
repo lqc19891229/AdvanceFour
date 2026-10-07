@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.37.1
+《前进四》项目目录规划 V0.38.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -334,3 +334,14 @@ Run Inventory：
 - Defeat：不提交战损，不发奖励。
 - Retry：从 battle_entry_ship 重新开始。
 - Run Refit：只修改 RunState.current_ship，不覆盖 user://ships/test_ship.json。
+
+
+模块仓库（v0.38.0）
+- RunState.module_inventory 继续作为模块仓库账本。
+- 基础仓储容量：12。
+- 模块仓储占用固定由 ShipModuleDefinition.get_storage_cost() = size.x × size.y 计算；旋转不改变占用。
+- Hull Stock 独立保存，不计入模块仓储。
+- FunctionModuleDefinition.storage_capacity > 0 的已安装模块会增加飞船仓储容量。
+- 当前标准货舱 function_cargo_hold：2×2，+16 仓储，自身进入仓库时占 4。
+- 商店模块购买、固定战斗模块奖励、成长模块奖励都必须先通过仓储容量检查。
+- 整备拆下模块仍允许写回仓库；若因此形成超载，新的商店购买/模块奖励会被阻止，直到玩家重新安装或消耗模块。
