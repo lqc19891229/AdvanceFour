@@ -6,4 +6,6 @@
 正式素材：data/assets/modules/。
 数据类型定义：data/definitions/module/。
 
-禁止手工修改本目录中的模块 .tres；请修改 Excel 后重新执行“前进四：导入模块数据”。
+通常禁止手工修改本目录中的模块 .tres；请修改数据源后重新执行“前进四：导入模块数据”。
+
+v0.38.0：function_cargo_hold 为内建系统模块，由 tools/import/import_excel.py 的 BUILTIN_MODULES 注入缓存并由 Godot 导入器稳定重建，不依赖 Excel Function Sheet。
