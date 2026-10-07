@@ -23,7 +23,7 @@ func _ready() -> void:
 	station_definition = _resolve_station_definition()
 	var run_state := _run_state()
 	if run_state != null and run_state.run_active:
-		run_state.call("repair_all_free")
+		run_state.call("repair_all_free_at_station")
 	_refresh()
 
 func _resolve_station_definition() -> StationDefinition:
