@@ -297,6 +297,15 @@ func _run() -> void:
 	_check(bool(run_state.call("spend_parts", 5)) and int(run_state.get("parts")) == 15 and int(run_state.get("energy_crystals")) == 20, "Spending parts must not change energy crystals")
 	_check(not bool(run_state.call("spend_parts", 16)) and int(run_state.get("parts")) == 15, "Parts overspend must fail atomically")
 
+	# Station services must not be callable outside an active station route node.
+	var off_route_station := load("res://data/stations/basic_station.tres") as StationDefinition
+	var off_route_cell := _first_cell(run_state.get("current_ship") as ShipData)
+	off_route_cell.current_hp = 5.0
+	run_state.set("parts", 100)
+	var off_route_cannon := off_route_station.get_craft_item(&"cannon")
+	_check(not bool(run_state.call("repair_all_free_at_station")) and is_equal_approx(off_route_cell.current_hp, 5.0), "Free station repair must be rejected outside a station node")
+	_check(not bool(run_state.call("craft_station_item", off_route_cannon)) and int(run_state.get("parts")) == 100 and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 0, "Station crafting must be rejected outside a station node")
+
 	# Inventory primitives must be atomic.
 	run_state.call("add_module_to_inventory", &"weapon_cannon", 2)
 	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 2, "Module inventory must add fixed quantities")
