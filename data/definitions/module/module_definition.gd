@@ -20,6 +20,10 @@ enum ModuleType {
 
 @export_group("美术资源")
 @export var texture: Texture2D
+@export var icon_texture: Texture2D
+
+func get_display_texture() -> Texture2D:
+	return icon_texture if icon_texture != null else texture
 
 func get_storage_cost() -> int:
 	return maxi(size.x, 0) * maxi(size.y, 0)
