@@ -255,7 +255,8 @@ func _finish_battle(victory: bool) -> void:
 	pending_result.battle_id = battle_definition.battle_id
 	pending_result.battle_path = _get_active_battle_path()
 	pending_result.next_battle_path = battle_definition.next_battle_path
-	pending_result.reward_credits = battle_definition.reward_credits if victory else 0
+	pending_result.reward_energy_crystals = battle_definition.reward_energy_crystals if victory else 0
+	pending_result.reward_parts = battle_definition.reward_parts if victory else 0
 	if victory:
 		if battle_definition.loot_table != null:
 			for rolled in battle_definition.loot_table.roll():
@@ -293,8 +294,10 @@ func _finish_battle(victory: bool) -> void:
 
 func _format_battle_reward() -> String:
 	var parts: Array[String] = []
-	if battle_definition.reward_credits > 0:
-		parts.append("%d Credits" % battle_definition.reward_credits)
+	if battle_definition.reward_energy_crystals > 0:
+		parts.append("%d 能量结晶" % battle_definition.reward_energy_crystals)
+	if battle_definition.reward_parts > 0:
+		parts.append("%d 零件" % battle_definition.reward_parts)
 	if battle_definition.reward_hull_cells > 0:
 		parts.append("%d Hull" % battle_definition.reward_hull_cells)
 	if battle_definition.loot_table != null:
