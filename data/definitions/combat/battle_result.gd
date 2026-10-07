@@ -11,6 +11,7 @@ var ship_after_battle: ShipData
 var reward_credits := 0
 var reward_module_ids: Array[StringName] = []
 var reward_module_counts: Array[int] = []
+var reward_module_rarities: Array[int] = []
 var loot_resolved: Array[bool] = []
 var loot_taken: Array[bool] = []
 var reward_hull_cells := 0
