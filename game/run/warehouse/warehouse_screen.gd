@@ -47,7 +47,7 @@ func _refresh() -> void:
 	var used := int(run_state.call("get_warehouse_used"))
 	var capacity := int(run_state.call("get_warehouse_capacity"))
 	var remaining := capacity - used
-	capacity_label.text = "模块仓库：%d / %d｜剩余：%d" % [used, capacity, maxi(remaining, 0)]
+	capacity_label.text = "能量结晶：%d｜零件：%d｜模块仓库：%d / %d｜剩余：%d" % [int(run_state.get("energy_crystals")), int(run_state.get("parts")), used, capacity, maxi(remaining, 0)]
 	if remaining < 0:
 		warning_label.text = "仓库超载 %d：无法购买或领取新的模块。" % -remaining
 	else:
