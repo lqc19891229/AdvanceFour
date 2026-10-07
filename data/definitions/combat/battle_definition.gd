@@ -11,6 +11,7 @@ const DATABASE := preload("res://data/modules/module_database.tres")
 @export var spawn_interval_seconds := 1.25
 @export var spawn_radius := 460.0
 @export var reward_credits := 0
+@export var loot_table: LootTableDefinition
 @export var reward_module_ids: Array[StringName] = []
 @export var reward_module_counts: Array[int] = []
 @export var reward_hull_cells := 0
@@ -32,6 +33,8 @@ func is_valid() -> bool:
 	if preparation_seconds < 0.0 or intermission_seconds < 0.0 or spawn_interval_seconds < 0.0:
 		return false
 	if spawn_radius <= 0.0 or reward_credits < 0 or reward_hull_cells < 0:
+		return false
+	if loot_table != null and not loot_table.is_valid():
 		return false
 	if reward_module_counts.size() > reward_module_ids.size():
 		return false
@@ -70,6 +73,8 @@ func get_invalid_reason() -> String:
 		return "战斗奖励不能为负数。"
 	if reward_hull_cells < 0:
 		return "Hull 奖励不能为负数。"
+	if loot_table != null and not loot_table.is_valid():
+		return "掉落表：%s" % loot_table.get_invalid_reason()
 	if reward_module_counts.size() > reward_module_ids.size():
 		return "模块奖励数量配置不能多于模块 ID。"
 	for count in reward_module_counts:
