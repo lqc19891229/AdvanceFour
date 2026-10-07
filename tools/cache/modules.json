@@ -115,7 +115,30 @@
       "turn_speed_degrees": 0,
       "projectile_speed": 0,
       "fire_angle_tolerance_degrees": 0,
-      "firing_arc_degrees": 0
+      "firing_arc_degrees": 0,
+      "storage_capacity": 0
+    },
+    {
+      "id": "function_cargo_hold",
+      "display_name": "标准货舱",
+      "module_type": "FUNCTION",
+      "description": "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。",
+      "width": 2,
+      "height": 2,
+      "energy_cost": 2,
+      "texture_path": "res://data/assets/modules/function_cargo_hold.png",
+      "turret_texture_path": "",
+      "energy_output": 0,
+      "thrust": 0,
+      "firepower": 0,
+      "protection": 0,
+      "attack_range": 0,
+      "fire_interval": 0,
+      "turn_speed_degrees": 0,
+      "projectile_speed": 0,
+      "fire_angle_tolerance_degrees": 0,
+      "firing_arc_degrees": 0,
+      "storage_capacity": 16
     },
     {
       "id": "core_bridge",
@@ -137,28 +160,6 @@
       "projectile_speed": 0,
       "fire_angle_tolerance_degrees": 0,
       "firing_arc_degrees": 0
-    },
-    {
-      "id": "function_cargo_hold",
-      "display_name": "标准货舱",
-      "module_type": "FUNCTION",
-      "description": "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。当前暂用功能模块占位贴图。",
-      "width": 2,
-      "height": 2,
-      "energy_cost": 2,
-      "texture_path": "res://data/assets/modules/function_radar.png",
-      "turret_texture_path": "",
-      "energy_output": 0,
-      "thrust": 0,
-      "firepower": 0,
-      "protection": 0,
-      "attack_range": 0,
-      "fire_interval": 0,
-      "turn_speed_degrees": 0,
-      "projectile_speed": 0,
-      "fire_angle_tolerance_degrees": 0,
-      "firing_arc_degrees": 0,
-      "storage_capacity": 16
     }
   ]
 }
