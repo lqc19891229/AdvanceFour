@@ -10,6 +10,7 @@ display_name = "轻型装甲"
 module_id = &"defense_lightarmor"
 module_count = 1
 price_credits = 45
+shop_groups = Array[StringName]([&"combat", &"utility"])
 
 [sub_resource type="Resource" id="Cannon"]
 script = ExtResource("2")
@@ -18,6 +19,7 @@ display_name = "机炮"
 module_id = &"weapon_cannon"
 module_count = 1
 price_credits = 70
+shop_groups = Array[StringName]([&"combat"])
 
 [sub_resource type="Resource" id="Engine"]
 script = ExtResource("2")
@@ -26,6 +28,7 @@ display_name = "小型引擎"
 module_id = &"propulsion_smallengine"
 module_count = 1
 price_credits = 55
+shop_groups = Array[StringName]([&"systems"])
 
 [sub_resource type="Resource" id="Reactor"]
 script = ExtResource("2")
@@ -34,6 +37,7 @@ display_name = "小型反应堆"
 module_id = &"energy_smallreactor"
 module_count = 1
 price_credits = 60
+shop_groups = Array[StringName]([&"systems"])
 
 [sub_resource type="Resource" id="Radar"]
 script = ExtResource("2")
@@ -42,6 +46,7 @@ display_name = "雷达"
 module_id = &"function_radar"
 module_count = 1
 price_credits = 50
+shop_groups = Array[StringName]([&"utility"])
 
 [sub_resource type="Resource" id="Hull"]
 script = ExtResource("2")
@@ -49,9 +54,12 @@ item_id = &"hull"
 display_name = "基础船体"
 hull_cells = 1
 price_credits = 25
+shop_groups = Array[StringName]([&"structure"])
 
 [resource]
 script = ExtResource("1")
 shop_id = &"basic_shop"
 display_name = "补给商店"
+slot_count = 4
+slot_groups = Array[StringName]([&"combat", &"systems", &"utility", &"any"])
 items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("Hull")])
