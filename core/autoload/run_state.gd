@@ -475,8 +475,22 @@ func purchase_shop_item(item: ShopItemDefinition) -> bool:
 		add_hull_stock(item.hull_cells)
 	return true
 
-func repair_all_free() -> bool:
-	if current_ship == null:
+func _get_current_station_definition() -> StationDefinition:
+	if not is_route_active():
+		return null
+	var node := get_current_route_node()
+	if node == null or node.node_type != RunRouteNodeDefinition.NodeType.REFIT:
+		return null
+	if node.target_path.is_empty() or not ResourceLoader.exists(node.target_path):
+		return null
+	var loaded := ResourceLoader.load(node.target_path)
+	if not (loaded is StationDefinition):
+		return null
+	var station := loaded as StationDefinition
+	return station if station.is_valid() else null
+
+func repair_all_free_at_station() -> bool:
+	if current_ship == null or _get_current_station_definition() == null:
 		return false
 	for cell in current_ship.get_hull_cells():
 		cell.current_hp = cell.max_hp
@@ -484,6 +498,9 @@ func repair_all_free() -> bool:
 
 func can_craft_station_item(item: StationCraftItemDefinition) -> bool:
 	if not run_active or item == null or not item.is_valid():
+		return false
+	var station := _get_current_station_definition()
+	if station == null or station.get_craft_item(item.item_id) != item:
 		return false
 	if parts < item.parts_cost:
 		return false
