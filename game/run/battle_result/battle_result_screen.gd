@@ -149,7 +149,9 @@ func _refresh_reward_choices(result: BattleResult) -> void:
 		button.custom_minimum_size = Vector2(0, 52)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.text = choice.get_label()
-		button.disabled = result.reward_choice_claimed
+		button.disabled = result.reward_choice_claimed or not bool(_run_state().call("can_claim_reward_choice", index))
+		if not result.reward_choice_claimed and button.disabled:
+			button.tooltip_text = "仓库空间不足，无法领取该模块奖励。"
 		if result.reward_choice_claimed and result.selected_reward_choice == index:
 			button.text = "已领取｜" + button.text
 		button.pressed.connect(_claim_reward_choice.bind(index))
