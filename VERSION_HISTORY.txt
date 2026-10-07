@@ -1,3 +1,14 @@
+v0.40.0
+- 新增 game/run/loot/ 战利品临时区场景。
+- 固定模块战利品不再随 commit_victory() 自动进入仓库。
+- BattleResult 新增逐件战利品 resolved / taken 状态。
+- RunState 新增 has_pending_loot()、can_take_loot()、take_loot()、discard_loot()。
+- 带走战利品统一经过仓储容量检查；容量不足时可选择放弃。
+- 未处理完战利品时阻止路线继续和下一战。
+- stage_001 配置轻型装甲、雷达、机炮三件固定战利品。
+- stage_002 配置机炮、轻型装甲、标准货舱三件固定战利品。
+- Run regression 增加提交不入库、带走入库、放弃不入库和处理完成解锁继续的验证。
+
 v0.39.0
 - 新增 game/run/warehouse 仓库管理场景。
 - Route Map 增加“查看仓库”入口，查看仓库不改变路线节点。
