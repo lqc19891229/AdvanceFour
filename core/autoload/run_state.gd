@@ -13,6 +13,7 @@ var completed_route_nodes: Array[StringName] = []
 var currency := 0
 var module_inventory: Dictionary = {}
 var hull_stock := 0
+var shop_node_states: Dictionary = {}
 var completed_battles: Array[StringName] = []
 var last_result: BattleResult
 
@@ -27,6 +28,7 @@ func reset_run() -> void:
 	currency = 0
 	module_inventory.clear()
 	hull_stock = 0
+	shop_node_states.clear()
 	completed_battles.clear()
 	last_result = null
 
@@ -231,6 +233,102 @@ func take_hull_stock(count: int = 1) -> bool:
 	hull_stock -= count
 	return true
 
+
+func _get_shop_state_key(shop: ShopDefinition) -> StringName:
+	if shop == null:
+		return &""
+	if is_route_active():
+		var node := get_current_route_node()
+		if node != null and node.node_type == RunRouteNodeDefinition.NodeType.SHOP:
+			return StringName("route:%s" % String(node.node_id))
+	return StringName("shop:%s" % String(shop.shop_id))
+
+func _generate_shop_state(shop: ShopDefinition) -> Dictionary:
+	var state := {
+		"item_ids": [],
+		"purchased_slots": []
+	}
+	if shop == null or not shop.is_valid():
+		return state
+	var remaining: Array[ShopItemDefinition] = []
+	for raw_item in shop.items:
+		var item := raw_item as ShopItemDefinition
+		if item != null:
+			remaining.append(item)
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var item_ids: Array[StringName] = []
+	var purchased_slots: Array[bool] = []
+	for slot_index in range(shop.slot_count):
+		var candidates: Array[ShopItemDefinition] = []
+		for item in remaining:
+			if shop.item_matches_slot(item, slot_index):
+				candidates.append(item)
+		if candidates.is_empty():
+			candidates.assign(remaining)
+		if candidates.is_empty():
+			break
+		var selected := candidates[rng.randi_range(0, candidates.size() - 1)]
+		item_ids.append(selected.item_id)
+		purchased_slots.append(false)
+		remaining.erase(selected)
+	state["item_ids"] = item_ids
+	state["purchased_slots"] = purchased_slots
+	return state
+
+func _ensure_shop_state(shop: ShopDefinition) -> StringName:
+	if not run_active or shop == null or not shop.is_valid():
+		return &""
+	var key := _get_shop_state_key(shop)
+	if key == &"":
+		return &""
+	if not shop_node_states.has(key):
+		shop_node_states[key] = _generate_shop_state(shop)
+	return key
+
+func get_shop_slots(shop: ShopDefinition) -> Array[ShopItemDefinition]:
+	var result: Array[ShopItemDefinition] = []
+	var key := _ensure_shop_state(shop)
+	if key == &"":
+		return result
+	var state: Dictionary = shop_node_states[key]
+	var item_ids: Array = state.get("item_ids", [])
+	for raw_id in item_ids:
+		var item := shop.get_item_by_id(StringName(raw_id))
+		if item != null:
+			result.append(item)
+	return result
+
+func is_shop_slot_purchased(shop: ShopDefinition, slot_index: int) -> bool:
+	var key := _ensure_shop_state(shop)
+	if key == &"":
+		return false
+	var state: Dictionary = shop_node_states[key]
+	var purchased_slots: Array = state.get("purchased_slots", [])
+	if slot_index < 0 or slot_index >= purchased_slots.size():
+		return false
+	return bool(purchased_slots[slot_index])
+
+func can_purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
+	var slots := get_shop_slots(shop)
+	if slot_index < 0 or slot_index >= slots.size() or is_shop_slot_purchased(shop, slot_index):
+		return false
+	return can_purchase_shop_item(slots[slot_index])
+
+func purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
+	if not can_purchase_shop_slot(shop, slot_index):
+		return false
+	var slots := get_shop_slots(shop)
+	var item := slots[slot_index]
+	if not purchase_shop_item(item):
+		return false
+	var key := _get_shop_state_key(shop)
+	var state: Dictionary = shop_node_states[key]
+	var purchased_slots: Array = state.get("purchased_slots", [])
+	purchased_slots[slot_index] = true
+	state["purchased_slots"] = purchased_slots
+	shop_node_states[key] = state
+	return true
 
 func can_purchase_shop_item(item: ShopItemDefinition) -> bool:
 	if not run_active or item == null or not item.is_valid():
