@@ -2,6 +2,7 @@ extends Control
 
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
+const STATION_SCENE_PATH := "res://game/run/station/station_screen.tscn"
 const RUN_REFIT_META := &"run_refit_mode"
 const DATABASE := preload("res://data/modules/module_database.tres")
 
@@ -204,8 +205,7 @@ func _open_refit() -> void:
 	if current == null or current.node_id != refit_id:
 		if not bool(run_state.call("select_route_node", refit_id)):
 			return
-	get_tree().set_meta(RUN_REFIT_META, true)
-	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
+	get_tree().change_scene_to_file(STATION_SCENE_PATH)
 
 func _return_to_route() -> void:
 	get_tree().change_scene_to_file(ROUTE_MAP_SCENE_PATH)
