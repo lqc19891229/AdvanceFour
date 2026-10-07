@@ -475,6 +475,28 @@ func purchase_shop_item(item: ShopItemDefinition) -> bool:
 		add_hull_stock(item.hull_cells)
 	return true
 
+func repair_all_free() -> bool:
+	if current_ship == null:
+		return false
+	for cell in current_ship.get_hull_cells():
+		cell.current_hp = cell.max_hp
+	return true
+
+func can_craft_station_item(item: StationCraftItemDefinition) -> bool:
+	if not run_active or item == null or not item.is_valid():
+		return false
+	if parts < item.parts_cost:
+		return false
+	return can_store_module(item.module_id, item.module_count)
+
+func craft_station_item(item: StationCraftItemDefinition) -> bool:
+	if not can_craft_station_item(item):
+		return false
+	if not store_module(item.module_id, item.module_count):
+		return false
+	parts -= item.parts_cost
+	return true
+
 func get_repair_cost_for_cell(position: Vector2i) -> int:
 	if current_ship == null:
 		return 0
