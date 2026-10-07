@@ -84,7 +84,7 @@ func complete_current_route_node() -> bool:
 func get_available_route_node_ids() -> Array[StringName]:
 	var result: Array[StringName] = []
 	var current := get_current_route_node()
-	if current == null or not is_current_route_node_complete() or has_pending_reward_choice():
+	if current == null or not is_current_route_node_complete() or has_pending_reward_choice() or has_pending_loot():
 		return result
 	for next_id in current.next_node_ids:
 		if route_definition.get_node(next_id) != null:
@@ -92,7 +92,7 @@ func get_available_route_node_ids() -> Array[StringName]:
 	return result
 
 func select_route_node(node_id: StringName) -> bool:
-	if not is_route_active() or has_pending_reward_choice():
+	if not is_route_active() or has_pending_reward_choice() or has_pending_loot():
 		return false
 	if not get_available_route_node_ids().has(node_id):
 		return false
@@ -141,27 +141,13 @@ func commit_victory(result: BattleResult) -> bool:
 		return false
 	if result.battle_id != &"" and completed_battles.has(result.battle_id):
 		return false
-	var required_storage := 0
-	for index in range(result.reward_module_ids.size()):
-		var reward_id := result.reward_module_ids[index]
-		var reward_count := 1
-		if index < result.reward_module_counts.size():
-			reward_count = maxi(result.reward_module_counts[index], 0)
-		required_storage += get_module_storage_cost(reward_id, reward_count)
-	if get_warehouse_used() + required_storage > get_warehouse_capacity():
-		return false
 	var copy := _clone_ship(result.ship_after_battle)
 	if copy == null:
 		return false
 	current_ship = copy
 	currency += maxi(result.reward_credits, 0)
 	hull_stock += maxi(result.reward_hull_cells, 0)
-	for index in range(result.reward_module_ids.size()):
-		var module_id := result.reward_module_ids[index]
-		var count := 1
-		if index < result.reward_module_counts.size():
-			count = maxi(result.reward_module_counts[index], 0)
-		store_module(module_id, count)
+	result.initialize_loot_state()
 	if result.battle_id != &"" and not completed_battles.has(result.battle_id):
 		completed_battles.append(result.battle_id)
 	last_result = result
@@ -174,6 +160,50 @@ func commit_victory(result: BattleResult) -> bool:
 			and node.target_path == result.battle_path
 		):
 			complete_current_route_node()
+	return true
+
+func has_pending_loot() -> bool:
+	return (
+		run_active
+		and last_result != null
+		and last_result.is_victory()
+		and last_result.has_pending_loot()
+	)
+
+func get_loot_count(index: int) -> int:
+	if last_result == null or index < 0 or index >= last_result.reward_module_ids.size():
+		return 0
+	if index < last_result.reward_module_counts.size():
+		return maxi(last_result.reward_module_counts[index], 0)
+	return 1
+
+func can_take_loot(index: int) -> bool:
+	if not has_pending_loot() or index < 0 or index >= last_result.reward_module_ids.size():
+		return false
+	if index < last_result.loot_resolved.size() and last_result.loot_resolved[index]:
+		return false
+	var module_id := last_result.reward_module_ids[index]
+	var count := get_loot_count(index)
+	return count > 0 and can_store_module(module_id, count)
+
+func take_loot(index: int) -> bool:
+	if not can_take_loot(index):
+		return false
+	var module_id := last_result.reward_module_ids[index]
+	var count := get_loot_count(index)
+	if not store_module(module_id, count):
+		return false
+	last_result.loot_resolved[index] = true
+	last_result.loot_taken[index] = true
+	return true
+
+func discard_loot(index: int) -> bool:
+	if not has_pending_loot() or index < 0 or index >= last_result.reward_module_ids.size():
+		return false
+	if index < last_result.loot_resolved.size() and last_result.loot_resolved[index]:
+		return false
+	last_result.loot_resolved[index] = true
+	last_result.loot_taken[index] = false
 	return true
 
 
@@ -460,7 +490,7 @@ func repair_all() -> bool:
 func get_next_battle_path() -> String:
 	if is_route_active():
 		return ""
-	if last_result == null or not last_result.is_victory() or has_pending_reward_choice():
+	if last_result == null or not last_result.is_victory() or has_pending_reward_choice() or has_pending_loot():
 		return ""
 	return last_result.next_battle_path
 
