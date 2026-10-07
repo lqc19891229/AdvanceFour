@@ -14,7 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://c0m11ukfvmfhh" path="res://data/assets/modules/weapon_cannon_turret.png" id="8_t4fk4"]
 [ext_resource type="Texture2D" uid="uid://cooehl8ssh6d" path="res://data/assets/modules/defense_lightarmor.png" id="10_h4yc2"]
 [ext_resource type="Texture2D" uid="uid://c1b4u0nqfqlsy" path="res://data/assets/modules/function_radar.png" id="12_wkwuo"]
-[ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://data/assets/modules/core_bridge.png" id="14_8q15v"]
+[ext_resource type="Texture2D" path="res://data/assets/modules/function_cargo_hold.png" id="13_cargo"]\n[ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://data/assets/modules/core_bridge.png" id="14_8q15v"]
 
 [sub_resource type="Resource" id="Resource_xux8q"]
 script = ExtResource("2_vue2a")
@@ -71,7 +71,7 @@ storage_capacity = 16
 id = &"function_cargo_hold"
 display_name = "标准货舱"
 module_type = 4
-description = "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。当前暂用功能模块占位贴图。"
+description = "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。"
 size = Vector2i(2, 2)
 energy_cost = 2.0
 texture = ExtResource("12_wkwuo")
