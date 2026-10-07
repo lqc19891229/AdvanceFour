@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.42.0
+《前进四》项目目录规划 V0.43.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -31,8 +31,15 @@ res://
 │  ├─ routes/
 │  │  └─ prototype_route.tres
 │  └─ battles/
-│     ├─ stage_001.tres
-│     └─ stage_002.tres
+│     ├─ stage_001/
+│     │  ├─ battle.tres
+│     │  └─ loot.tres
+│     ├─ elite_001/
+│     │  ├─ battle.tres
+│     │  └─ loot.tres
+│     └─ stage_002/
+│        ├─ battle.tres
+│        └─ loot.tres
 │
 ├─ game/                                  # Gameplay 执行逻辑与场景
 │  ├─ combat/
@@ -155,7 +162,7 @@ definitions 不承担 Gameplay 执行。
 四、正式战斗结构
 ========================================
 
-data/battles/stage_001.tres
+data/battles/stage_001/battle.tres
 ↓
 BattleDefinition
 ↓
@@ -393,3 +400,14 @@ Warehouse Screen（v0.39.0）
 - 精英强度完全由 battle.tres 表达：3 波共 12 艘敌舰、更短生成间隔、220 Credits。
 - 精英收益完全由 loot.tres 表达：drop_count = 4、禁止重复，并提高机炮 / 动力 / 能源 / 标准货舱等高价值模块权重。
 - Prototype Route：battle_001 后可选 shop_001 / refit_001 / elite_001，三条分支均汇合到 battle_002。
+
+
+双资源经济（v0.43.0）
+- RunState.energy_crystals：能量结晶，通用交易通货。
+- RunState.parts：零件，工程维修 / 制造资源。
+- BattleDefinition.reward_energy_crystals / reward_parts：每场战斗的数据化双资源奖励。
+- BattleResult 保存本场实际双资源奖励，commit_victory() 一次性写入 RunState。
+- ShopItemDefinition.price_energy_crystals：商店商品只以能量结晶定价。
+- repair_cell() / repair_all()：当前只消耗零件，规则为 1 缺失 Hull HP = 1 零件。
+- 能量结晶与零件的增减均由 RunState API 负责，UI 不直接修改资源。
+- v0.43 不实现模块制造；空间站以零件制造模块属于 v0.44。
