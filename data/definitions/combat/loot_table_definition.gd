@@ -79,9 +79,7 @@ func roll(seed_value: int = -1) -> Array[Dictionary]:
 				break
 		result.append({
 			"module_id": selected.module_id,
-			"count": rng.randi_range(selected.min_count, selected.max_count),
-			"rarity": selected.rarity,
-			"rarity_label": selected.get_rarity_label()
+			"count": rng.randi_range(selected.min_count, selected.max_count)
 		})
 		if not allow_duplicates:
 			pool.erase(selected)
