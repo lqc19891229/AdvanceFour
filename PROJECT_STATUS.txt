@@ -1,6 +1,8 @@
-《前进四》开发状态 v0.42.0
+《前进四》开发状态 v0.43.0
 
 当前阶段：模块化飞船战斗 Prototype，已建立第一版连续战斗 / 战后整备闭环，尚未形成完整 Roguelike 游戏。
+
+v0.43.0 完成双资源经济系统：移除当前玩法层的 Credits，正式加入能量结晶与零件。能量结晶是宇宙通用交易通货，仅用于商店购买；零件是工程资源，当前用于战后 Hull 维修，1 缺失 Hull HP = 1 零件。BattleDefinition / BattleResult 支持两种资源奖励；stage_001 为 100 能量结晶 + 12 零件，elite_001 为 220 + 30，stage_002 为 150 + 20。空间站制造模块留待 v0.44。
 
 v0.42.0 完成第一版精英战：新增 elite_001 战斗配置包，不新增精英专用运行时代码。精英战仍使用普通 BATTLE 节点和共享 battle.tscn，通过 battle.tres 的更强波次/220 Credits 与 loot.tres 的 4 件不重复高收益掉落表现风险收益差异；Prototype Route 第一战后现有商店、整备、精英战三条分支，最终汇合到第二战。
 
@@ -65,8 +67,8 @@ v0.31.15 完成项目目录职责重构：tools 负责源数据与生产工具�
 
 当前入口：
 1. F5 运行默认飞船编辑器，完成合法设计，点击“出航战斗”创建 Run。
-2. 清除 stage_001 后点击“结算并继续”，战损写入 RunState 并获得 100 Credits；处理维修与成长奖励后返回星图，在补给商店 / 整备站中二选一，再进入 stage_002。stage_002 胜利后返回星图并选择航线终点结束 Run。R 重开当前战斗并恢复本场战前快照；Esc 放弃当前 Run 并返回设计器。
-3. 可 F6 单独运行 game/combat/battle.tscn；默认使用 data/battles/stage_001.tres，无存档时使用调试示例船。
+2. 清除 stage_001 后点击“结算并继续”，战损写入 RunState 并获得 100 能量结晶 + 12 零件；处理维修与成长奖励后返回星图，在补给商店 / 整备站中二选一，再进入 stage_002。stage_002 胜利后返回星图并选择航线终点结束 Run。R 重开当前战斗并恢复本场战前快照；Esc 放弃当前 Run 并返回设计器。
+3. 可 F6 单独运行 game/combat/battle.tscn；默认使用 data/battles/stage_001/battle.tres，无存档时使用调试示例船。
 4. “敌舰 AI 测试”和旧 ship_movement_test.tscn 保留为独立诊断入口。
 
 下一阶段：
