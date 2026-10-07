@@ -368,10 +368,10 @@ Warehouse Screen（v0.39.0）
 
 
 随机掉落表（v0.41.0）
-- data/definitions/combat/loot_table_entry.gd：单个候选模块、权重、数量范围、稀有度。
+- data/definitions/combat/loot_table_entry.gd：单个候选模块、权重与数量范围。
 - data/definitions/combat/loot_table_definition.gd：掉落数量、重复规则、候选池与加权抽取。
 - data/loot_tables/stage_001_loot.tres / stage_002_loot.tres：当前两场战斗正式掉落池。
 - BattleDefinition.loot_table：战斗引用掉落表；保留旧 reward_module_ids 作为兼容回退接口。
 - Battle 在胜利时 roll() 一次，实际结果写入 BattleResult，进入 Loot Screen 后不再重新抽取。
 - 固定 seed 的 roll(seed) 用于自动测试；正式战斗使用随机种子。
-- 稀有度当前只有普通 / 优秀 / 稀有 / 史诗四档，仅作为掉落元数据，不改变模块静态属性。
+- 当前不设计装备稀有度；weight 仅表示掉落概率权重，不代表品质。
