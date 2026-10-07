@@ -1,3 +1,10 @@
+v0.44.1
+- 新增模块 UI 专用 icon_texture 与 get_display_texture() 回退接口。
+- 机炮新增组合 UI 图标 weapon_cannon_icon.png；飞船运行时继续使用 weapon_cannon_base.png + weapon_cannon_turret.png。
+- 数据导入器按 <module_id>_icon.png 约定自动挂载可选 UI 图标，不改变现有 Excel 字段。
+- 战利品、商店、仓库、空间站制造列表统一使用 get_display_texture()，避免武器只显示底座。
+- 自动验证增加可选 UI 图标资源引用检查，并增加机炮组合图标回归。
+
 v0.44.0
 - 新增 StationDefinition / StationCraftItemDefinition。
 - 新增 data/stations/basic_station.tres，第一版提供 6 种模块制造配方。
