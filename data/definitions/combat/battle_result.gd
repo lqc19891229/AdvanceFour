@@ -8,7 +8,8 @@ var battle_id: StringName = &""
 var battle_path := ""
 var next_battle_path := ""
 var ship_after_battle: ShipData
-var reward_credits := 0
+var reward_energy_crystals := 0
+var reward_parts := 0
 var reward_module_ids: Array[StringName] = []
 var reward_module_counts: Array[int] = []
 var loot_resolved: Array[bool] = []
