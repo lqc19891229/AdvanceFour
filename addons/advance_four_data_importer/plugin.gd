@@ -144,6 +144,10 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 		push_error("模块贴图不存在或无法加载：%s -> %s" % [d.id, texture_path])
 		return null
 
+	var icon_texture_path := "res://data/assets/modules/%s_icon.png" % String(d.id)
+	if ResourceLoader.exists(icon_texture_path):
+		d.icon_texture = _load_texture(icon_texture_path)
+
 	if d is WeaponModuleDefinition:
 		var turret_texture_path := String(row.get("turret_texture_path", "")).strip_edges()
 		(d as WeaponModuleDefinition).turret_texture = _load_texture(turret_texture_path)
