@@ -25,6 +25,7 @@ id = &"energy_smallreactor"
 display_name = "小型反应堆"
 module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
+size = Vector2i(1, 2)
 texture = ExtResource("3_banwa")
 
 [sub_resource type="Resource" id="Resource_11bf1"]

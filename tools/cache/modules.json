@@ -17,7 +17,7 @@
       "module_type": "ENERGY",
       "description": "基础能量模块，为飞船提供持续能量。",
       "width": 1,
-      "height": 1,
+      "height": 2,
       "energy_cost": 0.0,
       "texture_path": "res://data/assets/modules/energy_smallreactor.png",
       "turret_texture_path": "",
