@@ -1,6 +1,8 @@
-《前进四》开发状态 v0.38.0
+《前进四》开发状态 v0.39.0
 
 当前阶段：模块化飞船战斗 Prototype，已建立第一版连续战斗 / 战后整备闭环，尚未形成完整 Roguelike 游戏。
+
+v0.39.0 完成仓库管理场景：新增 game/run/warehouse，可从 Route Map 随时查看当前模块仓库；支持 Used / Capacity、超载提示、按模块类型筛选、同 ID 堆叠、模块详情与路线合法的“前往整备”。Function Sheet 正式加入 storage_capacity，标准货舱进入 game_data.xlsx，并新增独立 function_cargo_hold.png 贴图，不再使用内建数据/雷达占位图。
 
 v0.38.0 完成模块仓库第一版：Run 默认拥有 12 点基础模块仓储；库存模块按 definition.size.x × size.y 占用容量，Hull 不计入模块仓储。新增 2×2 标准货舱（+16 仓储，未安装时自身占用 4）；商店购买、战斗固定模块奖励、成长模块奖励均受仓储容量约束，容量不足时原子失败。整备界面与商店显示仓储占用。
 
