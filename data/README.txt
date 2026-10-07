@@ -11,7 +11,7 @@ data 保存游戏运行时需要加载和理解的“正式内容”，回答“
 - assets/：Godot Runtime 正式加载素材。
 - modules/：具体模块 .tres 与 module_database.tres。
 - enemies/：具体敌舰蓝图资源。
-- battles/：具体关卡战斗配置。
+- battles/：按 battle_id 组织的战斗配置包；每个目录包含 battle.tres 与 loot.tres。
 
 原则：
 1. data 按“内容类型”分类，不按“生成方式”分类。
@@ -21,3 +21,5 @@ data 保存游戏运行时需要加载和理解的“正式内容”，回答“
 5. game 只引用 data 下的正式运行时数据与素材。
 6. tools 保存策划源数据与生产/验证工具，不保存美术素材副本，也不作为 Runtime 数据源。
 7. PNG、音频等游戏素材只在 data/assets 保留唯一一份正式文件。
+
+8. Battle 与 Loot 数据按同一 battle_id 目录归档；资源职责仍保持分离。
