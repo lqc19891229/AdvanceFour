@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.41.0
+《前进四》项目目录规划 V0.41.1
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -375,3 +375,12 @@ Warehouse Screen（v0.39.0）
 - Battle 在胜利时 roll() 一次，实际结果写入 BattleResult，进入 Loot Screen 后不再重新抽取。
 - 固定 seed 的 roll(seed) 用于自动测试；正式战斗使用随机种子。
 - 当前不设计装备稀有度；weight 仅表示掉落概率权重，不代表品质。
+
+
+战斗配置包（v0.41.1）
+- data/battles/<battle_id>/battle.tres：该场战斗的 BattleDefinition。
+- data/battles/<battle_id>/loot.tres：该场战斗的 LootTableDefinition。
+- BattleDefinition 直接引用同目录 loot.tres。
+- 删除独立 data/loot_tables/ 目录。
+- 普通战 / 精英战 / Boss 仍统一使用共享 battle.tscn + BattleDefinition + LootTableDefinition。
+- “精英”首先作为数据强度差异表达：更强 battle.tres + 更高收益 loot.tres；除非未来 UI/规则明确需要，不新增 EliteBattle 专用运行时代码。
