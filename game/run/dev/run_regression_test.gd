@@ -1,7 +1,7 @@
 extends SceneTree
 
-const STAGE_001_PATH := "res://data/battles/stage_001.tres"
-const STAGE_002_PATH := "res://data/battles/stage_002.tres"
+const STAGE_001_PATH := "res://data/battles/stage_001/battle.tres"
+const STAGE_002_PATH := "res://data/battles/stage_002/battle.tres"
 
 var checks := 0
 var failures: Array[String] = []
