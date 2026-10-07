@@ -1,0 +1,58 @@
+[gd_resource type="Resource" script_class="StationDefinition" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/run/station_definition.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/run/station_craft_item_definition.gd" id="2"]
+
+[sub_resource type="Resource" id="Armor"]
+script = ExtResource("2")
+item_id = &"armor"
+display_name = "制造轻型装甲"
+module_id = &"defense_lightarmor"
+module_count = 1
+parts_cost = 18
+
+[sub_resource type="Resource" id="Cannon"]
+script = ExtResource("2")
+item_id = &"cannon"
+display_name = "制造机炮"
+module_id = &"weapon_cannon"
+module_count = 1
+parts_cost = 28
+
+[sub_resource type="Resource" id="Engine"]
+script = ExtResource("2")
+item_id = &"engine"
+display_name = "制造小型引擎"
+module_id = &"propulsion_smallengine"
+module_count = 1
+parts_cost = 22
+
+[sub_resource type="Resource" id="Reactor"]
+script = ExtResource("2")
+item_id = &"reactor"
+display_name = "制造小型反应堆"
+module_id = &"energy_smallreactor"
+module_count = 1
+parts_cost = 24
+
+[sub_resource type="Resource" id="Radar"]
+script = ExtResource("2")
+item_id = &"radar"
+display_name = "制造雷达"
+module_id = &"function_radar"
+module_count = 1
+parts_cost = 20
+
+[sub_resource type="Resource" id="Cargo"]
+script = ExtResource("2")
+item_id = &"cargo_hold"
+display_name = "制造标准货舱"
+module_id = &"function_cargo_hold"
+module_count = 1
+parts_cost = 32
+
+[resource]
+script = ExtResource("1")
+station_id = &"basic_station"
+display_name = "维修改装空间站"
+craft_items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("Cargo")])
