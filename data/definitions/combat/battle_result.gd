@@ -15,9 +15,6 @@ var reward_module_counts: Array[int] = []
 var loot_resolved: Array[bool] = []
 var loot_taken: Array[bool] = []
 var reward_hull_cells := 0
-var reward_choices: Array[Resource] = []
-var reward_choice_claimed := false
-var selected_reward_choice := -1
 var enemies_destroyed := 0
 var elapsed_seconds := 0.0
 

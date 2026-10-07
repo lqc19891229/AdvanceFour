@@ -64,7 +64,6 @@ func _run() -> void:
 	victory.reward_energy_crystals = 100
 	victory.reward_parts = 12
 	var stage_one_definition := load(STAGE_001_PATH) as BattleDefinition
-	victory.reward_choices.assign(stage_one_definition.reward_choices)
 	var stage_one_roll := stage_one_definition.loot_table.roll(41001)
 	_check(stage_one_definition.loot_table != null and stage_one_definition.loot_table.is_valid() and stage_one_roll.size() == 3, "stage_001 must use a valid three-drop loot table")
 	var stage_one_roll_again := stage_one_definition.loot_table.roll(41001)
@@ -86,7 +85,6 @@ func _run() -> void:
 	var completed: Array = run_state.get("completed_battles")
 	_check(int(run_state.get("energy_crystals")) == 100 and int(run_state.get("parts")) == 12 and completed.has(&"stage_001"), "Victory must grant energy crystals, parts and mark the battle complete")
 	_check(bool(run_state.call("has_pending_loot")), "Victory with fixed module loot must remain pending until loot is resolved")
-	_check(bool(run_state.call("has_pending_reward_choice")), "Victory with reward choices must remain pending until one choice is claimed")
 	var loot_absent_before_claim := true
 	for loot_id in stage_one_loot_ids:
 		if int(run_state.call("get_module_inventory_count", loot_id)) != 0:
@@ -94,16 +92,46 @@ func _run() -> void:
 	_check(loot_absent_before_claim, "Committed battle loot must not enter warehouse automatically")
 	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("energy_crystals")) == 100, "The same victory must not be committed twice")
 
-	var loot_scene := load("res://game/run/loot/loot_screen.tscn") as PackedScene
-	var loot_screen := loot_scene.instantiate() as Control
-	root.add_child(loot_screen)
+	var result_screen_scene := load("res://game/run/battle_result/battle_result_screen.tscn") as PackedScene
+	var result_screen := result_screen_scene.instantiate() as Control
+	root.add_child(result_screen)
 	await process_frame
-	var loot_list := loot_screen.get_node("Center/Panel/Margin/Layout/LootScroll/LootList") as VBoxContainer
-	var loot_continue := loot_screen.get_node("Center/Panel/Margin/Layout/Footer/Continue") as Button
-	_check(loot_list.get_child_count() == 3 and loot_continue.disabled, "stage_001 loot screen must show three unresolved module drops")
+	await process_frame
+	var loot_list := result_screen.get_node("%LootList") as VBoxContainer
+	var result_summary := result_screen.get_node("%Summary") as Label
+	var repair_button := result_screen.get_node("%RepairAll") as Button
+	var end_run_button := result_screen.get_node("%EndRun") as Button
+	var next_button_first := result_screen.get_node("%NextBattle") as Button
+	var shop_button_first := result_screen.get_node("%Shop") as Button
+	var refit_button_first := result_screen.get_node("%Refit") as Button
+	var repair_selected := result_screen.get_node("%RepairSelected") as Button
+	var selected_detail := result_screen.get_node("%SelectedDetail") as Label
+	var snapshot := result_screen.get_node("%Snapshot") as ShipDamageSnapshot
+	_check(loot_list.get_child_count() == 3 and next_button_first.disabled and shop_button_first.disabled and refit_button_first.disabled, "Unified settlement must show three drops and gate progression on pending loot")
+	_check(not run_state.has_method("has_pending_reward_choice") and result_screen.find_children("RewardChoice*", "", true, false).is_empty(), "Growth reward choices must no longer exist or block settlement")
+	_check(result_summary.text.contains("+100 能量结晶") and result_summary.text.contains("+12 零件") and repair_button.text.contains("12 零件"), "Settlement must expose currency rewards and repair cost without claiming dropped modules were taken")
+	_check(snapshot.ship == current_ship and snapshot.ship.modules.size() == design.modules.size(), "Damage snapshot must show the actual post-battle ship and installed modules")
+	var damaged_position := _first_cell(current_ship).grid_position
+	var mouse := InputEventMouseButton.new()
+	mouse.button_index = MOUSE_BUTTON_LEFT
+	mouse.pressed = true
+	mouse.position = snapshot.grid_to_screen(damaged_position) + Vector2.ONE * snapshot.get_cell_size() * 0.5
+	snapshot._gui_input(mouse)
+	_check(snapshot.selected_position == damaged_position and repair_selected.text.contains("12 零件") and selected_detail.text.contains("8 / 20"), "Clicking the actual snapshot must select the correct damaged Hull and expose its repair action")
+	_check(snapshot.get_damage_color(_first_cell(current_ship)) == ShipDamageSnapshot.HEAVY_DAMAGE_COLOR, "Heavy damage must use the red snapshot overlay")
+	var parts_before_ui_repair := int(run_state.get("parts"))
+	repair_selected.pressed.emit()
+	await process_frame
+	_check(is_equal_approx(_first_cell(current_ship).current_hp, 20.0) and int(run_state.get("parts")) == parts_before_ui_repair - 12 and repair_selected.disabled, "Snapshot repair must deduct parts, update HP and disable repair for the now-intact selected Hull")
+	_check(snapshot.get_damage_color(_first_cell(current_ship)) == ShipDamageSnapshot.INTACT_COLOR and selected_detail.text.contains("完好"), "Successful repair must immediately refresh the snapshot and selected detail")
+	# Restore the original battle damage for the cross-battle inheritance checks below.
+	_first_cell(current_ship).current_hp = 8.0
+	run_state.set("parts", 12)
+	result_screen.call("_refresh")
+	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
 	for loot_index in range(stage_one_loot_ids.size()):
 		var loot_definition := ShopItemDefinition.DATABASE.get_by_id(stage_one_loot_ids[loot_index])
-		_check_card_texture(loot_list.get_child(loot_index), loot_definition.get_display_texture(), "Loot cards must use the module UI texture")
+		_check_card_texture(loot_list.get_child(loot_index), loot_definition.get_display_texture(), "Unified loot cards must use the module UI texture")
 	var first_loot_card := loot_list.get_child(0) as PanelContainer
 	var first_loot_labels := first_loot_card.find_children("*", "Label", true, false)
 	var loot_detail_has_size := false
@@ -120,55 +148,27 @@ func _run() -> void:
 	var third_loot_id := stage_one_loot_ids[2]
 	var first_loot_count := int(victory.reward_module_counts[0])
 	var third_loot_count := int(victory.reward_module_counts[2])
-	_check(bool(run_state.call("take_loot", 0)), "An affordable loot item must be transferable into warehouse")
-	_check(int(run_state.call("get_module_inventory_count", first_loot_id)) == first_loot_count, "Taking loot must add exactly the rolled module quantity")
-	_check(bool(run_state.call("discard_loot", 1)), "Loot may be discarded without entering warehouse")
+	(loot_list.get_child(0).find_child("Take", true, false) as Button).pressed.emit()
+	_check(int(run_state.call("get_module_inventory_count", first_loot_id)) == first_loot_count, "Taking loot in settlement must add exactly the rolled module quantity")
+	_check(not bool(run_state.call("take_loot", 0)), "Resolved drops must not be granted twice")
+	(loot_list.get_child(1).find_child("Discard", true, false) as Button).pressed.emit()
 	_check(int(run_state.call("get_module_inventory_count", discarded_loot_id)) == 0, "Discarded loot must not enter warehouse")
-	_check(bool(run_state.call("take_loot", 2)), "A second loot item must be transferable independently")
+	(loot_list.get_child(2).find_child("Take", true, false) as Button).pressed.emit()
+	await process_frame
 	_check(int(run_state.call("get_module_inventory_count", third_loot_id)) == third_loot_count and not bool(run_state.call("has_pending_loot")), "Resolving every loot item must clear pending loot")
-	loot_screen.call("_refresh")
+	_check(not next_button_first.disabled and not shop_button_first.disabled and not refit_button_first.disabled and _first_cell(current_ship).current_hp < 20.0, "Resolving loot alone must unlock progression even with unrepaired Hull")
+	var resolved_labels := loot_list.get_child(1).find_children("*", "Label", true, false)
+	var marked_discarded := false
+	for label in resolved_labels:
+		marked_discarded = marked_discarded or (label as Label).text == "已放弃"
+	_check(marked_discarded, "Discarded drops must remain clearly marked in the combined settlement")
+	var inventory_before_reopen := (run_state.get("module_inventory") as Dictionary).duplicate(true)
+	result_screen.queue_free()
 	await process_frame
-	_check(not loot_continue.disabled, "Loot screen continue must unlock after all drops are resolved")
-	loot_screen.queue_free()
-	await process_frame
-
-	var result_screen_scene := load("res://game/run/battle_result/battle_result_screen.tscn") as PackedScene
-	var result_screen := result_screen_scene.instantiate() as Control
+	result_screen = result_screen_scene.instantiate() as Control
 	root.add_child(result_screen)
 	await process_frame
-	var result_summary := result_screen.get_node("Center/Panel/Margin/Content/Summary") as Label
-	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/RepairAll") as Button
-	var end_run_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/EndRun") as Button
-	_check(result_summary.text.contains("+100 能量结晶") and result_summary.text.contains("+12 零件") and repair_button.text.contains("12 零件"), "Battle result screen must expose fixed 能量结晶 and repair cost")
-	var reward_choice_row := result_screen.get_node("Center/Panel/Margin/Content/RewardChoiceRow") as HBoxContainer
-	var next_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/NextBattle") as Button
-	var shop_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/Shop") as Button
-	var refit_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/Refit") as Button
-	_check(reward_choice_row.get_child_count() == 3, "stage_001 must expose three reward choices")
-	_check(next_button_first.disabled and shop_button_first.disabled and refit_button_first.disabled, "Pending reward choice must block shop, refit and next battle")
-	var damage_list := result_screen.get_node("Center/Panel/Margin/Content/DamageScroll/DamageList") as VBoxContainer
-	var repair_selected := result_screen.get_node("Center/Panel/Margin/Content/RepairSelected") as Button
-	var selected_detail := result_screen.get_node("Center/Panel/Margin/Content/SelectedDetail") as Label
-	_check(damage_list.get_child_count() == 1, "One damaged Hull must create one local-repair list entry")
-	var damage_button := damage_list.get_child(0) as Button
-	damage_button.pressed.emit()
-	await process_frame
-	_check(repair_selected.text.contains("12 零件") and selected_detail.text.contains("8 / 20"), "Selecting a damaged Hull must expose its local repair action")
-	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
-	var cannon_before_growth := int(run_state.call("get_module_inventory_count", &"weapon_cannon"))
-	var inventory_before_growth: Dictionary = (run_state.get("module_inventory") as Dictionary).duplicate(true)
-	var choice_weapon := reward_choice_row.get_child(1) as Button
-	choice_weapon.pressed.emit()
-	await process_frame
-	_check(not bool(run_state.call("has_pending_reward_choice")), "Claiming one reward must clear the pending reward state")
-	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == cannon_before_growth + 1, "Selected module reward must add one cannon after battle loot")
-	var other_loot_unchanged := true
-	for loot_id in inventory_before_growth.keys():
-		if StringName(loot_id) != &"weapon_cannon" and int(run_state.call("get_module_inventory_count", StringName(loot_id))) != int(inventory_before_growth[loot_id]):
-			other_loot_unchanged = false
-	_check(other_loot_unchanged and int(run_state.get("hull_stock")) == 0, "Unselected growth rewards must not alter previously resolved battle loot")
-	_check(not next_button_first.disabled and not shop_button_first.disabled and not refit_button_first.disabled, "Claimed reward must unlock shop, refit and next battle")
-	_check(not bool(run_state.call("claim_reward_choice", 0)), "Reward choice can only be claimed once")
+	_check((run_state.get("module_inventory") as Dictionary) == inventory_before_reopen and int(run_state.get("energy_crystals")) == 100 and not (result_screen.get_node("%NextBattle") as Button).disabled, "Reopening settlement must preserve resolved loot and must not regrant rewards")
 	result_screen.queue_free()
 	await process_frame
 
@@ -424,8 +424,8 @@ func _run() -> void:
 	result_screen = result_screen_scene.instantiate() as Control
 	root.add_child(result_screen)
 	await process_frame
-	end_run_button = result_screen.get_node("Center/Panel/Margin/Content/ActionRow/EndRun") as Button
-	var next_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/NextBattle") as Button
+	end_run_button = result_screen.get_node("%EndRun") as Button
+	var next_button := result_screen.get_node("%NextBattle") as Button
 	_check(end_run_button.visible and not next_button.visible, "Final-stage result must offer End Run instead of a dead Next Battle action")
 	result_screen.queue_free()
 	await process_frame
@@ -448,13 +448,13 @@ func _run() -> void:
 	route_victory.ship_after_battle = route_ship
 	route_victory.reward_energy_crystals = 100
 	route_victory.reward_parts = 12
-	var route_stage_one := load(STAGE_001_PATH) as BattleDefinition
-	route_victory.reward_choices.assign(route_stage_one.reward_choices)
+	route_victory.reward_module_ids.append(&"defense_lightarmor")
+	route_victory.reward_module_counts.append(1)
 	_check(bool(run_state.call("commit_victory", route_victory)), "Route battle victory must commit")
 	_check(bool(run_state.call("is_current_route_node_complete")), "Committed route battle must mark current node complete")
-	_check(bool(run_state.call("has_pending_reward_choice")), "Route progression must still respect pending reward choices")
-	_check((run_state.call("get_available_route_node_ids") as Array).is_empty(), "Pending reward choice must hide route branches")
-	_check(bool(run_state.call("claim_reward_choice", 0)), "Route reward choice must be claimable")
+	_check(bool(run_state.call("has_pending_loot")), "Route progression must respect pending loot")
+	_check((run_state.call("get_available_route_node_ids") as Array).is_empty(), "Pending loot must hide route branches")
+	_check(bool(run_state.call("take_loot", 0)), "Route battle loot must be claimable")
 	var branch_ids: Array = run_state.call("get_available_route_node_ids")
 	_check(branch_ids.size() == 3 and branch_ids.has(&"shop_001") and branch_ids.has(&"refit_001") and branch_ids.has(&"elite_001"), "stage_001 route must branch to Shop, Station and Elite")
 	_check(not bool(run_state.call("select_route_node", &"battle_002")), "Route must reject skipping directly to stage_002")
@@ -593,6 +593,84 @@ func _run() -> void:
 	_check(int(run_state.get("energy_crystals")) == 220 and int(run_state.get("parts")) == 30, "Elite dual resource rewards must come from elite battle data")
 	branch_ids = run_state.call("get_available_route_node_ids")
 	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Elite battle must converge on stage_002")
+
+	# A full warehouse must still allow discarding every drop and leaving settlement.
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Full-warehouse settlement must start a Run")
+	for i in range(12):
+		run_state.call("store_module", &"weapon_cannon", 1)
+	var full_result := BattleResult.new()
+	full_result.outcome = BattleResult.Outcome.VICTORY
+	full_result.battle_id = &"stage_001"
+	full_result.ship_after_battle = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
+	full_result.reward_module_ids.assign([&"function_cargo_hold"])
+	full_result.reward_module_counts.assign([1])
+	var destroyed_cell := _first_cell(full_result.ship_after_battle)
+	destroyed_cell.current_hp = 0.0
+	_check(bool(run_state.call("commit_victory", full_result)), "Full warehouse must not prevent committing victory")
+	result_screen = result_screen_scene.instantiate() as Control
+	root.add_child(result_screen)
+	await process_frame
+	loot_list = result_screen.get_node("%LootList") as VBoxContainer
+	var full_take := loot_list.get_child(0).find_child("Take", true, false) as Button
+	var full_discard := loot_list.get_child(0).find_child("Discard", true, false) as Button
+	_check(full_take.disabled and not full_discard.disabled and (result_screen.get_node("%EndRun") as Button).disabled, "Full warehouse must disable taking loot but keep discard available and gate the exit")
+	snapshot = result_screen.get_node("%Snapshot") as ShipDamageSnapshot
+	result_screen.call("_select_cell", destroyed_cell.grid_position)
+	repair_selected = result_screen.get_node("%RepairSelected") as Button
+	_check(snapshot.get_damage_color(snapshot.ship.get_hull_cell_at(destroyed_cell.grid_position)) == ShipDamageSnapshot.DESTROYED_COLOR and repair_selected.disabled, "Destroyed Hull must keep its snapshot footprint and insufficient parts must disable repair")
+	run_state.set("parts", 20)
+	result_screen.call("_refresh")
+	repair_selected.pressed.emit()
+	_check(snapshot.ship.get_hull_cell_at(destroyed_cell.grid_position).current_hp == 20.0 and int(run_state.get("parts")) == 0, "A destroyed Hull must be repairable from the snapshot with exactly its missing-HP cost")
+	full_discard.pressed.emit()
+	_check(not bool(run_state.call("has_pending_loot")) and not (result_screen.get_node("%EndRun") as Button).disabled and int(run_state.call("get_warehouse_used")) == 12, "Discarding the only drop must unlock End Run without changing a full warehouse")
+	result_screen.queue_free()
+	await process_frame
+
+	# No loot and missing Run state must both render without blocking valid flow or granting rewards.
+	run_state.call("reset_run")
+	run_state.call("start_run", design, STAGE_001_PATH)
+	var empty_result := BattleResult.new()
+	empty_result.outcome = BattleResult.Outcome.VICTORY
+	empty_result.battle_id = &"stage_001"
+	empty_result.ship_after_battle = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
+	run_state.call("commit_victory", empty_result)
+	result_screen = result_screen_scene.instantiate() as Control
+	root.add_child(result_screen)
+	await process_frame
+	_check((result_screen.get_node("%LootList") as VBoxContainer).get_child_count() == 0 and not (result_screen.get_node("%EndRun") as Button).disabled, "Zero-drop victory must allow immediate continuation")
+	run_state.call("reset_run")
+	result_screen.call("_refresh")
+	_check((result_screen.get_node("%Snapshot") as ShipDamageSnapshot).ship == null and (result_screen.get_node("%EndRun") as Button).disabled, "Missing Run state must clear the ship snapshot and disable progression")
+	result_screen.queue_free()
+	await process_frame
+
+	# Snapshot geometry must preserve negative coordinates, quarter-turn footprints and large layouts.
+	var geometry_ship := ShipData.new()
+	var rectangular := FunctionModuleDefinition.new()
+	rectangular.size = Vector2i(2, 1)
+	geometry_ship.ensure_hull_for_equipment(rectangular, Vector2i(-8, -13), 1)
+	geometry_ship.place(rectangular, Vector2i(-8, -13), 1)
+	geometry_ship.add_hull_cell(Vector2i(100, 100))
+	var geometry_snapshot := ShipDamageSnapshot.new()
+	geometry_snapshot.size = Vector2(420, 260)
+	root.add_child(geometry_snapshot)
+	geometry_snapshot.set_ship(geometry_ship)
+	var hit_tests_pass := true
+	for cell in geometry_ship.get_hull_cells():
+		var center := geometry_snapshot.grid_to_screen(cell.grid_position) + Vector2.ONE * geometry_snapshot.get_cell_size() * 0.5
+		hit_tests_pass = hit_tests_pass and Rect2(Vector2.ZERO, geometry_snapshot.size).has_point(center) and geometry_snapshot.screen_to_grid(center) == cell.grid_position
+	_check(hit_tests_pass and geometry_snapshot.bounds.size == Vector2(109, 114), "Auto-fit and hit testing must retain all negative/large coordinates and the rotated 1x2 footprint")
+	geometry_snapshot.zoom = 3.0
+	geometry_snapshot.pan = Vector2(24, -16)
+	var rotated_cell := Vector2i(-8, -12)
+	var zoomed_center := geometry_snapshot.grid_to_screen(rotated_cell) + Vector2.ONE * geometry_snapshot.get_cell_size() * 0.5
+	_check(geometry_snapshot.screen_to_grid(zoomed_center) == rotated_cell, "Snapshot clicks must remain accurate after zoom and pan")
+	geometry_snapshot.center_view()
+	_check(geometry_snapshot.zoom == 1.0 and geometry_snapshot.pan == Vector2.ZERO, "Center view must restore the complete ship framing")
+	geometry_snapshot.queue_free()
+	await process_frame
 
 	run_state.call("reset_run")
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])

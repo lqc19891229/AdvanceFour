@@ -6,18 +6,18 @@
   用法：其他玩法代码通过 DataManager 查询模块定义，避免到处硬编码 Resource 路径。
 
 - run_state.gd
-  功能：当前 Roguelike Run 的跨场景状态，保存 current_ship、战前快照、Credits、完成关卡和最近 BattleResult。
-  规则：胜利提交战损与奖励；失败不提交；Retry 使用 battle_entry_ship；战后维修通过 Hull Cell 缺失 HP 扣除 Credits。
+  功能：当前 Roguelike Run 的跨场景状态，保存 current_ship、战前快照、能量结晶、零件、完成关卡和最近 BattleResult。
+  规则：胜利提交战损与奖励；失败不提交；Retry 使用 battle_entry_ship；战后维修通过 Hull Cell 缺失 HP 扣除零件。
   Run Warehouse：module_inventory 保存模块仓库数量；模块按自身 size.x × size.y 计算仓储占用。hull_stock 独立保存，不计入模块仓储。
-  Reward Choice：has_pending_reward_choice() 判断是否还有未领取成长奖励；claim_reward_choice(index) 负责一次性领取并写入 Inventory。
-  Shop：can_purchase_shop_item(item) 检查 Credits；purchase_shop_item(item) 原子扣款并把商品内容写入 Run Inventory。
+  Loot：has_pending_loot() 判断未处理战利品；take_loot(index) 检查容量并入库，discard_loot(index) 标记放弃。成长奖励三选一已移除。
+  Shop：can_purchase_shop_item(item) 检查能量结晶；purchase_shop_item(item) 原子扣款并把商品内容写入 Run Inventory。
   Route：route_definition / current_route_node_id / completed_route_nodes 保存星系路线状态；start_run_with_route()、get_available_route_node_ids()、select_route_node()、complete_current_route_node() 负责节点推进。
 
   维修接口：
   - get_repair_cost_for_cell(position)：查询单格维修费用。
   - repair_cell(position)：维修单个 Hull Cell。
   - get_total_repair_cost() / repair_all()：查询并执行全部维修。
-  - 当前维修价格：1 缺失 Hull HP = 1 Credit。
+  - 当前维修价格：1 缺失 Hull HP = 1 零件。
 
 后续可能加入：
 - save_manager.gd：局外永久存档。

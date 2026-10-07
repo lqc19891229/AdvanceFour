@@ -27,3 +27,6 @@ data/battles/<battle_id>/
 3. battle.tres 与 loot.tres 保持独立 Resource，但放在同一个 battle_id 目录中。
 4. 普通战 / 精英战 / Boss 不需要复制 Battle Runtime；通过各自 battle.tres + loot.tres 的数据差异表达。
 5. 新增关卡时新增目录与数据，不在 battle.gd 写具体关卡分支。
+
+
+v0.45.0：stage_001 移除成长奖励三选一配置；战后模块收益只由 loot.tres 或固定掉落清单决定。
