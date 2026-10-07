@@ -2,6 +2,7 @@ extends Node
 
 const DATABASE := preload("res://data/modules/module_database.tres")
 const REPAIR_COST_PER_HP := 1.0
+const BASE_WAREHOUSE_CAPACITY := 12
 
 var run_active := false
 var current_ship: ShipData
@@ -140,6 +141,15 @@ func commit_victory(result: BattleResult) -> bool:
 		return false
 	if result.battle_id != &"" and completed_battles.has(result.battle_id):
 		return false
+	var required_storage := 0
+	for index in range(result.reward_module_ids.size()):
+		var reward_id := result.reward_module_ids[index]
+		var reward_count := 1
+		if index < result.reward_module_counts.size():
+			reward_count = maxi(result.reward_module_counts[index], 0)
+		required_storage += get_module_storage_cost(reward_id, reward_count)
+	if get_warehouse_used() + required_storage > get_warehouse_capacity():
+		return false
 	var copy := _clone_ship(result.ship_after_battle)
 	if copy == null:
 		return false
@@ -151,7 +161,7 @@ func commit_victory(result: BattleResult) -> bool:
 		var count := 1
 		if index < result.reward_module_counts.size():
 			count = maxi(result.reward_module_counts[index], 0)
-		add_module_to_inventory(module_id, count)
+		store_module(module_id, count)
 	if result.battle_id != &"" and not completed_battles.has(result.battle_id):
 		completed_battles.append(result.battle_id)
 	last_result = result
@@ -175,12 +185,10 @@ func has_pending_reward_choice() -> bool:
 		and not last_result.reward_choice_claimed
 	)
 
-func claim_reward_choice(index: int) -> bool:
+func can_claim_reward_choice(index: int) -> bool:
 	if not run_active or last_result == null or not last_result.is_victory():
 		return false
-	if last_result.reward_choice_claimed:
-		return false
-	if index < 0 or index >= last_result.reward_choices.size():
+	if last_result.reward_choice_claimed or index < 0 or index >= last_result.reward_choices.size():
 		return false
 	var raw_choice := last_result.reward_choices[index]
 	if not (raw_choice is BattleRewardOption):
@@ -189,7 +197,25 @@ func claim_reward_choice(index: int) -> bool:
 	if not choice.is_valid():
 		return false
 	if choice.module_id != &"" and choice.module_count > 0:
-		add_module_to_inventory(choice.module_id, choice.module_count)
+		return can_store_module(choice.module_id, choice.module_count)
+	return true
+
+func claim_reward_choice(index: int) -> bool:
+	if not run_active or last_result == null or not last_result.is_victory():
+		return false
+	if last_result.reward_choice_claimed:
+		return false
+	if not can_claim_reward_choice(index):
+		return false
+	var raw_choice := last_result.reward_choices[index]
+	if not (raw_choice is BattleRewardOption):
+		return false
+	var choice := raw_choice as BattleRewardOption
+	if not choice.is_valid():
+		return false
+	if choice.module_id != &"" and choice.module_count > 0:
+		if not store_module(choice.module_id, choice.module_count):
+			return false
 	if choice.hull_cells > 0:
 		add_hull_stock(choice.hull_cells)
 	last_result.reward_choice_claimed = true
@@ -207,6 +233,47 @@ func get_module_inventory_count(module_id: StringName) -> int:
 
 func has_module_in_inventory(module_id: StringName, count: int = 1) -> bool:
 	return count >= 0 and get_module_inventory_count(module_id) >= count
+
+func get_module_storage_cost(module_id: StringName, count: int = 1) -> int:
+	if module_id == &"" or count <= 0:
+		return 0
+	var definition := DATABASE.get_by_id(module_id)
+	if definition == null:
+		return 0
+	return maxi(definition.get_storage_cost(), 0) * count
+
+func get_warehouse_capacity() -> int:
+	var capacity := BASE_WAREHOUSE_CAPACITY
+	if current_ship != null:
+		capacity += maxi(current_ship.get_storage_capacity(), 0)
+	return capacity
+
+func get_warehouse_used() -> int:
+	var total := 0
+	for raw_id in module_inventory.keys():
+		var module_id := StringName(raw_id)
+		total += get_module_storage_cost(module_id, int(module_inventory[module_id]))
+	return total
+
+func get_warehouse_remaining() -> int:
+	return get_warehouse_capacity() - get_warehouse_used()
+
+func is_warehouse_over_capacity() -> bool:
+	return get_warehouse_used() > get_warehouse_capacity()
+
+func can_store_module(module_id: StringName, count: int = 1) -> bool:
+	if not run_active or module_id == &"" or count <= 0:
+		return false
+	var definition := DATABASE.get_by_id(module_id)
+	if definition == null:
+		return false
+	return get_warehouse_used() + get_module_storage_cost(module_id, count) <= get_warehouse_capacity()
+
+func store_module(module_id: StringName, count: int = 1) -> bool:
+	if not can_store_module(module_id, count):
+		return false
+	add_module_to_inventory(module_id, count)
+	return true
 
 func add_module_to_inventory(module_id: StringName, count: int = 1) -> void:
 	if module_id == &"" or count <= 0:
@@ -331,17 +398,20 @@ func purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
 	return true
 
 func can_purchase_shop_item(item: ShopItemDefinition) -> bool:
-	if not run_active or item == null or not item.is_valid():
+	if not run_active or item == null or not item.is_valid() or currency < item.price_credits:
 		return false
-	return currency >= item.price_credits
+	if item.module_id != &"" and item.module_count > 0:
+		return can_store_module(item.module_id, item.module_count)
+	return true
 
 func purchase_shop_item(item: ShopItemDefinition) -> bool:
 	if not can_purchase_shop_item(item):
 		return false
-	currency -= item.price_credits
 	if item.module_id != &"" and item.module_count > 0:
-		add_module_to_inventory(item.module_id, item.module_count)
-	elif item.hull_cells > 0:
+		if not store_module(item.module_id, item.module_count):
+			return false
+	currency -= item.price_credits
+	if item.hull_cells > 0:
 		add_hull_stock(item.hull_cells)
 	return true
 
