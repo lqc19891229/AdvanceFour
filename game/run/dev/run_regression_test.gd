@@ -405,7 +405,7 @@ func _run() -> void:
 	_check((run_state.call("get_available_route_node_ids") as Array).is_empty(), "Pending reward choice must hide route branches")
 	_check(bool(run_state.call("claim_reward_choice", 0)), "Route reward choice must be claimable")
 	var branch_ids: Array = run_state.call("get_available_route_node_ids")
-	_check(branch_ids.size() == 3 and branch_ids.has(&"shop_001") and branch_ids.has(&"refit_001") and branch_ids.has(&"elite_001"), "stage_001 route must branch to Shop, Refit and Elite")
+	_check(branch_ids.size() == 3 and branch_ids.has(&"shop_001") and branch_ids.has(&"refit_001") and branch_ids.has(&"elite_001"), "stage_001 route must branch to Shop, Station and Elite")
 	_check(not bool(run_state.call("select_route_node", &"battle_002")), "Route must reject skipping directly to stage_002")
 
 	var map_scene := load("res://game/run/route/route_map_screen.tscn") as PackedScene
@@ -450,18 +450,53 @@ func _run() -> void:
 	_check(route_node.node_type == RunRouteNodeDefinition.NodeType.END, "Selected terminal route node must be END")
 
 	run_state.call("reset_run")
-	_check(bool(run_state.call("start_run_with_route", design, route_path)), "Route must restart cleanly for Refit branch")
+	_check(bool(run_state.call("start_run_with_route", design, route_path)), "Route must restart cleanly for Station branch")
 	route_ship = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
+	_first_cell(route_ship).current_hp = 6.0
 	route_victory = BattleResult.new()
 	route_victory.outcome = BattleResult.Outcome.VICTORY
 	route_victory.battle_id = &"stage_001"
 	route_victory.battle_path = STAGE_001_PATH
 	route_victory.ship_after_battle = route_ship
-	_check(bool(run_state.call("commit_victory", route_victory)), "Refit branch setup battle must commit")
-	_check(bool(run_state.call("select_route_node", &"refit_001")), "Refit branch must be selectable")
-	_check(bool(run_state.call("complete_current_route_node")), "Refit route node must be completable")
+	route_victory.reward_parts = 50
+	_check(bool(run_state.call("commit_victory", route_victory)), "Station branch setup battle must commit")
+	_check(bool(run_state.call("select_route_node", &"refit_001")), "Station branch must be selectable")
+	route_node = run_state.call("get_current_route_node") as RunRouteNodeDefinition
+	_check(route_node.node_type == RunRouteNodeDefinition.NodeType.REFIT and route_node.target_path == "res://data/stations/basic_station.tres", "Refit route node must target station data")
+	var station_definition := load(route_node.target_path) as StationDefinition
+	_check(station_definition != null and station_definition.is_valid() and station_definition.craft_items.size() == 6, "Basic station must expose six valid craft recipes")
+	var parts_before_station := int(run_state.get("parts"))
+	var station_scene := load("res://game/run/station/station_screen.tscn") as PackedScene
+	var station_screen := station_scene.instantiate() as Control
+	root.add_child(station_screen)
+	await process_frame
+	_check(is_equal_approx(_first_cell(run_state.get("current_ship") as ShipData).current_hp, 20.0), "Entering station must repair all Hull to full for free")
+	_check(int(run_state.get("parts")) == parts_before_station, "Free station repair must not consume parts")
+	var station_resources := station_screen.get_node("Margin/Layout/Resources") as Label
+	var station_craft_list := station_screen.get_node("Margin/Layout/CraftScroll/CraftList") as VBoxContainer
+	_check(station_resources.text.contains("零件：50") and station_craft_list.get_child_count() == 6, "Station screen must show resources and all craft recipes")
+	var craft_item := station_definition.get_craft_item(&"cannon")
+	var parts_before_craft := int(run_state.get("parts"))
+	_check(bool(run_state.call("craft_station_item", craft_item)), "Station must craft a valid module when parts and storage are sufficient")
+	_check(int(run_state.get("parts")) == parts_before_craft - craft_item.parts_cost and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Crafting must spend parts and add module to warehouse")
+	run_state.set("parts", 0)
+	var armor_recipe := station_definition.get_craft_item(&"armor")
+	var armor_before := int(run_state.call("get_module_inventory_count", &"defense_lightarmor"))
+	_check(not bool(run_state.call("craft_station_item", armor_recipe)) and int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == armor_before, "Station crafting must fail atomically when parts are insufficient")
+	run_state.set("parts", 100)
+	while int(run_state.call("get_warehouse_remaining")) > 0:
+		if not bool(run_state.call("store_module", &"weapon_cannon", 1)):
+			break
+	var parts_before_full_craft := int(run_state.get("parts"))
+	var cargo_recipe := station_definition.get_craft_item(&"cargo_hold")
+	_check(not bool(run_state.call("craft_station_item", cargo_recipe)) and int(run_state.get("parts")) == parts_before_full_craft, "Station crafting must not spend parts when warehouse capacity is insufficient")
+	var station_refit := station_screen.get_node("Margin/Layout/Actions/Refit") as Button
+	_check(not station_refit.disabled, "Station must keep access to ship refit")
+	station_screen.queue_free()
+	await process_frame
+	_check(bool(run_state.call("complete_current_route_node")), "Station route node must be completable")
 	branch_ids = run_state.call("get_available_route_node_ids")
-	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Refit node must converge on stage_002")
+	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Station node must converge on stage_002")
 
 	# v0.42 elite battle remains a normal BATTLE node whose difficulty/reward come entirely from battle + loot data.
 	var elite_definition := load(ELITE_001_PATH) as BattleDefinition
