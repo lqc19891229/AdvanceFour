@@ -43,7 +43,8 @@ hull_cells = 2
 [resource]
 script = ExtResource("1")
 waves = Array[Resource]([SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")])
-reward_credits = 100
+reward_energy_crystals = 100
+reward_parts = 12
 loot_table = ExtResource("6")
 reward_choices = Array[Resource]([SubResource("RewardArmor"), SubResource("RewardWeapon"), SubResource("RewardHull")])
 next_battle_path = "res://data/battles/stage_002/battle.tres"
