@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="LootTableDefinition" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/combat/loot_table_definition.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/combat/loot_table_entry.gd" id="2"]
+
+[sub_resource type="Resource" id="Cannon"]
+script = ExtResource("2")
+module_id = &"weapon_cannon"
+weight = 40.0
+
+[sub_resource type="Resource" id="Armor"]
+script = ExtResource("2")
+module_id = &"defense_lightarmor"
+weight = 28.0
+
+[sub_resource type="Resource" id="Engine"]
+script = ExtResource("2")
+module_id = &"propulsion_smallengine"
+weight = 30.0
+
+[sub_resource type="Resource" id="Reactor"]
+script = ExtResource("2")
+module_id = &"energy_smallreactor"
+weight = 30.0
+
+[sub_resource type="Resource" id="Radar"]
+script = ExtResource("2")
+module_id = &"function_radar"
+weight = 12.0
+
+[sub_resource type="Resource" id="Cargo"]
+script = ExtResource("2")
+module_id = &"function_cargo_hold"
+weight = 24.0
+
+[resource]
+script = ExtResource("1")
+loot_id = &"elite_001_loot"
+display_name = "精英战掉落表"
+drop_count = 4
+allow_duplicates = false
+entries = Array[Resource]([SubResource("Cannon"), SubResource("Armor"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("Cargo")])
