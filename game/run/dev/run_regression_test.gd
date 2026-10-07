@@ -2,6 +2,7 @@ extends SceneTree
 
 const STAGE_001_PATH := "res://data/battles/stage_001/battle.tres"
 const STAGE_002_PATH := "res://data/battles/stage_002/battle.tres"
+const ELITE_001_PATH := "res://data/battles/elite_001/battle.tres"
 
 var checks := 0
 var failures: Array[String] = []
@@ -368,7 +369,7 @@ func _run() -> void:
 	run_state.call("reset_run")
 	var route_path := "res://data/routes/prototype_route.tres"
 	var route_definition := load(route_path) as RunRouteDefinition
-	_check(route_definition != null and route_definition.is_valid() and route_definition.nodes.size() == 5, "Prototype route must contain five valid nodes")
+	_check(route_definition != null and route_definition.is_valid() and route_definition.nodes.size() == 6, "Prototype route must contain six valid nodes")
 	_check(bool(run_state.call("start_run_with_route", design, route_path)), "A valid design must start the prototype route")
 	_check(bool(run_state.call("is_route_active")), "Route Run must report active route state")
 	var route_node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
@@ -389,7 +390,7 @@ func _run() -> void:
 	_check((run_state.call("get_available_route_node_ids") as Array).is_empty(), "Pending reward choice must hide route branches")
 	_check(bool(run_state.call("claim_reward_choice", 0)), "Route reward choice must be claimable")
 	var branch_ids: Array = run_state.call("get_available_route_node_ids")
-	_check(branch_ids.size() == 2 and branch_ids.has(&"shop_001") and branch_ids.has(&"refit_001"), "stage_001 route must branch to Shop and Refit")
+	_check(branch_ids.size() == 3 and branch_ids.has(&"shop_001") and branch_ids.has(&"refit_001") and branch_ids.has(&"elite_001"), "stage_001 route must branch to Shop, Refit and Elite")
 	_check(not bool(run_state.call("select_route_node", &"battle_002")), "Route must reject skipping directly to stage_002")
 
 	var map_scene := load("res://game/run/route/route_map_screen.tscn") as PackedScene
@@ -406,7 +407,7 @@ func _run() -> void:
 			route_buttons += 1
 			if not (child as Button).disabled:
 				enabled_route_buttons += 1
-	_check(route_buttons == 5 and enabled_route_buttons == 2, "Route map must render five nodes with two selectable branches")
+	_check(route_buttons == 6 and enabled_route_buttons == 3, "Route map must render six nodes with three selectable branches")
 	map_screen.queue_free()
 	await process_frame
 
@@ -446,6 +447,46 @@ func _run() -> void:
 	_check(bool(run_state.call("complete_current_route_node")), "Refit route node must be completable")
 	branch_ids = run_state.call("get_available_route_node_ids")
 	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Refit node must converge on stage_002")
+
+	# v0.42 elite battle remains a normal BATTLE node whose difficulty/reward come entirely from battle + loot data.
+	var elite_definition := load(ELITE_001_PATH) as BattleDefinition
+	_check(elite_definition != null and elite_definition.is_valid() and elite_definition.battle_id == &"elite_001", "Elite battle package must contain a valid BattleDefinition")
+	var elite_enemy_total := 0
+	for wave_index in range(elite_definition.get_wave_count()):
+		elite_enemy_total += elite_definition.get_wave(wave_index).get_total_enemy_count()
+	_check(elite_definition.reward_credits == 220 and elite_enemy_total == 12, "Elite battle difficulty and Credits must be expressed by battle data")
+	_check(elite_definition.loot_table != null and elite_definition.loot_table.is_valid() and elite_definition.loot_table.drop_count == 4 and not elite_definition.loot_table.allow_duplicates, "Elite loot data must grant four non-duplicate weighted drops")
+	var elite_roll := elite_definition.loot_table.roll(42001)
+	var elite_unique: Dictionary = {}
+	for rolled in elite_roll:
+		elite_unique[StringName(rolled["module_id"])] = true
+	_check(elite_roll.size() == 4 and elite_unique.size() == 4, "Elite loot table must roll four unique modules")
+
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run_with_route", design, route_path)), "Route must restart cleanly for Elite branch")
+	route_ship = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
+	route_victory = BattleResult.new()
+	route_victory.outcome = BattleResult.Outcome.VICTORY
+	route_victory.battle_id = &"stage_001"
+	route_victory.battle_path = STAGE_001_PATH
+	route_victory.ship_after_battle = route_ship
+	_check(bool(run_state.call("commit_victory", route_victory)), "Elite branch setup battle must commit")
+	branch_ids = run_state.call("get_available_route_node_ids")
+	_check(branch_ids.has(&"elite_001"), "Elite branch must be available after stage_001")
+	_check(bool(run_state.call("select_route_node", &"elite_001")), "Elite battle branch must be selectable")
+	route_node = run_state.call("get_current_route_node") as RunRouteNodeDefinition
+	_check(route_node.node_type == RunRouteNodeDefinition.NodeType.BATTLE and route_node.target_path == ELITE_001_PATH, "Elite route node must remain a normal BATTLE node targeting elite battle data")
+	var elite_ship: ShipData = run_state.call("get_ship_for_battle", ELITE_001_PATH) as ShipData
+	var elite_victory := BattleResult.new()
+	elite_victory.outcome = BattleResult.Outcome.VICTORY
+	elite_victory.battle_id = &"elite_001"
+	elite_victory.battle_path = ELITE_001_PATH
+	elite_victory.ship_after_battle = elite_ship
+	elite_victory.reward_credits = elite_definition.reward_credits
+	_check(bool(run_state.call("commit_victory", elite_victory)), "Elite battle victory must commit through the shared battle flow")
+	_check(int(run_state.get("currency")) == 220, "Elite Credits reward must come from elite battle data")
+	branch_ids = run_state.call("get_available_route_node_ids")
+	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Elite battle must converge on stage_002")
 
 	run_state.call("reset_run")
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])
