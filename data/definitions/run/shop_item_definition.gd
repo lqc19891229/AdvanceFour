@@ -69,7 +69,7 @@ func get_texture() -> Texture2D:
 	if module_id == &"":
 		return null
 	var definition := DATABASE.get_by_id(module_id)
-	return null if definition == null else definition.texture
+	return null if definition == null else definition.get_display_texture()
 
 func get_button_label() -> String:
 	return "%s｜%s｜%d 能量结晶" % [display_name, get_contents_label(), price_energy_crystals]
