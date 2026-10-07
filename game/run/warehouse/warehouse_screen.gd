@@ -103,7 +103,7 @@ func _rebuild_inventory() -> void:
 			definition.size.y,
 			total_storage
 		]
-		button.icon = definition.texture
+		button.icon = definition.get_display_texture()
 		button.expand_icon = true
 		button.pressed.connect(_select_module.bind(definition.id))
 		item_list.add_child(button)
@@ -132,7 +132,7 @@ func _show_detail(definition: ShipModuleDefinition) -> void:
 		return
 	var count := int(run_state.call("get_module_inventory_count", definition.id))
 	var unit_storage := definition.get_storage_cost()
-	detail_texture.texture = definition.texture
+	detail_texture.texture = definition.get_display_texture()
 	detail_name.text = definition.display_name
 	detail_type.text = definition.get_type_name()
 	var lines: Array[String] = []
