@@ -30,8 +30,9 @@ func _refresh() -> void:
 	var route := run_state.get("route_definition") as RunRouteDefinition
 	var current := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 	title.text = route.display_name
-	status.text = "Credits：%d｜仓库：%d / %d｜当前节点：%s" % [
-		int(run_state.get("currency")),
+	status.text = "能量结晶：%d｜零件：%d｜仓库：%d / %d｜当前节点：%s" % [
+		int(run_state.get("energy_crystals")),
+		int(run_state.get("parts")),
 		int(run_state.call("get_warehouse_used")),
 		int(run_state.call("get_warehouse_capacity")),
 		"无" if current == null else current.display_name
@@ -92,7 +93,7 @@ func _get_node_tooltip(node: RunRouteNodeDefinition) -> String:
 		RunRouteNodeDefinition.NodeType.BATTLE:
 			return "进入战斗节点。胜利后返回战果页。"
 		RunRouteNodeDefinition.NodeType.SHOP:
-			return "进入补给商店，用 Credits 购买模块或 Hull。"
+			return "进入补给商店，用能量结晶购买模块或 Hull。"
 		RunRouteNodeDefinition.NodeType.REFIT:
 			return "进入整备站，使用当前 Run Inventory 改装飞船。"
 		RunRouteNodeDefinition.NodeType.END:
