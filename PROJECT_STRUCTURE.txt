@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.41.1
+《前进四》项目目录规划 V0.42.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -384,3 +384,12 @@ Warehouse Screen（v0.39.0）
 - 删除独立 data/loot_tables/ 目录。
 - 普通战 / 精英战 / Boss 仍统一使用共享 battle.tscn + BattleDefinition + LootTableDefinition。
 - “精英”首先作为数据强度差异表达：更强 battle.tres + 更高收益 loot.tres；除非未来 UI/规则明确需要，不新增 EliteBattle 专用运行时代码。
+
+
+精英战（v0.42.0）
+- data/battles/elite_001/battle.tres：精英战 BattleDefinition。
+- data/battles/elite_001/loot.tres：精英战 LootTableDefinition。
+- elite_001 仍是 RunRouteNodeDefinition.NodeType.BATTLE，不新增 ELITE_BATTLE。
+- 精英强度完全由 battle.tres 表达：3 波共 12 艘敌舰、更短生成间隔、220 Credits。
+- 精英收益完全由 loot.tres 表达：drop_count = 4、禁止重复，并提高机炮 / 动力 / 能源 / 标准货舱等高价值模块权重。
+- Prototype Route：battle_001 后可选 shop_001 / refit_001 / elite_001，三条分支均汇合到 battle_002。
