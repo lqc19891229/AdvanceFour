@@ -81,8 +81,9 @@ func _build_inventory_summary() -> String:
 	if not run_refit_mode or _run_state() == null:
 		return ""
 	var lines: Array[String] = []
-	lines.append("Run 库存")
-	lines.append("Hull：%d" % int(_run_state().get("hull_stock")))
+	lines.append("Run 仓库")
+	lines.append("模块仓储：%d / %d" % [int(_run_state().call("get_warehouse_used")), int(_run_state().call("get_warehouse_capacity"))])
+	lines.append("Hull：%d（不计入模块仓储）" % int(_run_state().get("hull_stock")))
 	var inventory: Dictionary = _run_state().get("module_inventory")
 	if inventory.is_empty():
 		lines.append("模块：无")
@@ -94,7 +95,7 @@ func _build_inventory_summary() -> String:
 			var module_id := StringName(raw_id)
 			var definition := grid.definitions.get(String(module_id), null) as ShipModuleDefinition
 			var display_name := String(module_id) if definition == null else definition.display_name
-			lines.append("- %s ×%d" % [display_name, int(inventory[module_id])])
+			lines.append("- %s ×%d｜占用 %d" % [display_name, int(inventory[module_id]), int(_run_state().call("get_module_storage_cost", module_id, int(inventory[module_id])))])
 	return "\n".join(lines)
 
 func _build_module_buttons() -> void:
@@ -143,7 +144,11 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 		lines.append("装甲 HP：%.1f" % defense.hp)
 		lines.append("防护：%.1f" % defense.protection)
 	elif definition is FunctionModuleDefinition:
-		lines.append("功能模块：暂无额外参数")
+		var function_module := definition as FunctionModuleDefinition
+		if function_module.storage_capacity > 0:
+			lines.append("仓储容量：+%d" % function_module.storage_capacity)
+		else:
+			lines.append("功能模块：暂无额外参数")
 	elif definition is CoreModuleDefinition:
 		lines.append("核心模块：被击毁时判定沉没")
 
@@ -343,6 +348,7 @@ Equipment：%d
 
 火力：%.1f
 防御系统：%.1f
+仓储模块容量：%d
 
 核心：%s
 沉没判定：核心覆盖 Hull 全部损毁
@@ -371,6 +377,7 @@ Hull 受损会降低对应 Equipment 效率。
 		s.get_acceleration_score(),
 		s.get_firepower(),
 		s.get_protection(),
+		s.get_storage_capacity(),
 		"已安装" if s.has_core() else "未安装",
 		design_status
 	]
