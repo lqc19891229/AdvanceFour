@@ -4,8 +4,8 @@
 负责一轮 Run 中跨战斗的战果展示、维修/整备入口与开发回归。
 
 主要内容：
-- battle_result/：战斗胜利后的结果页，显示 Credits、受损 Hull、成长奖励选择与维修。
-- shop/：补给商店，使用 Credits 购买模块 / Hull 并写入 Run Inventory。
+- battle_result/：战斗胜利后的结果页，显示能量结晶、零件、受损 Hull、成长奖励选择与维修。
+- shop/：补给商店，使用能量结晶购买模块 / Hull 并写入 Run Inventory。
 - route/：星图与路线节点选择。
 - dev/run_regression_test.gd：验证战损持久化、Retry 战前恢复、跨关卡继承、奖励与维修。
 
@@ -80,3 +80,11 @@ v0.37.0：
 - Battle 节点胜利后先进入战果页，再返回星图。
 - Shop / Refit 节点完成后回星图。
 - 旧线性 Run API 保留给诊断入口。
+
+
+v0.43.0：
+- RunState 使用能量结晶 + 零件双资源。
+- 能量结晶只用于商店交易。
+- 零件当前只用于 Hull 维修；1 缺失 Hull HP = 1 零件。
+- 战斗可同时奖励两种资源。
+- 空间站制造模块留待 v0.44。
