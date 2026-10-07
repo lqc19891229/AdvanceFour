@@ -24,8 +24,9 @@ map_position = Vector2(120, 180)
 [sub_resource type="Resource" id="Refit1"]
 script = ExtResource("2")
 node_id = &"refit_001"
-display_name = "整备站"
+display_name = "维修改装空间站"
 node_type = 2
+target_path = "res://data/stations/basic_station.tres"
 next_node_ids = Array[StringName]([&"battle_002"])
 map_position = Vector2(430, 180)
 
