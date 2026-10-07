@@ -68,6 +68,31 @@ WEAPON_FIELDS = [
 WEAPON_TEXTURE_FIELD = "turret_texture_path"
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
+BUILTIN_MODULES = [
+    {
+        "id": "function_cargo_hold",
+        "display_name": "标准货舱",
+        "module_type": "FUNCTION",
+        "description": "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。当前暂用功能模块占位贴图。",
+        "width": 2,
+        "height": 2,
+        "energy_cost": 2.0,
+        "texture_path": "res://data/assets/modules/function_radar.png",
+        "turret_texture_path": "",
+        "energy_output": 0.0,
+        "thrust": 0.0,
+        "firepower": 0.0,
+        "protection": 0.0,
+        "attack_range": 0.0,
+        "fire_interval": 0.0,
+        "turn_speed_degrees": 0.0,
+        "projectile_speed": 0.0,
+        "fire_angle_tolerance_degrees": 0.0,
+        "firing_arc_degrees": 0.0,
+        "storage_capacity": 16,
+    },
+]
+
 HEADER_ALIASES = {
     "标识": "id",
     "显示名称": "display_name",
@@ -380,6 +405,15 @@ def parse_modules(xlsx: Path) -> dict[str, Any]:
         except Exception as exc:
             errors.append(f"读取 {sheet_name} 工作表失败：{exc}")
             counts[sheet_name] = 0
+
+    for builtin in BUILTIN_MODULES:
+        if builtin["id"] in seen_ids:
+            errors.append(f"内建模块 ID 与 Excel 重复：{builtin['id']}")
+            continue
+        modules.append(dict(builtin))
+        seen_ids.add(builtin["id"])
+        if builtin["module_type"] == "FUNCTION":
+            counts["Function"] = counts.get("Function", 0) + 1
 
     return {
         "ok": not errors,
