@@ -5,6 +5,7 @@
 [ext_resource type="Resource" path="res://data/enemies/scout.tres" id="3"]
 [ext_resource type="Resource" path="res://data/enemies/gunship.tres" id="4"]
 [ext_resource type="Script" path="res://data/definitions/combat/battle_reward_option.gd" id="5"]
+[ext_resource type="Resource" path="res://data/loot_tables/stage_001_loot.tres" id="6"]
 
 [sub_resource type="Resource" id="Wave1"]
 script = ExtResource("2")
@@ -43,7 +44,6 @@ hull_cells = 2
 script = ExtResource("1")
 waves = Array[Resource]([SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")])
 reward_credits = 100
-reward_module_ids = Array[StringName]([&"defense_lightarmor", &"function_radar", &"weapon_cannon"])
-reward_module_counts = Array[int]([1, 1, 1])
+loot_table = ExtResource("6")
 reward_choices = Array[Resource]([SubResource("RewardArmor"), SubResource("RewardWeapon"), SubResource("RewardHull")])
 next_battle_path = "res://data/battles/stage_002.tres"
