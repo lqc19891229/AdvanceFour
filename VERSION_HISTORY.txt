@@ -1,3 +1,16 @@
+v0.39.0
+- 新增 game/run/warehouse 仓库管理场景。
+- Route Map 增加“查看仓库”入口，查看仓库不改变路线节点。
+- 仓库界面显示 Used / Capacity、剩余/超载状态、Hull Stock。
+- 库存按模块 ID 堆叠显示，并支持武器/能源/动力/防御/功能/核心分类筛选。
+- 右侧详情显示尺寸、单件/总仓储占用、数量、描述与类型专属属性。
+- 标准货舱详情显示安装后仓储 +16 与净仓储贡献 +12。
+- “前往整备”只在路线存在合法 REFIT 选择时启用。
+- game_data.xlsx Function Sheet 新增 storage_capacity，并正式加入 function_cargo_hold 数据。
+- 删除临时 BUILTIN_MODULES 注入方案；仓库模块恢复为标准 Excel → JSON → .tres 数据链。
+- 新增 data/assets/modules/function_cargo_hold.png，替换雷达占位贴图。
+- Run regression 增加仓库场景、分类筛选、货舱详情与路线整备权限验证。
+
 v0.38.0
 - 新增模块仓库容量系统；基础仓储容量 12。
 - 模块在仓库中的占用统一为 width × height，旋转不影响占用。
