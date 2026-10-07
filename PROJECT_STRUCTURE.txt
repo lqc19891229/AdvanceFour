@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.39.0
+《前进四》项目目录规划 V0.40.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -354,3 +354,14 @@ Warehouse Screen（v0.39.0）
 - “前往整备”只有当前路线允许 REFIT 时才可用；不会绕过路线选择。
 - game_data.xlsx 的 Function Sheet 正式增加 storage_capacity；标准货舱由 Excel → JSON → .tres 正式数据链生成。
 - data/assets/modules/function_cargo_hold.png：标准货舱正式模块贴图。
+
+
+战利品临时区（v0.40.0）
+- game/run/loot/loot_screen.tscn：战斗胜利后的模块战利品处理场景。
+- BattleDefinition.reward_module_ids / reward_module_counts 当前作为固定模块掉落清单。
+- commit_victory() 不再自动把固定模块奖励写入仓库。
+- BattleResult 保存每件掉落的 loot_resolved / loot_taken 状态。
+- RunState.take_loot()：仓储容量允许时将指定战利品写入 module_inventory。
+- RunState.discard_loot()：放弃指定战利品，不改变仓库。
+- 有未处理 Loot 时阻止路线选择与下一战。
+- 当前为固定掉落清单；随机掉落池与权重属于后续版本。
