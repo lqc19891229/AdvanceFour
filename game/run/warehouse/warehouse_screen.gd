@@ -103,7 +103,6 @@ func _rebuild_inventory() -> void:
 			total_storage
 		]
 		button.icon = definition.texture
-		button.icon_max_width = 54
 		button.expand_icon = true
 		button.pressed.connect(_select_module.bind(definition.id))
 		item_list.add_child(button)
