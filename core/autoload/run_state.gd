@@ -86,7 +86,7 @@ func complete_current_route_node() -> bool:
 func get_available_route_node_ids() -> Array[StringName]:
 	var result: Array[StringName] = []
 	var current := get_current_route_node()
-	if current == null or not is_current_route_node_complete() or has_pending_reward_choice() or has_pending_loot():
+	if current == null or not is_current_route_node_complete() or has_pending_loot():
 		return result
 	for next_id in current.next_node_ids:
 		if route_definition.get_node(next_id) != null:
@@ -94,7 +94,7 @@ func get_available_route_node_ids() -> Array[StringName]:
 	return result
 
 func select_route_node(node_id: StringName) -> bool:
-	if not is_route_active() or has_pending_reward_choice() or has_pending_loot():
+	if not is_route_active() or has_pending_loot():
 		return false
 	if not get_available_route_node_ids().has(node_id):
 		return false
@@ -209,51 +209,6 @@ func discard_loot(index: int) -> bool:
 	last_result.loot_taken[index] = false
 	return true
 
-
-func has_pending_reward_choice() -> bool:
-	return (
-		last_result != null
-		and last_result.is_victory()
-		and not last_result.reward_choices.is_empty()
-		and not last_result.reward_choice_claimed
-	)
-
-func can_claim_reward_choice(index: int) -> bool:
-	if not run_active or last_result == null or not last_result.is_victory():
-		return false
-	if last_result.reward_choice_claimed or index < 0 or index >= last_result.reward_choices.size():
-		return false
-	var raw_choice := last_result.reward_choices[index]
-	if not (raw_choice is BattleRewardOption):
-		return false
-	var choice := raw_choice as BattleRewardOption
-	if not choice.is_valid():
-		return false
-	if choice.module_id != &"" and choice.module_count > 0:
-		return can_store_module(choice.module_id, choice.module_count)
-	return true
-
-func claim_reward_choice(index: int) -> bool:
-	if not run_active or last_result == null or not last_result.is_victory():
-		return false
-	if last_result.reward_choice_claimed:
-		return false
-	if not can_claim_reward_choice(index):
-		return false
-	var raw_choice := last_result.reward_choices[index]
-	if not (raw_choice is BattleRewardOption):
-		return false
-	var choice := raw_choice as BattleRewardOption
-	if not choice.is_valid():
-		return false
-	if choice.module_id != &"" and choice.module_count > 0:
-		if not store_module(choice.module_id, choice.module_count):
-			return false
-	if choice.hull_cells > 0:
-		add_hull_stock(choice.hull_cells)
-	last_result.reward_choice_claimed = true
-	last_result.selected_reward_choice = index
-	return true
 
 func record_defeat(result: BattleResult) -> void:
 	if not run_active:
@@ -559,7 +514,7 @@ func repair_all() -> bool:
 func get_next_battle_path() -> String:
 	if is_route_active():
 		return ""
-	if last_result == null or not last_result.is_victory() or has_pending_reward_choice() or has_pending_loot():
+	if last_result == null or not last_result.is_victory() or has_pending_loot():
 		return ""
 	return last_result.next_battle_path
 

@@ -34,3 +34,6 @@ v0.32 Run 规则：
 - Retry 不提交 pending result，重新使用本场战前快照。
 - Defeat 仅记录失败结果，不写回 current_ship。
 - 独立 F6 / 开发测试在没有 active Run 时继续使用保存设计 / debug fallback。
+
+
+v0.45.0：胜利提交后统一进入 game/run/battle_result/battle_result_screen.tscn。战利品处理和可选维修在同一页完成，不再先进入独立 Loot Screen；BattleResult 不再生成成长奖励候选。

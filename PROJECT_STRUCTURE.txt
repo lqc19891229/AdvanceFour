@@ -148,7 +148,6 @@ data/definitions/combat/
 - BattleWaveDefinition
 - EnemyShipDefinition
 - BattleResult
-- BattleRewardOption
 
 具体实例：
 - data/modules/
@@ -316,12 +315,11 @@ Shop：
 - 生成结果和每槽 SOLD 状态由 RunState.shop_node_states 按路线节点保存；刷新/重新进入不会换货，购买后不补货。
 - 最终关不显示商店。
 
-Reward Choice：
-- BattleDefinition.reward_choices：战后成长奖励候选。
-- BattleRewardOption：一个候选可奖励模块和/或 Hull。
-- Credits 与固定奖励在 Victory commit 时结算；reward_choices 必须额外选择 1 项。
-- pending choice 会阻止 Refit / Next Battle / End Run，但不阻止维修。
-- 每场候选只能领取一次。
+战后结算（v0.45.0）：
+- game/run/battle_result/battle_result_screen：统一战利品与战斗胜利结算。
+- ship_damage_snapshot.gd：只读飞船布局与损伤绘制；选格信号交给结算页处理维修。
+- 已移除成长奖励三选一及相关 Resource / 状态接口。
+- 未处理战利品阻止继续；维修可跳过。
 
 Run Inventory：
 - RunState.module_inventory：module_id → 数量。
@@ -364,7 +362,7 @@ Warehouse Screen（v0.39.0）
 
 
 战利品临时区（v0.40.0）
-- game/run/loot/loot_screen.tscn：战斗胜利后的模块战利品处理场景。
+- game/run/battle_result/battle_result_screen.tscn：战斗胜利后的统一结算与模块战利品处理场景。
 - BattleDefinition.reward_module_ids / reward_module_counts 当前作为固定模块掉落清单。
 - commit_victory() 不再自动把固定模块奖励写入仓库。
 - BattleResult 保存每件掉落的 loot_resolved / loot_taken 状态。

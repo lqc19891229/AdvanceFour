@@ -4,7 +4,7 @@
 负责一轮 Run 中跨战斗的战果展示、维修/整备入口与开发回归。
 
 主要内容：
-- battle_result/：战斗胜利后的结果页，显示能量结晶、零件、受损 Hull、成长奖励选择与维修。
+- battle_result/：战斗胜利后的结果页，统一显示资源收益、战利品带走/放弃、仓库容量与可点击维修的飞船战损快照。
 - shop/：补给商店，使用能量结晶购买模块 / Hull 并写入 Run Inventory。
 - route/：星图与路线节点选择。
 - dev/run_regression_test.gd：验证战损持久化、Retry 战前恢复、跨关卡继承、奖励与维修。
@@ -19,7 +19,7 @@ Ship Editor
 → Victory
 → BattleResult
 → Result Screen
-→ Repair / Reward Choice
+→ Loot / Optional Repair
 → Route Map
 → Shop / Refit
 → Route Map
@@ -69,7 +69,7 @@ v0.36.0：
 - 商店从 data/shops/basic_shop.tres 读取数据化商品与价格。
 - 购买模块 / Hull 会直接进入 Run Inventory。
 - Credits 不足时购买原子失败。
-- 未领取 Reward Choice 时商店入口锁定。
+- 有未处理战利品时商店入口锁定。
 - 只有仍有下一战的战果页显示商店，当前最终关不开放商店。
 
 
@@ -88,3 +88,14 @@ v0.43.0：
 - 零件当前只用于 Hull 维修；1 缺失 Hull HP = 1 零件。
 - 战斗可同时奖励两种资源。
 - 空间站制造模块留待 v0.44。
+
+
+v0.45.0：
+- 战利品与胜利结算合为 battle_result_screen；删除独立 Loot Screen。
+- 移除成长奖励三选一、对应配置和领取状态；模块收益统一经过战利品系统。
+- 右侧 ship_damage_snapshot 显示真实 Hull 与模块布局，复用正式船体 Tile、模块底座/炮塔素材。
+- 黄/红/暗红分别显示轻伤、重伤和摧毁；摧毁格保留轮廓。点击选格查看 HP、模块效率与费用。
+- 维修选中格和全部维修后立即刷新快照、详情和零件余额。维修可跳过。
+- 快照自动居中适配完整飞船；滚轮缩放、中键拖动、双击居中。
+- 宽屏左右分栏；窄屏纵向排列，整页可滚动。
+- 只有未处理战利品阻止继续；带走仍检查仓库容量，已放弃物品明确标注。
