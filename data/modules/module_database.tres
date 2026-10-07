@@ -65,6 +65,17 @@ description = "基础功能模块。现阶段暂无额外参数。"
 energy_cost = 10.0
 texture = ExtResource("12_wkwuo")
 
+[sub_resource type="Resource" id="Resource_cargo_hold"]
+script = ExtResource("6_51is1")
+storage_capacity = 16
+id = &"function_cargo_hold"
+display_name = "标准货舱"
+module_type = 4
+description = "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。当前暂用功能模块占位贴图。"
+size = Vector2i(2, 2)
+energy_cost = 2.0
+texture = ExtResource("12_wkwuo")
+
 [sub_resource type="Resource" id="Resource_cvonq"]
 script = ExtResource("7_uyp4t")
 id = &"core_bridge"
@@ -77,4 +88,4 @@ texture = ExtResource("14_8q15v")
 
 [resource]
 script = ExtResource("8_banwa")
-modules = Array[ExtResource("1_vu7qi")]([SubResource("Resource_xux8q"), SubResource("Resource_lpla0"), SubResource("Resource_fybx2"), SubResource("Resource_11bf1"), SubResource("Resource_a5gge"), SubResource("Resource_cvonq")])
+modules = Array[ExtResource("1_vu7qi")]([SubResource("Resource_xux8q"), SubResource("Resource_lpla0"), SubResource("Resource_fybx2"), SubResource("Resource_11bf1"), SubResource("Resource_a5gge"), SubResource("Resource_cargo_hold"), SubResource("Resource_cvonq")])
