@@ -14,10 +14,10 @@
 [ext_resource type="Texture2D" uid="uid://c0m11ukfvmfhh" path="res://data/assets/modules/weapon_cannon_turret.png" id="8_t4fk4"]
 [ext_resource type="Texture2D" uid="uid://cooehl8ssh6d" path="res://data/assets/modules/defense_lightarmor.png" id="10_h4yc2"]
 [ext_resource type="Texture2D" uid="uid://c1b4u0nqfqlsy" path="res://data/assets/modules/function_radar.png" id="12_wkwuo"]
-[ext_resource type="Texture2D" path="res://data/assets/modules/function_cargo_hold.png" id="13_cargo"]
+[ext_resource type="Texture2D" uid="uid://c8adudcii7yi" path="res://data/assets/modules/function_cargo_hold.png" id="13_cargo"]
 [ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://data/assets/modules/core_bridge.png" id="14_8q15v"]
 
-[sub_resource type="Resource" id="Resource_xux8q"]
+[sub_resource type="Resource" id="Resource_lpla0"]
 script = ExtResource("2_vue2a")
 energy_output = 20.0
 id = &"energy_smallreactor"
@@ -26,7 +26,7 @@ module_type = 0
 description = "基础能量模块，为飞船提供持续能量。"
 texture = ExtResource("3_banwa")
 
-[sub_resource type="Resource" id="Resource_lpla0"]
+[sub_resource type="Resource" id="Resource_fybx2"]
 script = ExtResource("3_82fgq")
 thrust = 20.0
 id = &"propulsion_smallengine"
@@ -36,7 +36,7 @@ description = "基础动力模块，为飞船提供主要推进力。"
 energy_cost = 5.0
 texture = ExtResource("5_a2lp8")
 
-[sub_resource type="Resource" id="Resource_fybx2"]
+[sub_resource type="Resource" id="Resource_11bf1"]
 script = ExtResource("4_w5ypd")
 firepower = 10.0
 firing_arc_degrees = 180.0
@@ -48,7 +48,7 @@ description = "基础武器模块，提供稳定的常规火力。"
 energy_cost = 5.0
 texture = ExtResource("7_tkhon")
 
-[sub_resource type="Resource" id="Resource_11bf1"]
+[sub_resource type="Resource" id="Resource_a5gge"]
 script = ExtResource("5_3kk2a")
 hp = 10.0
 protection = 1.0
@@ -58,7 +58,7 @@ module_type = 3
 description = "基础防护模块，为飞船提供结构防护。"
 texture = ExtResource("10_h4yc2")
 
-[sub_resource type="Resource" id="Resource_a5gge"]
+[sub_resource type="Resource" id="Resource_cvonq"]
 script = ExtResource("6_51is1")
 id = &"function_radar"
 display_name = "雷达"
@@ -66,18 +66,17 @@ description = "基础功能模块。现阶段暂无额外参数。"
 energy_cost = 10.0
 texture = ExtResource("12_wkwuo")
 
-[sub_resource type="Resource" id="Resource_cargo_hold"]
+[sub_resource type="Resource" id="Resource_bf2fk"]
 script = ExtResource("6_51is1")
 storage_capacity = 16
 id = &"function_cargo_hold"
 display_name = "标准货舱"
-module_type = 4
 description = "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。"
 size = Vector2i(2, 2)
 energy_cost = 2.0
-texture = ExtResource("12_wkwuo")
+texture = ExtResource("13_cargo")
 
-[sub_resource type="Resource" id="Resource_cvonq"]
+[sub_resource type="Resource" id="Resource_8teia"]
 script = ExtResource("7_uyp4t")
 id = &"core_bridge"
 display_name = "舰桥"
@@ -89,4 +88,4 @@ texture = ExtResource("14_8q15v")
 
 [resource]
 script = ExtResource("8_banwa")
-modules = Array[ExtResource("1_vu7qi")]([SubResource("Resource_xux8q"), SubResource("Resource_lpla0"), SubResource("Resource_fybx2"), SubResource("Resource_11bf1"), SubResource("Resource_a5gge"), SubResource("Resource_cargo_hold"), SubResource("Resource_cvonq")])
+modules = Array[ExtResource("1_vu7qi")]([SubResource("Resource_lpla0"), SubResource("Resource_fybx2"), SubResource("Resource_11bf1"), SubResource("Resource_a5gge"), SubResource("Resource_cvonq"), SubResource("Resource_bf2fk"), SubResource("Resource_8teia")])
