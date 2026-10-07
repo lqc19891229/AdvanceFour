@@ -80,9 +80,20 @@ func _run() -> void:
 	var loot_screen := loot_scene.instantiate() as Control
 	root.add_child(loot_screen)
 	await process_frame
-	var loot_list := loot_screen.get_node("Margin/Layout/LootScroll/LootList") as VBoxContainer
-	var loot_continue := loot_screen.get_node("Margin/Layout/Footer/Continue") as Button
+	var loot_list := loot_screen.get_node("Center/Panel/Margin/Layout/LootScroll/LootList") as VBoxContainer
+	var loot_continue := loot_screen.get_node("Center/Panel/Margin/Layout/Footer/Continue") as Button
 	_check(loot_list.get_child_count() == 3 and loot_continue.disabled, "stage_001 loot screen must show three unresolved module drops")
+	var first_loot_card := loot_list.get_child(0) as PanelContainer
+	var first_loot_labels := first_loot_card.find_children("*", "Label", true, false)
+	var loot_detail_has_size := false
+	var loot_detail_has_storage := false
+	for label in first_loot_labels:
+		var loot_text := (label as Label).text
+		if loot_text.contains("×1") or loot_text.contains("1×1"):
+			loot_detail_has_size = true
+		if loot_text.contains("仓储占用"):
+			loot_detail_has_storage = true
+	_check(not loot_detail_has_size and loot_detail_has_storage, "Loot card must omit module dimensions while keeping storage usage")
 	var first_loot_id := stage_one_loot_ids[0]
 	var discarded_loot_id := stage_one_loot_ids[1]
 	var third_loot_id := stage_one_loot_ids[2]
