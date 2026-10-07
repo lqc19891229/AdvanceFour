@@ -5,6 +5,9 @@ enum Outcome { VICTORY, DEFEAT }
 
 var outcome := Outcome.DEFEAT
 var battle_id: StringName = &""
+var battle_name := ""
+var waves_reached := 0
+var total_waves := 0
 var battle_path := ""
 var next_battle_path := ""
 var ship_after_battle: ShipData

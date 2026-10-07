@@ -211,8 +211,10 @@ func discard_loot(index: int) -> bool:
 
 
 func record_defeat(result: BattleResult) -> void:
-	if not run_active:
+	if result == null or result.is_victory():
 		return
+	# Defeat ends the whole Run immediately; only the Game Over summary survives.
+	reset_run()
 	last_result = result
 
 

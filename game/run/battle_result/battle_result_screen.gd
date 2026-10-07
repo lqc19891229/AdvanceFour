@@ -77,8 +77,10 @@ func _refresh() -> void:
 			intact += 1
 	var repair_cost := int(run_state.call("get_total_repair_cost"))
 	title.text = "战斗胜利"
-	summary.text = "%s｜%s\n能量结晶：%d｜零件：%d" % [
-		String(result.battle_id), _build_reward_text(result), run_state.energy_crystals, run_state.parts
+	summary.text = "%s｜%s\n击毁敌舰：%d｜波次：%d / %d｜战斗时间：%.1f 秒\n能量结晶：%d｜零件：%d" % [
+		String(result.battle_id) if result.battle_name.is_empty() else result.battle_name, _build_reward_text(result),
+		result.enemies_destroyed, result.waves_reached, result.total_waves, result.elapsed_seconds,
+		run_state.energy_crystals, run_state.parts
 	]
 	damage_summary.text = "完好 %d｜受损 %d｜摧毁 %d" % [intact, damaged, destroyed]
 	snapshot.set_ship(run_state.current_ship)

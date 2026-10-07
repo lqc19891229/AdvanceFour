@@ -398,7 +398,7 @@ func _run() -> void:
 	defeat.reward_parts = 12
 	run_state.call("record_defeat", defeat)
 	current_ship = run_state.get("current_ship") as ShipData
-	_check(is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Defeat must not commit battle damage")
+	_check(current_ship == null and not bool(run_state.get("run_active")) and run_state.get("battle_entry_ship") == null and run_state.get("last_result") == defeat, "Defeat must terminate the Run and retain only the Game Over result")
 	completed = run_state.get("completed_battles")
 	_check(int(run_state.get("energy_crystals")) == 0 and int(run_state.get("parts")) == 0 and completed.is_empty(), "Defeat must not grant resources or completion")
 

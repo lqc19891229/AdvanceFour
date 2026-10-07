@@ -2,7 +2,6 @@ extends SceneTree
 
 const BATTLE_SCENE := preload("res://game/combat/battle.tscn")
 const SAVE_PATH := "user://ships/test_ship.json"
-const CONTENT := "UI/ResultOverlay/Center/Panel/Margin/Content/"
 const CUSTOM_BATTLE_DEFINITION_PATH := "res://game/combat/dev/custom_battle_definition.tres"
 const INVALID_BATTLE_DEFINITION_PATH := "res://game/combat/dev/missing_battle_definition.tres"
 const TEST_ENEMY := preload("res://data/enemies/scout.tres")
@@ -94,7 +93,8 @@ func _run() -> void:
 	await _test_late_projectile_and_failure()
 	await _test_friendly_fire()
 	await _test_errors()
-	await _test_custom_definition_retry()
+	await _test_custom_definition()
+	await _test_direct_victory_settlement()
 	await _test_editor_roundtrip()
 	if had_save:
 		var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -187,7 +187,7 @@ func _test_waves_and_victory() -> void:
 	_check(outcomes.is_empty() and battle._has_live_projectiles(), "Live airborne shots must postpone victory")
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.VICTORY, 180), "Victory must occur after projectiles finish and player survives")
 	_check(outcomes == [true] and battle.defeated_enemies == 3, "Victory must emit exactly once with correct kill count")
-	_check(battle.result_overlay.visible and battle.result_title.text == "战斗胜利", "Victory must show the result interface")
+	_check(not battle.has_node("UI/ResultOverlay") and battle.pending_result.is_victory(), "Victory must generate a result without the deleted intermediate interface")
 	var elapsed := battle.elapsed_seconds
 	var position_before := battle.player.global_position
 	battle.player.set_control_input(1.0, 1.0)
@@ -196,9 +196,7 @@ func _test_waves_and_victory() -> void:
 	_check(battle.elapsed_seconds == elapsed and battle.player.global_position == position_before, "Result state must freeze combat and timers")
 	battle._finish_battle(false)
 	_check(outcomes == [true] and battle.phase == Battle.Phase.VICTORY, "Settled victory must not be overwritten")
-	await process_frame
-	var panel: Control = battle.get_node("UI/ResultOverlay/Center/Panel")
-	_check(root.get_visible_rect().encloses(panel.get_global_rect()), "Result panel and its actions must fit in the viewport: viewport=%s panel=%s" % [root.get_visible_rect(), panel.get_global_rect()])
+	_check(battle.pending_result.enemies_destroyed == 3 and battle.pending_result.waves_reached == 2 and battle.pending_result.total_waves == 2, "Battle statistics must survive in BattleResult for the common settlement")
 	battle.queue_free()
 	await process_frame
 
@@ -223,7 +221,7 @@ func _test_late_projectile_and_failure() -> void:
 	_kill(enemy)
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.DEFEAT), "Last enemy's airborne shot must still be able to defeat the player")
 	_check(outcomes == [false], "Late player destruction must emit defeat, never premature victory")
-	_check(battle.result_overlay.visible and battle.result_title.text == "战斗失败", "Player destruction must show defeat UI")
+	_check(not battle.has_node("UI/ResultOverlay") and not root.get_node("RunState").run_active and root.get_node("RunState").last_result == battle.pending_result, "Player destruction must end the Run immediately and retain only the Game Over result")
 	for frame in range(15):
 		await physics_frame
 	_check(battle.spawned_in_wave == 1 and outcomes == [false], "Defeat must stop spawning and remain stable")
@@ -263,7 +261,7 @@ func _test_friendly_fire() -> void:
 
 func _test_errors() -> void:
 	var invalid := _new_battle([])
-	_check(invalid.phase == Battle.Phase.ERROR and invalid.result_overlay.visible, "Empty encounter configuration must show a recoverable error")
+	_check(invalid.phase == Battle.Phase.ERROR and invalid.hud.text.contains("无法开始战斗"), "Empty encounter configuration must show a recoverable error")
 	invalid.queue_free()
 	await process_frame
 
@@ -271,7 +269,7 @@ func _test_errors() -> void:
 	invalid = BATTLE_SCENE.instantiate() as Battle
 	root.add_child(invalid)
 	_check(invalid.phase == Battle.Phase.ERROR, "Explicit invalid battle definition path must enter ERROR")
-	_check(invalid.result_summary.text.contains("战斗配置不存在"), "Invalid battle definition path must report the configuration error")
+	_check(invalid.hud.text.contains("战斗配置不存在"), "Invalid battle definition path must report the configuration error")
 	_check(invalid.battle_definition == null or invalid.battle_definition.battle_id != &"stage_001", "Explicit invalid battle definition path must never fall back to stage_001")
 	invalid.queue_free()
 	await process_frame
@@ -283,10 +281,10 @@ func _test_errors() -> void:
 	await process_frame
 	DirAccess.remove_absolute(SAVE_PATH)
 
-func _test_custom_definition_retry() -> void:
+func _test_custom_definition() -> void:
 	var design := Battle.build_starter_design()
 	var saved := ShipSerializer.save_to_file(design, SAVE_PATH)
-	_check(saved["ok"], "Custom battle retry test must save a valid player design")
+	_check(saved["ok"], "Custom battle test must save a valid player design")
 	set_meta(Battle.BATTLE_DEFINITION_META, CUSTOM_BATTLE_DEFINITION_PATH)
 	change_scene_to_file("res://game/combat/battle.tscn")
 	await scene_changed
@@ -297,14 +295,19 @@ func _test_custom_definition_retry() -> void:
 	_check(battle.battle_definition.get_wave(0).get_enemy_for_spawn_index(0).enemy_id == &"scout", "Custom battle wave must preserve its enemy blueprint")
 	_check(is_equal_approx(battle.battle_definition.spawn_radius, 333.0), "Custom battle spawn radius must come from the selected definition")
 
-	battle.retry()
+	_key(KEY_R, true)
+	await process_frame
+	_key(KEY_R, false)
+	_check(current_scene == battle and not battle.has_method("retry"), "R must no longer restart the encounter")
+
+	battle._finish_battle(true)
 	await scene_changed
-	battle = current_scene as Battle
-	_check(battle != null and battle.battle_definition.battle_id == &"regression_custom", "Retry must preserve the active custom BattleDefinition")
-	_check(battle.battle_definition.display_name == "自定义回归关卡", "Retry must not fall back to the scene default BattleDefinition")
-	battle.queue_free()
+	var run_state := root.get_node("RunState")
+	_check(current_scene.scene_file_path.ends_with("battle_result_screen.tscn") and run_state.last_result.battle_id == &"regression_custom", "An F6 encounter without an active Run must also enter the common settlement")
+	current_scene.queue_free()
 	current_scene = null
 	await process_frame
+	run_state.reset_run()
 	DirAccess.remove_absolute(SAVE_PATH)
 
 func _test_editor_roundtrip() -> void:
@@ -322,16 +325,67 @@ func _test_editor_roundtrip() -> void:
 	await scene_changed
 	_check(current_scene is Battle, "Editor departure must enter the combat scene")
 	var battle := current_scene as Battle
+	var run_state := root.get_node("RunState")
+	run_state.energy_crystals = 250
+	run_state.parts = 50
+	run_state.call("store_module", &"weapon_cannon", 1)
 	_kill(battle.player)
-	battle.get_node(CONTENT + "Retry").pressed.emit()
+	_check(not run_state.run_active and run_state.current_ship == null and run_state.module_inventory.is_empty() and run_state.energy_crystals == 0 and run_state.parts == 0, "Core destruction must immediately clear the whole Run, its resources and warehouse")
 	await scene_changed
-	_check(current_scene is Battle and current_scene.phase == Battle.Phase.PREPARING, "Result retry button must start a fresh encounter")
-	_check(is_equal_approx(_core_cell(current_scene.player).current_hp, 20.0), "Retry must restore Hull HP from the saved design")
-	_kill(current_scene.player)
-	current_scene.get_node(CONTENT + "Return").pressed.emit()
+	_check(current_scene.scene_file_path.ends_with("game_over_screen.tscn"), "Defeat must automatically enter Game Over without a result-confirmation click")
+	_check((current_scene.get_node("%Title") as Label).text == "GAME OVER" and current_scene.find_children("*Retry*", "", true, false).is_empty(), "Game Over must offer no retry action")
+	await process_frame
+	_key(KEY_R, true)
+	await process_frame
+	_key(KEY_R, false)
+	_check(current_scene.scene_file_path.ends_with("game_over_screen.tscn") and not run_state.run_active, "R must not resurrect a defeated Run from Game Over")
+	var game_over_summary := current_scene.get_node("%Summary") as Label
+	_check(game_over_summary.text.contains("第一战") and game_over_summary.text.contains("战斗时间"), "Game Over must retain the defeated battle's statistics")
+	var return_button := current_scene.get_node("%Return") as Button
+	_check(root.get_visible_rect().encloses(return_button.get_global_rect()), "Game Over return action must remain within the game viewport")
+	return_button.pressed.emit()
 	await scene_changed
-	_check(current_scene.scene_file_path.ends_with("ship_editor.tscn"), "Result return button must reach the editor")
-	_check(ShipSerializer.to_dictionary(current_scene.grid.ship) == ShipSerializer.to_dictionary(design), "Returning from defeat must preserve the exact saved layout")
+	_check(current_scene.scene_file_path.ends_with("ship_editor.tscn"), "Game Over return must restore the permanent editor design")
+	_check(not run_state.run_active and run_state.last_result == null, "Returning from Game Over must keep the Run ended and clear its result")
+	_check(ShipSerializer.to_dictionary(current_scene.grid.ship) == ShipSerializer.to_dictionary(design), "Returning from Game Over must preserve the exact saved layout")
+
 	current_scene.queue_free()
 	current_scene = null
 	await process_frame
+
+func _test_direct_victory_settlement() -> void:
+	var run_state := root.get_node("RunState")
+	var design := Battle.build_starter_design()
+	_check(run_state.start_run_with_route(design, "res://data/routes/prototype_route.tres"), "Direct victory settlement test must start a route")
+	set_meta(Battle.BATTLE_DEFINITION_META, "res://data/battles/stage_001/battle.tres")
+	change_scene_to_file("res://game/combat/battle.tscn")
+	await scene_changed
+	var battle := current_scene as Battle
+	battle.wave_index = 2
+	battle.defeated_enemies = 6
+	battle.elapsed_seconds = 28.3
+	_core_cell(battle.player).current_hp = 8.0
+	_check(not battle.has_node("UI/ResultOverlay"), "The old result popup must be deleted from the battle scene")
+	var outcomes: Array[bool] = []
+	battle.finished.connect(func(value: bool): outcomes.append(value))
+	battle._finish_battle(true)
+	battle._finish_battle(true)
+	var result := battle.pending_result
+	await scene_changed
+	_check(current_scene.scene_file_path.ends_with("battle_result_screen.tscn"), "Victory must automatically open the unified settlement without an extra click")
+	_check(outcomes == [true] and run_state.last_result == result and run_state.completed_battles.size() == 1, "Automatic victory must commit exactly once")
+	_check(run_state.energy_crystals == 100 and run_state.parts == 12 and run_state.has_pending_loot(), "Automatic settlement must grant currencies once and leave module loot pending")
+	_check(is_equal_approx(_core_cell_from_data(run_state.current_ship).current_hp, 8.0), "Automatic settlement must retain battle damage")
+	var summary := current_scene.get_node("%Summary") as Label
+	_check(summary.text.contains("第一战") and summary.text.contains("击毁敌舰：6") and summary.text.contains("3 / 3") and summary.text.contains("28.3 秒"), "The unified settlement must display the statistics from the deleted popup")
+	_check((current_scene.get_node("%NextBattle") as Button).disabled, "Automatic settlement must still require processing every loot item before route continuation")
+	current_scene.queue_free()
+	current_scene = null
+	await process_frame
+	run_state.reset_run()
+
+func _core_cell_from_data(ship: ShipData) -> ShipHullCell:
+	for module in ship.modules:
+		if module.definition is CoreModuleDefinition:
+			return ship.get_hull_cell_at(module.get_cells()[0])
+	return null
