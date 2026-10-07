@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FunctionModuleDefinition" format=3]
+
+[ext_resource type="Script" path="res://data/definitions/module/function_module_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/assets/modules/function_radar.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+storage_capacity = 16
+id = &"function_cargo_hold"
+display_name = "标准货舱"
+module_type = 4
+description = "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。当前暂用功能模块占位贴图。"
+size = Vector2i(2, 2)
+energy_cost = 2.0
+texture = ExtResource("2")
