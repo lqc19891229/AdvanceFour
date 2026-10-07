@@ -8,7 +8,7 @@ script = ExtResource("2")
 node_id = &"battle_001"
 display_name = "第一战"
 node_type = 0
-target_path = "res://data/battles/stage_001.tres"
+target_path = "res://data/battles/stage_001/battle.tres"
 next_node_ids = Array[StringName]([&"shop_001", &"refit_001"])
 map_position = Vector2(275, 40)
 
@@ -34,7 +34,7 @@ script = ExtResource("2")
 node_id = &"battle_002"
 display_name = "第二战"
 node_type = 0
-target_path = "res://data/battles/stage_002.tres"
+target_path = "res://data/battles/stage_002/battle.tres"
 next_node_ids = Array[StringName]([&"end"])
 map_position = Vector2(275, 320)
 
