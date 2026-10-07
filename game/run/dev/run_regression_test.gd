@@ -45,15 +45,37 @@ func _run() -> void:
 	victory.reward_credits = 100
 	var stage_one_definition := load(STAGE_001_PATH) as BattleDefinition
 	victory.reward_choices.assign(stage_one_definition.reward_choices)
+	victory.reward_module_ids.assign(stage_one_definition.reward_module_ids)
+	victory.reward_module_counts.assign(stage_one_definition.reward_module_counts)
 	victory.enemies_destroyed = 5
 	_check(bool(run_state.call("commit_victory", victory)), "Victory must commit a valid BattleResult")
 	var current_ship := run_state.get("current_ship") as ShipData
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 8.0), "Victory must persist Hull damage into RunState")
 	var completed: Array = run_state.get("completed_battles")
 	_check(int(run_state.get("currency")) == 100 and completed.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
+	_check(bool(run_state.call("has_pending_loot")), "Victory with fixed module loot must remain pending until loot is resolved")
 	_check(bool(run_state.call("has_pending_reward_choice")), "Victory with reward choices must remain pending until one choice is claimed")
-	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0 and int(run_state.get("hull_stock")) == 0, "Unclaimed reward choices must not enter inventory")
+	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0 and int(run_state.call("get_module_inventory_count", &"function_radar")) == 0 and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 0, "Committed battle loot must not enter warehouse automatically")
 	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("currency")) == 100, "The same victory must not be committed twice")
+
+	var loot_scene := load("res://game/run/loot/loot_screen.tscn") as PackedScene
+	var loot_screen := loot_scene.instantiate() as Control
+	root.add_child(loot_screen)
+	await process_frame
+	var loot_list := loot_screen.get_node("Margin/Layout/LootScroll/LootList") as VBoxContainer
+	var loot_continue := loot_screen.get_node("Margin/Layout/Footer/Continue") as Button
+	_check(loot_list.get_child_count() == 3 and loot_continue.disabled, "stage_001 loot screen must show three unresolved module drops")
+	_check(bool(run_state.call("take_loot", 0)), "An affordable loot item must be transferable into warehouse")
+	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 1, "Taking loot must add exactly that module to warehouse")
+	_check(bool(run_state.call("discard_loot", 1)), "Loot may be discarded without entering warehouse")
+	_check(int(run_state.call("get_module_inventory_count", &"function_radar")) == 0, "Discarded loot must not enter warehouse")
+	_check(bool(run_state.call("take_loot", 2)), "A second loot item must be transferable independently")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1 and not bool(run_state.call("has_pending_loot")), "Resolving every loot item must clear pending loot")
+	loot_screen.call("_refresh")
+	await process_frame
+	_check(not loot_continue.disabled, "Loot screen continue must unlock after all drops are resolved")
+	loot_screen.queue_free()
+	await process_frame
 
 	var result_screen_scene := load("res://game/run/battle_result/battle_result_screen.tscn") as PackedScene
 	var result_screen := result_screen_scene.instantiate() as Control
@@ -82,8 +104,8 @@ func _run() -> void:
 	choice_weapon.pressed.emit()
 	await process_frame
 	_check(not bool(run_state.call("has_pending_reward_choice")), "Claiming one reward must clear the pending reward state")
-	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Selected module reward must enter inventory")
-	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0 and int(run_state.get("hull_stock")) == 0, "Unselected rewards must not enter inventory")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 2, "Selected module reward must enter inventory after taken battle loot")
+	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 1 and int(run_state.get("hull_stock")) == 0, "Unselected growth rewards must not alter previously taken battle loot")
 	_check(not next_button_first.disabled and not shop_button_first.disabled and not refit_button_first.disabled, "Claimed reward must unlock shop, refit and next battle")
 	_check(not bool(run_state.call("claim_reward_choice", 0)), "Reward choice can only be claimed once")
 	result_screen.queue_free()
@@ -302,7 +324,8 @@ func _run() -> void:
 	final_victory.reward_module_ids.assign([&"weapon_cannon"])
 	final_victory.reward_module_counts.assign([1])
 	_check(bool(run_state.call("commit_victory", final_victory)), "Final-stage victory must commit")
-	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Final-stage module reward must enter inventory")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 0 and bool(run_state.call("has_pending_loot")), "Final-stage loot must wait for player confirmation")
+	_check(bool(run_state.call("take_loot", 0)) and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Taking final-stage loot must move it into warehouse")
 	result_screen = result_screen_scene.instantiate() as Control
 	root.add_child(result_screen)
 	await process_frame
