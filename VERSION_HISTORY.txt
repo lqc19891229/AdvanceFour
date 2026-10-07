@@ -1,3 +1,16 @@
+v0.43.0
+- 将 Prototype 临时 Credits 正式替换为“能量结晶”。
+- RunState 新增 energy_crystals 与 parts，并增加独立 add / can_spend / spend API。
+- 能量结晶定位为宇宙通用交易通货，商店模块 / Hull 全部改为消耗能量结晶。
+- 零件定位为工程资源，当前战后单格 / 全部 Hull 维修只消耗零件。
+- 当前维修规则维持 1 缺失 Hull HP = 1 零件；维修不会消耗能量结晶。
+- BattleDefinition / BattleResult 新增 reward_energy_crystals / reward_parts。
+- stage_001：100 能量结晶 + 12 零件；elite_001：220 + 30；stage_002：150 + 20。
+- ShopItemDefinition 将 price_credits 重命名为 price_energy_crystals。
+- Battle Result、Shop、Route Map、Warehouse UI 同时显示两种资源。
+- Run regression 增加双资源独立增减、超支原子失败、商店只扣能量结晶、维修只扣零件的验证。
+- 模块制造与维修改装空间站不在本版本实现，留待 v0.44。
+
 v0.42.0
 - 新增 data/battles/elite_001/battle.tres 与 loot.tres。
 - 精英战继续复用共享 battle.tscn、BattleDefinition 与 LootTableDefinition，不新增专用 EliteBattle 代码。
