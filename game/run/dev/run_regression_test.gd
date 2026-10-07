@@ -149,16 +149,16 @@ func _run() -> void:
 	_check(is_equal_approx(_first_cell(retry_ship).current_hp, 8.0), "Retry must restore the stage entry Hull snapshot")
 
 	var repair_cost := int(run_state.call("get_total_repair_cost"))
-	_check(repair_cost == 12, "Missing 12 base Hull HP must cost 12 能量结晶")
-	_check(bool(run_state.call("repair_all")), "Repair all must succeed when 能量结晶 are sufficient")
+	_check(repair_cost == 12, "Missing 12 base Hull HP must cost 12 parts")
+	_check(bool(run_state.call("repair_all")), "Repair all must succeed when parts are sufficient")
 	current_ship = run_state.get("current_ship") as ShipData
-	_check(int(run_state.get("energy_crystals")) == 88 and is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Repair all must restore Hull HP and deduct 能量结晶")
+	_check(int(run_state.get("energy_crystals")) == 100 and int(run_state.get("parts")) == 0 and is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Repair all must deduct parts while preserving energy crystals")
 
 	_first_cell(current_ship).current_hp = 0.0
 	run_state.set("parts", 5)
 	var crystals_before_failed_repair := int(run_state.get("energy_crystals"))
 	var hp_before := _first_cell(current_ship).current_hp
-	_check(not bool(run_state.call("repair_all")), "Repair all must fail atomically when 能量结晶 are insufficient")
+	_check(not bool(run_state.call("repair_all")), "Repair all must fail atomically when parts are insufficient")
 	_check(int(run_state.get("parts")) == 5 and int(run_state.get("energy_crystals")) == crystals_before_failed_repair and is_equal_approx(_first_cell(current_ship).current_hp, hp_before), "Failed repair must not change parts, energy crystals or Hull HP")
 
 	# Local repair must repair exactly one Hull Cell and charge only that cell.
@@ -173,10 +173,10 @@ func _run() -> void:
 	run_state.set("parts", 12)
 	var local_crystals_before := int(run_state.get("energy_crystals"))
 	_check(int(run_state.call("get_repair_cost_for_cell", local_a.grid_position)) == 12, "Local repair cost must equal missing Hull HP")
-	_check(bool(run_state.call("repair_cell", local_a.grid_position)), "Local repair must succeed when 能量结晶 are sufficient")
+	_check(bool(run_state.call("repair_cell", local_a.grid_position)), "Local repair must succeed when parts are sufficient")
 	_check(is_equal_approx(local_a.current_hp, local_a.max_hp) and is_equal_approx(local_b.current_hp, 10.0), "Local repair must not repair other Hull Cells")
 	_check(int(run_state.get("parts")) == 0 and int(run_state.get("energy_crystals")) == local_crystals_before, "Local repair must deduct only parts and preserve energy crystals")
-	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when 能量结晶 are insufficient")
+	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when parts are insufficient")
 	_check(is_equal_approx(local_b.current_hp, 10.0) and int(run_state.get("parts")) == 0 and int(run_state.get("energy_crystals")) == local_crystals_before, "Failed local repair must be atomic")
 
 	# Shop nodes must generate four fixed slots, preserve them for the node lifetime, and sell each slot once.
@@ -205,8 +205,8 @@ func _run() -> void:
 	root.add_child(shop_screen)
 	await process_frame
 	var shop_slots_ui := shop_screen.get_node("Center/Panel/Margin/Content/Slots") as HBoxContainer
-	var shop_credits := shop_screen.get_node("Center/Panel/Margin/Content/能量结晶") as Label
-	_check(shop_slots_ui.get_child_count() == 4 and shop_credits.text.contains("500"), "Shop screen must render four product cards and current 能量结晶")
+	var shop_resources := shop_screen.get_node("Center/Panel/Margin/Content/Credits") as Label
+	_check(shop_slots_ui.get_child_count() == 4 and shop_resources.text.contains("能量结晶：500") and shop_resources.text.contains("零件：0"), "Shop screen must render four product cards and both resource balances")
 
 	var first_item := generated_shop_slots[0] as ShopItemDefinition
 	var credits_before_first_purchase := int(run_state.get("energy_crystals"))
@@ -288,6 +288,15 @@ func _run() -> void:
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Inventory primitive test must start a clean Run")
 
+	# Resource primitives must be atomic and keep currencies independent.
+	run_state.call("add_energy_crystals", 50)
+	run_state.call("add_parts", 20)
+	_check(int(run_state.get("energy_crystals")) == 50 and int(run_state.get("parts")) == 20, "Resource APIs must add energy crystals and parts independently")
+	_check(bool(run_state.call("spend_energy_crystals", 30)) and int(run_state.get("energy_crystals")) == 20 and int(run_state.get("parts")) == 20, "Spending energy crystals must not change parts")
+	_check(not bool(run_state.call("spend_energy_crystals", 25)) and int(run_state.get("energy_crystals")) == 20, "Energy crystal overspend must fail atomically")
+	_check(bool(run_state.call("spend_parts", 5)) and int(run_state.get("parts")) == 15 and int(run_state.get("energy_crystals")) == 20, "Spending parts must not change energy crystals")
+	_check(not bool(run_state.call("spend_parts", 16)) and int(run_state.get("parts")) == 15, "Parts overspend must fail atomically")
+
 	# Inventory primitives must be atomic.
 	run_state.call("add_module_to_inventory", &"weapon_cannon", 2)
 	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 2, "Module inventory must add fixed quantities")
@@ -340,7 +349,7 @@ func _run() -> void:
 	current_ship = run_state.get("current_ship") as ShipData
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Defeat must not commit battle damage")
 	completed = run_state.get("completed_battles")
-	_check(int(run_state.get("energy_crystals")) == 0 and completed.is_empty(), "Defeat must not grant rewards or completion")
+	_check(int(run_state.get("energy_crystals")) == 0 and int(run_state.get("parts")) == 0 and completed.is_empty(), "Defeat must not grant resources or completion")
 
 	# Current final-stage result must expose a way to leave the Run.
 	run_state.call("reset_run")
