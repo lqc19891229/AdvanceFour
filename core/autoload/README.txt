@@ -22,3 +22,10 @@
 后续可能加入：
 - save_manager.gd：局外永久存档。
 - scene_manager.gd：统一场景切换。
+
+
+v0.37.1 Shop Node 状态：
+- shop_node_states 保存每个商店节点的四槽商品与购买状态。
+- get_shop_slots() 首次访问时生成四个无重复商品，之后保持固定。
+- purchase_shop_slot() 按槽购买并标记 SOLD；重复购买与资金不足均失败且不改变状态。
+- reset_run() 会清空全部商店节点状态。
