@@ -22,7 +22,7 @@
 - 右键空 Hull：拆除 Hull Cell。
 - 已有 Equipment 覆盖的 Hull Cell 不能直接拆除，需先拆设备。
 - 中键拖动：平移编辑区。
-- 保存 / 加载：使用 ShipSerializer v2，同时保存 hull_cells 与 modules。
+- 保存 / 加载：使用 ShipSerializer v3，同时保存 hull_cells 与 modules；读取 v1/v2 时自动迁移旧武器安装方向。
 - 出航战斗：普通设计模式下先保存设计模板并创建 Run，然后进入 stage_001。
 - 敌舰 AI 测试：使用相同 Hull / Equipment 设计进入测试场景。
 
@@ -31,7 +31,8 @@
 - 绿色：目标 Hull 完整、无 Equipment 重叠、核心规则合法。
 - 红色：超出 Hull、与 Equipment 重叠或违反核心规则。
 - 预览同时绘制真实 Equipment 贴图；Weapon 显示 base + turret。
-- 武器安装角度以贴图向右为 0°，四个方向为 0 右 / 1 下 / 2 左 / 3 上；战斗射界以同一安装方向为中心。
+- 武器安装角度以贴图向上为 0°，四个方向为 0 上 / 1 右 / 2 下 / 3 左；战斗射界以同一安装方向为中心。
+- 先绘制全部底座，再绘制全部炮塔；长炮管允许伸出底座，但选中、移动和安装只按底座占格。
 - Hull 放置模式同样使用红 / 绿预览。
 
 属性面板：

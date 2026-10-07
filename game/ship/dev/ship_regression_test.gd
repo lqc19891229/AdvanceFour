@@ -58,6 +58,7 @@ func _run() -> void:
 	await _test_module_art_data()
 	await _test_ai_and_damage()
 	await _test_weapon_firing_arc()
+	await _test_long_turret_geometry()
 	await _test_projectile_range()
 	if had_save:
 		DirAccess.remove_absolute(SAVE_PATH)
@@ -187,6 +188,58 @@ func _test_module_art_data() -> void:
 	await process_frame
 
 
+func _test_long_turret_geometry() -> void:
+	var world := Node2D.new()
+	root.add_child(world)
+	world.position = Vector2(150.0, 230.0)
+	world.rotation = 0.4
+	var definition := WeaponModuleDefinition.new()
+	definition.size = Vector2i.ONE
+	definition.turret_size_cells = Vector2(1.0, 2.0)
+	definition.turret_pivot = Vector2(0.5, 0.25)
+	definition.turret_muzzle = Vector2(0.5, 0.98)
+	definition.turret_texture = ImageTexture.create_from_image(Image.create(128, 256, false, Image.FORMAT_RGBA8))
+	var rect := ModuleArtLibrary.get_turret_draw_rect(definition, 32.0)
+	_check(rect.size.is_equal_approx(Vector2(32, 64)), "A 2x1 height-first turret must retain a tall canvas above a 1x1 mount")
+	_check(rect.position.is_equal_approx(Vector2(-16, -48)), "Bottom-left pivot coordinates must align the lower-quarter axle to the mount")
+	_check(ModuleArtLibrary.get_turret_muzzle_offset(definition, 32).is_equal_approx(Vector2(0, -46.72)), "A high Y muzzle must lie above the mount with upward art")
+	var weapon := WeaponRuntime.new()
+	world.add_child(weapon)
+	weapon.set_physics_process(false)
+	var fired_positions: Array[Vector2] = []
+	weapon.fired.connect(func(_module, _power, position, _direction): fired_positions.append(position))
+	for quarters in range(4):
+		var module := ShipModuleInstance.new(100 + quarters, definition, Vector2i.ZERO, quarters)
+		weapon.setup(world, module, Vector2(30, -20))
+		_check(module.get_cells().size() == 1, "Long turret art must not reserve extra placement cells")
+		var pivot_in_pixels := Vector2(64, 192)
+		_check(weapon.turret_visual.to_global(pivot_in_pixels).is_equal_approx(weapon.global_position), "Every rotation must keep the artwork axle fixed at the mount")
+		var expected_muzzle := weapon.turret_visual.to_global(Vector2(64, 5.12))
+		fired_positions.clear()
+		weapon.fire_once()
+		_check(fired_positions.size() == 1 and fired_positions[0].is_equal_approx(expected_muzzle), "Every rotation must spawn at the visible muzzle on a rotated owning ship")
+	definition.size = Vector2i(2, 2)
+	weapon.setup(world, ShipModuleInstance.new(200, definition, Vector2i.ZERO, 0), Vector2.ZERO, &"unused", 52.0)
+	_check(weapon.turret_visual != null, "A larger base must still render its independent turret texture")
+	_check((Vector2(definition.turret_texture.get_size()) * weapon.turret_visual.scale).is_equal_approx(Vector2(48, 96)), "Turret size must scale with the actual runtime cell size")
+	var design := _design()
+	var legacy := ShipSerializer.to_dictionary(design)
+	legacy["version"] = 2
+	for row in legacy["modules"]:
+		if row["module_id"] == "weapon_cannon":
+			row["rotation"] = 3
+	var migrated := ShipSerializer.from_dictionary(legacy, DATABASE)
+	_check(migrated["ok"] and migrated["ship"].get_module_at(Vector2i(0, -1)).rotation_quarters == 0, "A v2 upward cannon must preserve its world-facing direction when migrated to v3")
+	var migrated_core := migrated["ship"].get_module_at(Vector2i.ZERO) as ShipModuleInstance
+	_check(migrated_core.rotation_quarters == 0 and migrated_core.get_cells().size() == 4, "Old-save migration must preserve non-weapon orientation and occupied cells")
+	var roundtrip := ShipSerializer.from_dictionary(ShipSerializer.to_dictionary(migrated["ship"]), DATABASE)
+	_check(roundtrip["ok"] and roundtrip["ship"].get_module_at(Vector2i(0, -1)).rotation_quarters == 0, "Saving and loading v3 must not repeat the legacy weapon rotation conversion")
+	var legacy_v1 := {"version": 1, "modules": legacy["modules"]}
+	var migrated_v1 := ShipSerializer.from_dictionary(legacy_v1, DATABASE)
+	_check(migrated_v1["ok"] and migrated_v1["ship"].get_module_at(Vector2i(0, -1)).rotation_quarters == 0, "The v1 Hull reconstruction must migrate upward weapon orientation too")
+	world.queue_free()
+	await process_frame
+
 func _test_weapon_firing_arc() -> void:
 	var world := Node2D.new()
 	root.add_child(world)
@@ -204,7 +257,7 @@ func _test_weapon_firing_arc() -> void:
 	target.add_to_group(&"arc_test_targets")
 
 	# Exercise all editor installation orientations with a rotated ship and real texture.
-	var local_directions := [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]
+	var local_directions := [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
 	for quarters in range(4):
 		var module := ShipModuleInstance.new(quarters, definition, Vector2i.ZERO, quarters)
 		weapon.setup(owner, module, Vector2.ZERO, &"arc_test_targets")
@@ -222,7 +275,7 @@ func _test_weapon_firing_arc() -> void:
 		weapon.global_rotation = center + deg_to_rad(20.0)
 		shots.clear()
 		weapon.fire_once()
-		var visual_direction := Vector2.RIGHT.rotated(weapon.turret_visual.global_rotation)
+		var visual_direction := ModuleArtLibrary.WEAPON_FORWARD.rotated(weapon.turret_visual.global_rotation)
 		_check(shots.size() == 1 and shots[0].is_equal_approx(visual_direction), "Installation %d must fire along the actual rotated turret texture" % quarters)
 		_check(is_equal_approx(weapon.get_firing_arc_center_global_rotation(), center), "Aiming must not move the installation's fixed firing arc center")
 
@@ -232,7 +285,7 @@ func _test_weapon_firing_arc() -> void:
 	var center := weapon.get_firing_arc_center_global_rotation()
 	for sign_value in [-1.0, 1.0]:
 		weapon.global_rotation = center + deg_to_rad(130.0 * sign_value)
-		target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center - deg_to_rad(130.0 * sign_value)) * 100.0
+		target.global_position = weapon.global_position + ModuleArtLibrary.WEAPON_FORWARD.rotated(center - deg_to_rad(130.0 * sign_value)) * 100.0
 		weapon.target = target
 		weapon._aim_at_target(0.05)
 		var first_relative := wrapf(weapon.global_rotation - center, -PI, PI)
@@ -248,14 +301,14 @@ func _test_weapon_firing_arc() -> void:
 
 	weapon.firing_arc_degrees = 360.0
 	weapon.global_rotation = center + deg_to_rad(175.0)
-	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center - deg_to_rad(175.0)) * 100.0
+	target.global_position = weapon.global_position + ModuleArtLibrary.WEAPON_FORWARD.rotated(center - deg_to_rad(175.0)) * 100.0
 	var before := weapon.global_rotation
 	weapon._aim_at_target(0.05)
 	_check(is_equal_approx(wrapf(weapon.global_rotation - before, -PI, PI), deg_to_rad(9.0)), "A full-circle turret must keep circular shortest-path turning")
 
 	weapon.firing_arc_degrees = 0.0
 	weapon.global_rotation = center
-	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center + 0.5) * 100.0
+	target.global_position = weapon.global_position + ModuleArtLibrary.WEAPON_FORWARD.rotated(center + 0.5) * 100.0
 	weapon._aim_at_target(1.0)
 	_check(absf(wrapf(weapon.global_rotation - center, -PI, PI)) < 0.00001, "A zero-degree turret must remain locked to its installation")
 
@@ -265,7 +318,7 @@ func _test_weapon_firing_arc() -> void:
 	shots.clear()
 	weapon.fire_once()
 	_check(shots.is_empty(), "Manual firing must reject a muzzle outside the mount arc")
-	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center + deg_to_rad(89.0)) * 100.0
+	target.global_position = weapon.global_position + ModuleArtLibrary.WEAPON_FORWARD.rotated(center + deg_to_rad(89.0)) * 100.0
 	weapon.target = target
 	weapon._physics_process(0.0)
 	_check(shots.size() == 1 and weapon.is_world_direction_inside_firing_arc(shots[0]), "Automatic firing must clamp an invalid muzzle before emitting a shot, even within the aiming tolerance")
@@ -279,7 +332,7 @@ func _test_weapon_firing_arc() -> void:
 	weapon.set_powered(true)
 	weapon.global_rotation = center
 	weapon.target = null
-	target.global_position = weapon.global_position + Vector2.RIGHT.rotated(center + PI) * 100.0
+	target.global_position = weapon.global_position + ModuleArtLibrary.WEAPON_FORWARD.rotated(center + PI) * 100.0
 	weapon._physics_process(1.0)
 	_check(weapon.target == null and shots.size() == 1, "Targets outside the installation arc must not be selected or fired at")
 	weapon.global_rotation = center + PI
@@ -377,13 +430,13 @@ func _test_projectile_range() -> void:
 	_check(
 		weapon.is_world_direction_inside_firing_arc(Vector2.RIGHT)
 		and weapon.is_world_direction_inside_firing_arc(Vector2.UP)
-		and not weapon.is_world_direction_inside_firing_arc(Vector2.LEFT),
-		"A zero-rotation turret must use the right-facing texture muzzle as its arc center"
+		and not weapon.is_world_direction_inside_firing_arc(Vector2.DOWN),
+		"A zero-rotation turret must use the upward texture muzzle as its arc center"
 	)
 	owner.rotation = PI / 2.0
 	_check(
-		weapon.is_world_direction_inside_firing_arc(Vector2.DOWN)
-		and not weapon.is_world_direction_inside_firing_arc(Vector2.UP),
+		weapon.is_world_direction_inside_firing_arc(Vector2.RIGHT)
+		and not weapon.is_world_direction_inside_firing_arc(Vector2.LEFT),
 		"Weapon firing arc must rotate with the owning ship"
 	)
 	owner.rotation = 0.0
@@ -404,7 +457,7 @@ func _test_projectile_range() -> void:
 		shots.size() == 1
 		and is_equal_approx(shots[0].max_distance, 1600.0)
 		and is_equal_approx(shots[0].speed, 700.0)
-		and shots[0].direction.is_equal_approx(Vector2.RIGHT),
+		and shots[0].direction.is_equal_approx(Vector2.UP),
 		"ShipRuntime must preserve the muzzle direction, range and speed in the actual projectile"
 	)
 	if not shots.is_empty():
@@ -425,10 +478,10 @@ func _test_projectile_range() -> void:
 		owner.position += Vector2(2000.0, 1000.0)
 		owner.rotation = PI
 		projectile._physics_process(2.01)
-		_check(not projectile.finished and projectile.global_position.is_equal_approx(origin + Vector2(1407.0, 0.0)), "A long-range shot must survive beyond the old two-second lifetime and ignore source movement")
+		_check(not projectile.finished and projectile.global_position.is_equal_approx(origin + Vector2(0.0, -1407.0)), "A long-range shot must survive beyond the old two-second lifetime and ignore source movement")
 		owner.free()
 		projectile._physics_process(1.0)
-		_check(projectile.finished and projectile.global_position.is_equal_approx(origin + Vector2(1600.0, 0.0)), "Destroying the source must not change a projectile's independent flight or range")
+		_check(projectile.finished and projectile.global_position.is_equal_approx(origin + Vector2(0.0, -1600.0)), "Destroying the source must not change a projectile's independent flight or range")
 	else:
 		owner.free()
 	await process_frame
