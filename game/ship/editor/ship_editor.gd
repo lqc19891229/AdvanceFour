@@ -221,7 +221,7 @@ func _save_design_for_departure() -> bool:
 func _save_ship() -> void:
 	if run_refit_mode:
 		if _run_state().update_current_ship(grid.ship):
-			_show_status("当前 Run 整备状态已更新｜Credits：%d" % _run_state().currency)
+			_show_status("当前 Run 整备状态已更新｜能量结晶：%d｜零件：%d" % [int(_run_state().get("energy_crystals")), int(_run_state().get("parts"))])
 		else:
 			_show_status("当前 Run 整备状态保存失败。")
 		return
