@@ -8,13 +8,13 @@ const DATABASE := preload("res://data/modules/module_database.tres")
 @export var module_id: StringName = &""
 @export var module_count := 0
 @export var hull_cells := 0
-@export var price_credits := 0
+@export var price_energy_crystals := 0
 @export var shop_groups: Array[StringName] = []
 
 func is_valid() -> bool:
 	if item_id == &"" or display_name.strip_edges().is_empty():
 		return false
-	if price_credits < 0 or module_count < 0 or hull_cells < 0:
+	if price_energy_crystals < 0 or module_count < 0 or hull_cells < 0:
 		return false
 	var has_module := module_id != &"" and module_count > 0
 	var has_hull := hull_cells > 0
@@ -34,7 +34,7 @@ func get_invalid_reason() -> String:
 		return "商品 ID 不能为空。"
 	if display_name.strip_edges().is_empty():
 		return "商品名称不能为空。"
-	if price_credits < 0 or module_count < 0 or hull_cells < 0:
+	if price_energy_crystals < 0 or module_count < 0 or hull_cells < 0:
 		return "商品数量与价格不能为负数。"
 	var has_module := module_id != &"" and module_count > 0
 	var has_hull := hull_cells > 0
@@ -72,4 +72,4 @@ func get_texture() -> Texture2D:
 	return null if definition == null else definition.texture
 
 func get_button_label() -> String:
-	return "%s｜%s｜%d Credits" % [display_name, get_contents_label(), price_credits]
+	return "%s｜%s｜%d 能量结晶" % [display_name, get_contents_label(), price_energy_crystals]
