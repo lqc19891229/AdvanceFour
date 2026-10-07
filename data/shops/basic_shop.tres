@@ -48,6 +48,15 @@ module_count = 1
 price_credits = 50
 shop_groups = Array[StringName]([&"utility"])
 
+[sub_resource type="Resource" id="CargoHold"]
+script = ExtResource("2")
+item_id = &"cargo_hold"
+display_name = "标准货舱"
+module_id = &"function_cargo_hold"
+module_count = 1
+price_credits = 80
+shop_groups = Array[StringName]([&"utility", &"systems"])
+
 [sub_resource type="Resource" id="Hull"]
 script = ExtResource("2")
 item_id = &"hull"
@@ -62,4 +71,4 @@ shop_id = &"basic_shop"
 display_name = "补给商店"
 slot_count = 4
 slot_groups = Array[StringName]([&"combat", &"systems", &"utility", &"any"])
-items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("Hull")])
+items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("CargoHold"), SubResource("Hull")])
