@@ -131,7 +131,7 @@ func _run() -> void:
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Shop test must start a Run")
 	run_state.set("currency", 500)
 	var shop_definition := load("res://data/shops/basic_shop.tres") as ShopDefinition
-	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 6 and shop_definition.slot_count == 4, "Basic shop data must expose a valid six-item pool and four slots")
+	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 7 and shop_definition.slot_count == 4, "Basic shop data must expose a valid seven-item pool and four slots")
 	var generated_shop_slots: Array = run_state.call("get_shop_slots", shop_definition)
 	_check(generated_shop_slots.size() == 4, "Shop must generate exactly four product slots")
 	var generated_ids: Array[StringName] = []
@@ -179,6 +179,28 @@ func _run() -> void:
 	_check(sold_button.disabled and sold_button.text == "SOLD", "Purchased product card must remain SOLD after refresh")
 	shop_screen.queue_free()
 	await process_frame
+
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Warehouse test must start a clean Run")
+	_check(int(run_state.call("get_warehouse_capacity")) == 12 and int(run_state.call("get_warehouse_used")) == 0, "A Run must start with 12 base warehouse capacity")
+	_check(int(run_state.call("get_module_storage_cost", &"weapon_cannon", 1)) == 1, "A 1x1 module must occupy one warehouse unit")
+	var cargo_definition := RunState.DATABASE.get_by_id(&"function_cargo_hold") as FunctionModuleDefinition
+	_check(cargo_definition != null and cargo_definition.size == Vector2i(2, 2) and cargo_definition.storage_capacity == 16 and cargo_definition.get_storage_cost() == 4, "Standard cargo hold must be 2x2, occupy four storage units, and provide 16 capacity")
+	for i in range(12):
+		_check(bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse must accept modules while capacity remains")
+	_check(int(run_state.call("get_warehouse_used")) == 12 and int(run_state.call("get_warehouse_remaining")) == 0, "Twelve 1x1 modules must fill the base warehouse")
+	_check(not bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse must reject a module that exceeds capacity")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 12, "Failed warehouse storage must preserve inventory atomically")
+	run_state.set("currency", 500)
+	var cannon_shop_item := shop_definition.get_item_by_id(&"cannon")
+	_check(cannon_shop_item != null and not bool(run_state.call("can_purchase_shop_item", cannon_shop_item)), "A full warehouse must block module purchases")
+	_check(not bool(run_state.call("purchase_shop_item", cannon_shop_item)) and int(run_state.get("currency")) == 500, "Warehouse-full shop purchase must not deduct Credits")
+
+	var capacity_ship := ShipData.new()
+	capacity_ship.ensure_hull_for_equipment(cargo_definition, Vector2i.ZERO, 0)
+	_check(capacity_ship.place(cargo_definition, Vector2i.ZERO, 0) != null, "Cargo hold must be placeable on prepared Hull")
+	run_state.set("current_ship", capacity_ship)
+	_check(int(run_state.call("get_warehouse_capacity")) == 28, "Installed standard cargo hold must increase warehouse capacity from 12 to 28")
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Inventory primitive test must start a clean Run")
