@@ -45,7 +45,7 @@ func _refresh() -> void:
 		return
 
 	title.text = shop_definition.display_name
-	credits_label.text = "Credits：%d" % int(run_state.get("currency"))
+	credits_label.text = "Credits：%d｜仓库：%d / %d" % [int(run_state.get("currency")), int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity"))]
 	_refresh_slots()
 	_refresh_inventory()
 
@@ -103,7 +103,10 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	content.add_child(name_label)
 
 	var type_label := Label.new()
-	type_label.text = "%s｜%s" % [item.get_type_label(), item.get_contents_label()]
+	var storage_text := ""
+	if item.module_id != &"" and item.module_count > 0:
+		storage_text = "｜仓储 %d" % int(_run_state().call("get_module_storage_cost", item.module_id, item.module_count))
+	type_label.text = "%s｜%s%s" % [item.get_type_label(), item.get_contents_label(), storage_text]
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	type_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(type_label)
@@ -156,7 +159,7 @@ func _purchase_slot(slot_index: int) -> void:
 	if bool(run_state.call("purchase_shop_slot", shop_definition, slot_index)):
 		status_label.text = "已购买：%s" % item.get_contents_label()
 	else:
-		status_label.text = "购买失败：Credits 不足、商品已售出或商品无效。"
+		status_label.text = "购买失败：Credits 不足、仓库空间不足、商品已售出或商品无效。"
 	_refresh()
 
 func _return_from_shop() -> void:
