@@ -21,6 +21,10 @@ func _first_cell(ship: ShipData) -> ShipHullCell:
 	var cells := ship.get_hull_cells()
 	return null if cells.is_empty() else cells[0]
 
+func _check_card_texture(card: Node, expected: Texture2D, message: String) -> void:
+	var textures := card.find_children("*", "TextureRect", true, false)
+	_check(textures.size() == 1 and (textures[0] as TextureRect).texture == expected, message)
+
 func _run() -> void:
 	run_state = root.get_node_or_null("RunState")
 	_check(run_state != null, "RunState autoload must be available")
@@ -33,6 +37,18 @@ func _run() -> void:
 	var design := Battle.build_starter_design()
 	var cannon_definition := ShopItemDefinition.DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
 	_check(cannon_definition != null and cannon_definition.icon_texture != null and cannon_definition.get_display_texture() == cannon_definition.icon_texture and cannon_definition.get_display_texture() != cannon_definition.texture, "Weapon cannon must use a dedicated combined UI icon instead of its base texture")
+	var icon_image := Image.new()
+	var icon_error := icon_image.load(ProjectSettings.globalize_path("res://data/assets/modules/weapon_cannon_icon.png"))
+	_check(icon_error == OK and not icon_image.is_empty() and icon_image.detect_alpha() != Image.ALPHA_NONE, "Weapon UI icon source must be a decodable transparent PNG")
+	var fallback_weapon := cannon_definition.duplicate() as WeaponModuleDefinition
+	fallback_weapon.icon_texture = null
+	_check(fallback_weapon.get_display_texture() == cannon_definition.turret_texture and fallback_weapon.texture == cannon_definition.texture, "Weapons without a UI icon must display the turret while preserving their runtime base")
+	fallback_weapon.turret_texture = null
+	_check(fallback_weapon.get_display_texture() == cannon_definition.texture, "Weapons without a UI icon or turret must retain the base fallback")
+	fallback_weapon.texture = null
+	_check(fallback_weapon.get_display_texture() == null, "Weapons without art must return null safely")
+	var ordinary_module := ShopItemDefinition.DATABASE.get_by_id(&"energy_smallreactor")
+	_check(ordinary_module.get_display_texture() == ordinary_module.texture, "Ordinary modules without UI icons must keep their normal texture")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "A valid design must start a Run")
 	_check(int(run_state.get("energy_crystals")) == 0 and String(run_state.get("current_battle_path")) == STAGE_001_PATH, "A new Run must start with zero 能量结晶 at stage_001")
 
@@ -85,6 +101,9 @@ func _run() -> void:
 	var loot_list := loot_screen.get_node("Center/Panel/Margin/Layout/LootScroll/LootList") as VBoxContainer
 	var loot_continue := loot_screen.get_node("Center/Panel/Margin/Layout/Footer/Continue") as Button
 	_check(loot_list.get_child_count() == 3 and loot_continue.disabled, "stage_001 loot screen must show three unresolved module drops")
+	for loot_index in range(stage_one_loot_ids.size()):
+		var loot_definition := ShopItemDefinition.DATABASE.get_by_id(stage_one_loot_ids[loot_index])
+		_check_card_texture(loot_list.get_child(loot_index), loot_definition.get_display_texture(), "Loot cards must use the module UI texture")
 	var first_loot_card := loot_list.get_child(0) as PanelContainer
 	var first_loot_labels := first_loot_card.find_children("*", "Label", true, false)
 	var loot_detail_has_size := false
@@ -220,6 +239,11 @@ func _run() -> void:
 	var shop_slots_ui := shop_screen.get_node("Center/Panel/Margin/Content/Slots") as HBoxContainer
 	var shop_resources := shop_screen.get_node("Center/Panel/Margin/Content/Credits") as Label
 	_check(shop_slots_ui.get_child_count() == 4 and shop_resources.text.contains("能量结晶：500") and shop_resources.text.contains("零件：0"), "Shop screen must render four product cards and both resource balances")
+	var cannon_icon_item := shop_definition.get_item_by_id(&"cannon")
+	_check(cannon_icon_item.get_texture() == cannon_definition.icon_texture, "Cannon shop data must resolve the combined UI icon")
+	var cannon_icon_card: Control = shop_screen.call("_build_item_card", cannon_icon_item, 0, false)
+	_check_card_texture(cannon_icon_card, cannon_definition.icon_texture, "Cannon shop card must display the combined UI icon")
+	cannon_icon_card.free()
 
 	var first_item := generated_shop_slots[0] as ShopItemDefinition
 	var credits_before_first_purchase := int(run_state.get("energy_crystals"))
@@ -282,8 +306,13 @@ func _run() -> void:
 	var warehouse_refit := warehouse_screen.get_node("Margin/Layout/Footer/Refit") as Button
 	_check(warehouse_capacity_label.text.contains("5 / 12"), "Warehouse screen must show used and total capacity")
 	_check(warehouse_item_list.get_child_count() == 2, "Warehouse screen must stack inventory by module ID")
+	warehouse_screen.call("_select_module", &"weapon_cannon")
+	var warehouse_cannon_texture := warehouse_screen.get_node("Margin/Layout/Body/DetailPanel/DetailMargin/DetailLayout/Texture") as TextureRect
+	_check(warehouse_cannon_texture.texture == cannon_definition.icon_texture, "Warehouse cannon details must display the combined UI icon")
 	var cargo_button: Button
 	for child in warehouse_item_list.get_children():
+		if child is Button and (child as Button).text.contains("机炮"):
+			_check((child as Button).icon == cannon_definition.icon_texture, "Warehouse cannon list must display the combined UI icon")
 		if child is Button and (child as Button).text.contains("标准货舱"):
 			cargo_button = child as Button
 	_check(cargo_button != null and cargo_button.text.contains("2×2") and cargo_button.text.contains("总占用 4"), "Cargo hold list entry must show size and storage footprint")
@@ -497,7 +526,11 @@ func _run() -> void:
 	var station_resources := station_screen.get_node("Margin/Layout/Resources") as Label
 	var station_craft_list := station_screen.get_node("Margin/Layout/CraftScroll/CraftList") as VBoxContainer
 	_check(station_resources.text.contains("零件：50") and station_craft_list.get_child_count() == 6, "Station screen must show resources and all craft recipes")
+	for recipe_index in range(station_definition.craft_items.size()):
+		var recipe := station_definition.craft_items[recipe_index]
+		_check_card_texture(station_craft_list.get_child(recipe_index), recipe.get_texture(), "Station craft rows must use the module UI texture")
 	var craft_item := station_definition.get_craft_item(&"cannon")
+	_check(craft_item.get_texture() == cannon_definition.icon_texture, "Cannon station recipe must resolve the combined UI icon")
 	var parts_before_craft := int(run_state.get("parts"))
 	_check(bool(run_state.call("craft_station_item", craft_item)), "Station must craft a valid module when parts and storage are sufficient")
 	_check(int(run_state.get("parts")) == parts_before_craft - craft_item.parts_cost and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Crafting must spend parts and add module to warehouse")

@@ -1,3 +1,9 @@
+v0.44.2
+- 验证 weapon_cannon_icon.png 可正常解码且具有透明通道，保留现有组合图标和 Godot 导入配置。
+- 武器 UI 无专用图标时优先回退炮塔贴图；底座仍用于舰船编辑器与战斗的底层显示。
+- 新增 tools/generate_weapon_icon.gd，可按武器 ID 重建组合图标。
+- Run regression 增加 PNG 实际解码、武器贴图回退以及战利品 / 商店 / 仓库 / 空间站 UI 取图验证。
+
 v0.44.1
 - 新增模块 UI 专用 icon_texture 与 get_display_texture() 回退接口。
 - 机炮新增组合 UI 图标 weapon_cannon_icon.png；飞船运行时继续使用 weapon_cannon_base.png + weapon_cannon_turret.png。
