@@ -31,6 +31,8 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	var design := Battle.build_starter_design()
+	var cannon_definition := ShopItemDefinition.DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
+	_check(cannon_definition != null and cannon_definition.icon_texture != null and cannon_definition.get_display_texture() == cannon_definition.icon_texture and cannon_definition.get_display_texture() != cannon_definition.texture, "Weapon cannon must use a dedicated combined UI icon instead of its base texture")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "A valid design must start a Run")
 	_check(int(run_state.get("energy_crystals")) == 0 and String(run_state.get("current_battle_path")) == STAGE_001_PATH, "A new Run must start with zero 能量结晶 at stage_001")
 
