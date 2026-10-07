@@ -10,7 +10,8 @@ const DATABASE := preload("res://data/modules/module_database.tres")
 @export var intermission_seconds := 3.0
 @export var spawn_interval_seconds := 1.25
 @export var spawn_radius := 460.0
-@export var reward_credits := 0
+@export var reward_energy_crystals := 0
+@export var reward_parts := 0
 @export var loot_table: LootTableDefinition
 @export var reward_module_ids: Array[StringName] = []
 @export var reward_module_counts: Array[int] = []
@@ -32,7 +33,7 @@ func is_valid() -> bool:
 			return false
 	if preparation_seconds < 0.0 or intermission_seconds < 0.0 or spawn_interval_seconds < 0.0:
 		return false
-	if spawn_radius <= 0.0 or reward_credits < 0 or reward_hull_cells < 0:
+	if spawn_radius <= 0.0 or reward_energy_crystals < 0 or reward_parts < 0 or reward_hull_cells < 0:
 		return false
 	if loot_table != null and not loot_table.is_valid():
 		return false
@@ -69,8 +70,10 @@ func get_invalid_reason() -> String:
 		return "战斗计时参数不能为负数。"
 	if spawn_radius <= 0.0:
 		return "敌舰生成半径必须大于零。"
-	if reward_credits < 0:
-		return "战斗奖励不能为负数。"
+	if reward_energy_crystals < 0:
+		return "能量结晶奖励不能为负数。"
+	if reward_parts < 0:
+		return "零件奖励不能为负数。"
 	if reward_hull_cells < 0:
 		return "Hull 奖励不能为负数。"
 	if loot_table != null and not loot_table.is_valid():
