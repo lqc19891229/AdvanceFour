@@ -203,6 +203,36 @@ func _run() -> void:
 	_check(int(run_state.call("get_warehouse_capacity")) == 28, "Installed standard cargo hold must increase warehouse capacity from 12 to 28")
 
 	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Warehouse screen test must start a clean Run")
+	_check(bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse screen setup must store cannon")
+	_check(bool(run_state.call("store_module", &"function_cargo_hold", 1)), "Warehouse screen setup must store cargo hold")
+	var warehouse_scene := load("res://game/run/warehouse/warehouse_screen.tscn") as PackedScene
+	var warehouse_screen := warehouse_scene.instantiate() as Control
+	root.add_child(warehouse_screen)
+	await process_frame
+	var warehouse_capacity_label := warehouse_screen.get_node("Margin/Layout/Header/Capacity") as Label
+	var warehouse_item_list := warehouse_screen.get_node("Margin/Layout/Body/InventoryPanel/InventoryMargin/InventoryLayout/ItemScroll/ItemList") as VBoxContainer
+	var warehouse_detail_body := warehouse_screen.get_node("Margin/Layout/Body/DetailPanel/DetailMargin/DetailLayout/Body") as Label
+	var warehouse_refit := warehouse_screen.get_node("Margin/Layout/Footer/Refit") as Button
+	_check(warehouse_capacity_label.text.contains("5 / 12"), "Warehouse screen must show used and total capacity")
+	_check(warehouse_item_list.get_child_count() == 2, "Warehouse screen must stack inventory by module ID")
+	var cargo_button: Button
+	for child in warehouse_item_list.get_children():
+		if child is Button and (child as Button).text.contains("标准货舱"):
+			cargo_button = child as Button
+	_check(cargo_button != null and cargo_button.text.contains("2×2") and cargo_button.text.contains("总占用 4"), "Cargo hold list entry must show size and storage footprint")
+	cargo_button.pressed.emit()
+	await process_frame
+	_check(warehouse_detail_body.text.contains("安装后仓储容量：+16") and warehouse_detail_body.text.contains("净仓储贡献：+12"), "Cargo hold detail must show installed and net storage contribution")
+	var function_filter := warehouse_screen.get_node("Margin/Layout/Filters/Function") as Button
+	function_filter.pressed.emit()
+	await process_frame
+	_check(warehouse_item_list.get_child_count() == 1 and (warehouse_item_list.get_child(0) as Button).text.contains("标准货舱"), "Warehouse Function filter must show only stored function modules")
+	_check(warehouse_refit.disabled, "Warehouse must not bypass route rules to grant free refit")
+	warehouse_screen.queue_free()
+	await process_frame
+
+	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Inventory primitive test must start a clean Run")
 
 	# Inventory primitives must be atomic.
@@ -315,6 +345,8 @@ func _run() -> void:
 	root.add_child(map_screen)
 	await process_frame
 	var map_area := map_screen.get_node("Margin/Layout/MapFrame/MapArea") as Control
+	var warehouse_route_button := map_screen.get_node("Margin/Layout/Actions/Warehouse") as Button
+	_check(warehouse_route_button != null and not warehouse_route_button.disabled, "Active route map must expose warehouse access without changing route choices")
 	var route_buttons := 0
 	var enabled_route_buttons := 0
 	for child in map_area.get_children():
