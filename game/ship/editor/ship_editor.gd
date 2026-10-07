@@ -3,7 +3,7 @@ extends Control
 const SAVE_PATH := "user://ships/test_ship.json"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
-const FIRST_BATTLE_DEFINITION_PATH := "res://data/battles/stage_001.tres"
+const FIRST_BATTLE_DEFINITION_PATH := "res://data/battles/stage_001/battle.tres"
 const PROTOTYPE_ROUTE_PATH := "res://data/routes/prototype_route.tres"
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
@@ -44,7 +44,7 @@ func _ready() -> void:
 			$MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.disabled = true
 			$MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.disabled = true
 			_refresh_inventory_button_labels()
-			_show_status("Run 整备模式｜Credits：%d｜模块/Hull 安装受库存限制" % _run_state().currency)
+			_show_status("Run 整备模式｜能量结晶：%d｜零件：%d｜模块/Hull 安装受库存限制" % [int(_run_state().get("energy_crystals")), int(_run_state().get("parts"))])
 	elif get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
