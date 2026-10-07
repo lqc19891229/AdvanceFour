@@ -45,8 +45,21 @@ func _run() -> void:
 	victory.reward_credits = 100
 	var stage_one_definition := load(STAGE_001_PATH) as BattleDefinition
 	victory.reward_choices.assign(stage_one_definition.reward_choices)
-	victory.reward_module_ids.assign(stage_one_definition.reward_module_ids)
-	victory.reward_module_counts.assign(stage_one_definition.reward_module_counts)
+	var stage_one_roll := stage_one_definition.loot_table.roll(41001)
+	_check(stage_one_definition.loot_table != null and stage_one_definition.loot_table.is_valid() and stage_one_roll.size() == 3, "stage_001 must use a valid three-drop loot table")
+	var stage_one_roll_again := stage_one_definition.loot_table.roll(41001)
+	_check(stage_one_roll == stage_one_roll_again, "Loot table rolls must be reproducible with a fixed seed")
+	var stage_one_loot_ids: Array[StringName] = []
+	for rolled in stage_one_roll:
+		var rolled_id := StringName(rolled["module_id"])
+		stage_one_loot_ids.append(rolled_id)
+		victory.reward_module_ids.append(rolled_id)
+		victory.reward_module_counts.append(int(rolled["count"]))
+		victory.reward_module_rarities.append(int(rolled["rarity"]))
+	var stage_one_unique: Dictionary = {}
+	for loot_id in stage_one_loot_ids:
+		stage_one_unique[loot_id] = true
+	_check(stage_one_unique.size() == 3, "stage_001 loot table must not return duplicate modules")
 	victory.enemies_destroyed = 5
 	_check(bool(run_state.call("commit_victory", victory)), "Victory must commit a valid BattleResult")
 	var current_ship := run_state.get("current_ship") as ShipData
@@ -55,7 +68,11 @@ func _run() -> void:
 	_check(int(run_state.get("currency")) == 100 and completed.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
 	_check(bool(run_state.call("has_pending_loot")), "Victory with fixed module loot must remain pending until loot is resolved")
 	_check(bool(run_state.call("has_pending_reward_choice")), "Victory with reward choices must remain pending until one choice is claimed")
-	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0 and int(run_state.call("get_module_inventory_count", &"function_radar")) == 0 and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 0, "Committed battle loot must not enter warehouse automatically")
+	var loot_absent_before_claim := true
+	for loot_id in stage_one_loot_ids:
+		if int(run_state.call("get_module_inventory_count", loot_id)) != 0:
+			loot_absent_before_claim = false
+	_check(loot_absent_before_claim, "Committed battle loot must not enter warehouse automatically")
 	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("currency")) == 100, "The same victory must not be committed twice")
 
 	var loot_scene := load("res://game/run/loot/loot_screen.tscn") as PackedScene
@@ -65,12 +82,24 @@ func _run() -> void:
 	var loot_list := loot_screen.get_node("Margin/Layout/LootScroll/LootList") as VBoxContainer
 	var loot_continue := loot_screen.get_node("Margin/Layout/Footer/Continue") as Button
 	_check(loot_list.get_child_count() == 3 and loot_continue.disabled, "stage_001 loot screen must show three unresolved module drops")
+	var first_loot_id := stage_one_loot_ids[0]
+	var discarded_loot_id := stage_one_loot_ids[1]
+	var third_loot_id := stage_one_loot_ids[2]
+	var first_loot_count := int(victory.reward_module_counts[0])
+	var third_loot_count := int(victory.reward_module_counts[2])
 	_check(bool(run_state.call("take_loot", 0)), "An affordable loot item must be transferable into warehouse")
-	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 1, "Taking loot must add exactly that module to warehouse")
+	_check(int(run_state.call("get_module_inventory_count", first_loot_id)) == first_loot_count, "Taking loot must add exactly the rolled module quantity")
 	_check(bool(run_state.call("discard_loot", 1)), "Loot may be discarded without entering warehouse")
-	_check(int(run_state.call("get_module_inventory_count", &"function_radar")) == 0, "Discarded loot must not enter warehouse")
+	_check(int(run_state.call("get_module_inventory_count", discarded_loot_id)) == 0, "Discarded loot must not enter warehouse")
 	_check(bool(run_state.call("take_loot", 2)), "A second loot item must be transferable independently")
-	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1 and not bool(run_state.call("has_pending_loot")), "Resolving every loot item must clear pending loot")
+	_check(int(run_state.call("get_module_inventory_count", third_loot_id)) == third_loot_count and not bool(run_state.call("has_pending_loot")), "Resolving every loot item must clear pending loot")
+	var rarity_text_found := false
+	for child in loot_list.get_children():
+		if child is PanelContainer:
+			for label in child.find_children("*", "Label", true, false):
+				if (label as Label).text.contains("普通") or (label as Label).text.contains("优秀") or (label as Label).text.contains("稀有") or (label as Label).text.contains("史诗"):
+					rarity_text_found = true
+	_check(rarity_text_found, "Loot screen must expose rolled rarity labels")
 	loot_screen.call("_refresh")
 	await process_frame
 	_check(not loot_continue.disabled, "Loot screen continue must unlock after all drops are resolved")
@@ -100,12 +129,18 @@ func _run() -> void:
 	await process_frame
 	_check(repair_selected.text.contains("12 Credits") and selected_detail.text.contains("8 / 20"), "Selecting a damaged Hull must expose its local repair action")
 	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
+	var cannon_before_growth := int(run_state.call("get_module_inventory_count", &"weapon_cannon"))
+	var inventory_before_growth: Dictionary = (run_state.get("module_inventory") as Dictionary).duplicate(true)
 	var choice_weapon := reward_choice_row.get_child(1) as Button
 	choice_weapon.pressed.emit()
 	await process_frame
 	_check(not bool(run_state.call("has_pending_reward_choice")), "Claiming one reward must clear the pending reward state")
-	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 2, "Selected module reward must enter inventory after taken battle loot")
-	_check(int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 1 and int(run_state.get("hull_stock")) == 0, "Unselected growth rewards must not alter previously taken battle loot")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == cannon_before_growth + 1, "Selected module reward must add one cannon after battle loot")
+	var other_loot_unchanged := true
+	for loot_id in inventory_before_growth.keys():
+		if StringName(loot_id) != &"weapon_cannon" and int(run_state.call("get_module_inventory_count", StringName(loot_id))) != int(inventory_before_growth[loot_id]):
+			other_loot_unchanged = false
+	_check(other_loot_unchanged and int(run_state.get("hull_stock")) == 0, "Unselected growth rewards must not alter previously resolved battle loot")
 	_check(not next_button_first.disabled and not shop_button_first.disabled and not refit_button_first.disabled, "Claimed reward must unlock shop, refit and next battle")
 	_check(not bool(run_state.call("claim_reward_choice", 0)), "Reward choice can only be claimed once")
 	result_screen.queue_free()
@@ -314,6 +349,8 @@ func _run() -> void:
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_002_PATH)), "Final-stage flow must be able to start")
 	var final_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_002_PATH) as ShipData
+	var stage_two_definition := load(STAGE_002_PATH) as BattleDefinition
+	_check(stage_two_definition.loot_table != null and stage_two_definition.loot_table.is_valid() and stage_two_definition.loot_table.drop_count == 3, "stage_002 must use a valid three-drop loot table")
 	var final_victory := BattleResult.new()
 	final_victory.outcome = BattleResult.Outcome.VICTORY
 	final_victory.battle_id = &"stage_002"
