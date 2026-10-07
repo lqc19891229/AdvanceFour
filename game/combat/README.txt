@@ -37,3 +37,11 @@ v0.32 Run 规则：
 
 
 v0.45.0：胜利提交后统一进入 game/run/battle_result/battle_result_screen.tscn。战利品处理和可选维修在同一页完成，不再先进入独立 Loot Screen；BattleResult 不再生成成长奖励候选。
+
+
+v0.45.1：
+- 删除 ResultOverlay 及 Retry / Continue / Return 结果按钮，不再显示战斗内胜利/失败确认弹窗。
+- 正式场景胜利后在物理回调结束后自动提交一次结果并进入统一结算页；F6 战斗同样进入结算。
+- 失败立即结束并清空 Run 的资源、仓库、路线与飞船，只保留结果摘要，再进入 game/run/game_over。
+- 移除 R 重开。Game Over 只允许返回整备，恢复永久设计，不能继续失败的 Run。
+- 配置/存档错误在 HUD 显示原因，仍可通过 Esc 返回。

@@ -8,3 +8,5 @@ game/run/battle_result
 规则：未处理战利品阻止商店/整备/下一战/返回星图/结束 Run。维修可跳过。成长奖励三选一已移除。
 布局：宽屏分栏、窄屏纵排；整页和战利品列表均可滚动。
 验证：game/run/dev/run_regression_test.gd，统一入口 tools/verify_project.py。
+
+胜利入口（v0.45.1）：战斗完成后自动提交并进入本页。顶部统计由 BattleResult.battle_name / enemies_destroyed / waves_reached / total_waves / elapsed_seconds 提供。

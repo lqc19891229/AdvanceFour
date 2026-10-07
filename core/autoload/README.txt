@@ -7,7 +7,7 @@
 
 - run_state.gd
   功能：当前 Roguelike Run 的跨场景状态，保存 current_ship、战前快照、能量结晶、零件、完成关卡和最近 BattleResult。
-  规则：胜利提交战损与奖励；失败不提交；Retry 使用 battle_entry_ship；战后维修通过 Hull Cell 缺失 HP 扣除零件。
+  规则：胜利自动提交战损与奖励；失败立即 reset_run()，只保留 Game Over 所需 last_result；战后维修通过 Hull Cell 缺失 HP 扣除零件。
   Run Warehouse：module_inventory 保存模块仓库数量；模块按自身 size.x × size.y 计算仓储占用。hull_stock 独立保存，不计入模块仓储。
   Loot：has_pending_loot() 判断未处理战利品；take_loot(index) 检查容量并入库，discard_loot(index) 标记放弃。成长奖励三选一已移除。
   Shop：can_purchase_shop_item(item) 检查能量结晶；purchase_shop_item(item) 原子扣款并把商品内容写入 Run Inventory。

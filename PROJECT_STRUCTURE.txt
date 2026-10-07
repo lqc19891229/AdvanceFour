@@ -232,7 +232,7 @@ Godot：4.6.1
 - 模块资源与正式素材引用
 - Ship 回归
 - Combat 回归
-- 自定义 BattleDefinition / Retry
+- 自定义 BattleDefinition / 自动战后流转
 - 非法 BattleDefinition
 
 
@@ -275,7 +275,7 @@ Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
 core/autoload/run_state.gd
 - 当前 Run 的跨场景状态。
 - current_ship：当前真实飞船状态。
-- battle_entry_ship：当前战斗开场快照，用于 Retry。
+- battle_entry_ship：当前战斗开场快照。
 - currency：当前 Credits。
 - completed_battles：已完成战斗。
 - last_result：最近一次已记录战斗结果。
@@ -337,7 +337,7 @@ Run Inventory：
 规则：
 - Victory：提交战损并发放奖励。
 - Defeat：不提交战损，不发奖励。
-- Retry：从 battle_entry_ship 重新开始。
+- Game Over：失败清空 Run，返回整备后恢复永久设计。
 - Run Refit：只修改 RunState.current_ship，不覆盖 user://ships/test_ship.json。
 
 
@@ -420,3 +420,10 @@ Warehouse Screen（v0.39.0）
 - 进入空间站自动调用免费全修，不消耗零件。
 - 制造模块只消耗零件，先检查仓储容量再扣资源并写入仓库。
 - 空间站可进入 Ship Editor Run Refit 模式；离开后完成当前路线节点。
+
+
+自动战后流转（v0.45.1）
+- battle.tscn 不再包含 ResultOverlay。
+- 胜利 → 自动提交 BattleResult → 统一战后结算。
+- 失败 → 清空 Run → game/run/game_over/game_over_screen.tscn。
+- Game Over 仅保留返回整备；移除战斗 R 重开。

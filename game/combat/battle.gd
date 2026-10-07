@@ -7,6 +7,7 @@ enum Phase { PREPARING, FIGHTING, INTERMISSION, RESOLVING, VICTORY, DEFEAT, ERRO
 
 const PLAYER_SHIP_SAVE_PATH := "user://ships/test_ship.json"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
+const GAME_OVER_SCENE_PATH := "res://game/run/game_over/game_over_screen.tscn"
 const RESULT_SCENE_PATH := "res://game/run/battle_result/battle_result_screen.tscn"
 const SHIP_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const DATABASE := preload("res://data/modules/module_database.tres")
@@ -32,9 +33,6 @@ var pending_result: BattleResult
 @onready var world: Node2D = $World
 @onready var camera: Camera2D = $Camera2D
 @onready var hud: Label = $UI/HUD/Margin/Info
-@onready var result_overlay: Control = $UI/ResultOverlay
-@onready var result_title: Label = $UI/ResultOverlay/Center/Panel/Margin/Content/Title
-@onready var result_summary: Label = $UI/ResultOverlay/Center/Panel/Margin/Content/Summary
 
 func _init() -> void:
 	process_physics_priority = 100
@@ -43,9 +41,6 @@ func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
 
 func _ready() -> void:
-	$UI/ResultOverlay/Center/Panel/Margin/Content/Retry.pressed.connect(retry)
-	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.pressed.connect(continue_after_victory)
-	$UI/ResultOverlay/Center/Panel/Margin/Content/Return.pressed.connect(return_from_battle)
 	$UI/Return.pressed.connect(return_from_battle)
 
 	_resolve_battle_definition()
@@ -252,6 +247,9 @@ func _finish_battle(victory: bool) -> void:
 	pending_result = BattleResult.new()
 	pending_result.outcome = BattleResult.Outcome.VICTORY if victory else BattleResult.Outcome.DEFEAT
 	pending_result.battle_id = battle_definition.battle_id
+	pending_result.battle_name = battle_definition.display_name
+	pending_result.waves_reached = maxi(wave_index + 1, 0)
+	pending_result.total_waves = battle_definition.get_wave_count()
 	pending_result.battle_path = _get_active_battle_path()
 	pending_result.next_battle_path = battle_definition.next_battle_path
 	pending_result.reward_energy_crystals = battle_definition.reward_energy_crystals if victory else 0
@@ -271,53 +269,36 @@ func _finish_battle(victory: bool) -> void:
 		var cloned := ShipSerializer.from_dictionary(ShipSerializer.to_dictionary(player.ship_data), DATABASE)
 		if cloned["ok"]:
 			pending_result.ship_after_battle = cloned["ship"] as ShipData
-	if not victory and _run_state() != null and _run_state().run_active:
+	if not victory and _run_state() != null:
 		_run_state().record_defeat(pending_result)
-
-	result_title.text = "战斗胜利" if victory else "战斗失败"
-	result_summary.text = "%s\n击毁敌舰：%d\n到达波次：%d / %d\n战斗时间：%.1f 秒\n%s\n\n%s" % [
-		battle_definition.display_name,
-		defeated_enemies,
-		maxi(wave_index + 1, 0),
-		battle_definition.get_wave_count(),
-		elapsed_seconds,
-		_format_battle_reward() if victory and _run_state() != null and _run_state().run_active else "",
-		"全部波次已清除。" if victory else "核心承载船体被摧毁。"
-	]
-	$UI/ResultOverlay/Center/Panel/Margin/Content/Continue.visible = victory and _run_state().run_active
-	result_overlay.show()
 	_update_hud()
 	finished.emit(victory)
+	# Scene changes must happen after destruction/physics callbacks have unwound.
+	_transition_after_battle.call_deferred()
 
-
-func _format_battle_reward() -> String:
-	var parts: Array[String] = []
-	if battle_definition.reward_energy_crystals > 0:
-		parts.append("%d 能量结晶" % battle_definition.reward_energy_crystals)
-	if battle_definition.reward_parts > 0:
-		parts.append("%d 零件" % battle_definition.reward_parts)
-	if battle_definition.reward_hull_cells > 0:
-		parts.append("%d Hull" % battle_definition.reward_hull_cells)
-	if battle_definition.loot_table != null:
-		parts.append("%d 件随机模块战利品" % battle_definition.loot_table.drop_count)
-	else:
-		for index in range(battle_definition.reward_module_ids.size()):
-			var module_id := battle_definition.reward_module_ids[index]
-			var count := 1
-			if index < battle_definition.reward_module_counts.size():
-				count = battle_definition.reward_module_counts[index]
-			var definition := DATABASE.get_by_id(module_id)
-			var name := String(module_id) if definition == null else definition.display_name
-			parts.append("%s ×%d" % [name, count])
-	return "奖励：" + ("无" if parts.is_empty() else " / ".join(parts))
+func _transition_after_battle() -> void:
+	# A diagnostic Battle added alongside another scene must not replace that scene.
+	if get_tree().current_scene != self:
+		return
+	var run_state := _run_state()
+	if phase == Phase.DEFEAT:
+		get_tree().change_scene_to_file(GAME_OVER_SCENE_PATH)
+	elif phase == Phase.VICTORY and pending_result != null and run_state != null:
+		if not run_state.run_active:
+			# F6 encounters also use the common settlement; no result popup is needed.
+			var entry_path := pending_result.battle_path if not pending_result.battle_path.is_empty() else "diagnostic"
+			if not run_state.start_run(pending_result.ship_after_battle, entry_path):
+				_show_error("无法创建战后结算状态。")
+				return
+		if not run_state.commit_victory(pending_result):
+			_show_error("无法提交本场战斗结果。")
+			return
+		get_tree().change_scene_to_file(RESULT_SCENE_PATH)
 
 func _show_error(message: String) -> void:
 	phase = Phase.ERROR
 	world.process_mode = Node.PROCESS_MODE_DISABLED
-	hud.text = "无法开始战斗"
-	result_title.text = "无法出航"
-	result_summary.text = message
-	result_overlay.show()
+	hud.text = "无法开始战斗\n%s\n按 Esc 返回整备。" % message
 
 func _process(_delta: float) -> void:
 	if phase == Phase.ERROR:
@@ -378,7 +359,7 @@ func _update_hud() -> void:
 Hull HP：%.0f / %.0f  核心效率：%.0f%%  可用设备：%d
 可用武器：%d  供能 / 需求：%.0f / %.0f  有效推力：%.0f
 速度：%.1f px/s  坐标：(%.1f, %.1f)
-W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % [
+W/S 前进 / 倒车｜A/D 转向｜方向键同理｜Esc 返回""" % [
 		battle_definition.display_name,
 		design_source,
 		status,
@@ -400,20 +381,9 @@ W/S 前进 / 倒车｜A/D 转向｜方向键同理｜R 重开｜Esc 返回""" % 
 		location.y
 	]
 
-func continue_after_victory() -> void:
-	if phase != Phase.VICTORY or _run_state() == null or not _run_state().run_active or pending_result == null:
-		return
-	if not _run_state().commit_victory(pending_result):
-		_show_error("无法提交本场战斗结果。")
-		return
-	get_tree().change_scene_to_file(RESULT_SCENE_PATH)
-
-func retry() -> void:
-	if battle_definition != null and not battle_definition.resource_path.is_empty():
-		get_tree().set_meta(BATTLE_DEFINITION_META, battle_definition.resource_path)
-	get_tree().reload_current_scene()
-
 func return_from_battle() -> void:
+	if phase in [Phase.VICTORY, Phase.DEFEAT]:
+		return
 	if battle_definition == null or battle_definition.return_scene_path.is_empty():
 		return
 	if _run_state() != null and _run_state().run_active:
@@ -425,7 +395,5 @@ func return_from_battle() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not (event is InputEventKey) or not event.pressed or event.echo:
 		return
-	if event.keycode == KEY_R:
-		retry()
-	elif event.keycode == KEY_ESCAPE:
+	if event.keycode == KEY_ESCAPE:
 		return_from_battle()
