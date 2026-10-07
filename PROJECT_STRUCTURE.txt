@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.37.0
+《前进四》项目目录规划 V0.37.1
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -305,7 +305,9 @@ Shop：
 - data/shops/basic_shop.tres：当前 Prototype 固定补给商店。
 - game/run/shop/：商店场景与购买 UI。
 - RunState.purchase_shop_item()：原子扣 Credits 并写入 Run Inventory。
-- 当前商店无限库存、不出售、不随机刷新；最终关不显示商店。
+- v0.37.1 起每个商店节点固定 4 个商品槽；首次进入时按 combat / systems / utility / any 槽规则从商品池无重复生成。
+- 生成结果和每槽 SOLD 状态由 RunState.shop_node_states 按路线节点保存；刷新/重新进入不会换货，购买后不补货。
+- 最终关不显示商店。
 
 Reward Choice：
 - BattleDefinition.reward_choices：战后成长奖励候选。
