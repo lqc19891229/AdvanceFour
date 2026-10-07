@@ -45,7 +45,7 @@ func _refresh() -> void:
 		return
 
 	title.text = shop_definition.display_name
-	credits_label.text = "Credits：%d｜仓库：%d / %d" % [int(run_state.get("currency")), int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity"))]
+	credits_label.text = "能量结晶：%d｜零件：%d｜仓库：%d / %d" % [int(run_state.get("energy_crystals")), int(run_state.get("parts")), int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity"))]
 	_refresh_slots()
 	_refresh_inventory()
 
@@ -112,7 +112,7 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	content.add_child(type_label)
 
 	var price_label := Label.new()
-	price_label.text = "%d Credits" % item.price_credits
+	price_label.text = "%d 能量结晶" % item.price_energy_crystals
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(price_label)
 
@@ -159,7 +159,7 @@ func _purchase_slot(slot_index: int) -> void:
 	if bool(run_state.call("purchase_shop_slot", shop_definition, slot_index)):
 		status_label.text = "已购买：%s" % item.get_contents_label()
 	else:
-		status_label.text = "购买失败：Credits 不足、仓库空间不足、商品已售出或商品无效。"
+		status_label.text = "购买失败：能量结晶不足、仓库空间不足、商品已售出或商品无效。"
 	_refresh()
 
 func _return_from_shop() -> void:
