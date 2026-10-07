@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.38.0
+《前进四》项目目录规划 V0.39.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -345,3 +345,12 @@ Run Inventory：
 - 当前标准货舱 function_cargo_hold：2×2，+16 仓储，自身进入仓库时占 4。
 - 商店模块购买、固定战斗模块奖励、成长模块奖励都必须先通过仓储容量检查。
 - 整备拆下模块仍允许写回仓库；若因此形成超载，新的商店购买/模块奖励会被阻止，直到玩家重新安装或消耗模块。
+
+
+Warehouse Screen（v0.39.0）
+- game/run/warehouse/warehouse_screen.tscn：模块仓库管理场景。
+- game/run/warehouse/warehouse_screen.gd：类型筛选、堆叠库存、容量/超载显示、模块详情与路线合法整备跳转。
+- Route Map 增加“查看仓库”入口；进入/返回仓库本身不推进路线节点。
+- “前往整备”只有当前路线允许 REFIT 时才可用；不会绕过路线选择。
+- game_data.xlsx 的 Function Sheet 正式增加 storage_capacity；标准货舱由 Excel → JSON → .tres 正式数据链生成。
+- data/assets/modules/function_cargo_hold.png：标准货舱正式模块贴图。
