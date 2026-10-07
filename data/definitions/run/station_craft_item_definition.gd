@@ -39,4 +39,4 @@ func get_contents_label() -> String:
 
 func get_texture() -> Texture2D:
 	var definition := DATABASE.get_by_id(module_id)
-	return null if definition == null else definition.texture
+	return null if definition == null else definition.get_display_texture()
