@@ -8,6 +8,7 @@ enum Phase { PREPARING, FIGHTING, INTERMISSION, RESOLVING, VICTORY, DEFEAT, ERRO
 const PLAYER_SHIP_SAVE_PATH := "user://ships/test_ship.json"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RESULT_SCENE_PATH := "res://game/run/battle_result/battle_result_screen.tscn"
+const LOOT_SCENE_PATH := "res://game/run/loot/loot_screen.tscn"
 const SHIP_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const DATABASE := preload("res://data/modules/module_database.tres")
 const PLAYER_LAYER := 4
@@ -299,6 +300,8 @@ func _format_battle_reward() -> String:
 		var definition := DATABASE.get_by_id(module_id)
 		var name := String(module_id) if definition == null else definition.display_name
 		parts.append("%s ×%d" % [name, count])
+	if not battle_definition.reward_module_ids.is_empty():
+		parts.append("%d 件模块战利品待处理" % battle_definition.reward_module_ids.size())
 	return "奖励：" + ("无" if parts.is_empty() else " / ".join(parts))
 
 func _show_error(message: String) -> void:
@@ -396,7 +399,10 @@ func continue_after_victory() -> void:
 	if not _run_state().commit_victory(pending_result):
 		_show_error("无法提交本场战斗结果。")
 		return
-	get_tree().change_scene_to_file(RESULT_SCENE_PATH)
+	if bool(_run_state().call("has_pending_loot")):
+		get_tree().change_scene_to_file(LOOT_SCENE_PATH)
+	else:
+		get_tree().change_scene_to_file(RESULT_SCENE_PATH)
 
 func retry() -> void:
 	if battle_definition != null and not battle_definition.resource_path.is_empty():
