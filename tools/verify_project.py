@@ -64,6 +64,9 @@ def main() -> int:
             texture_paths = [module["texture_path"]]
             if module["module_type"] == "WEAPON":
                 texture_paths.append(module["turret_texture_path"])
+                icon_texture_path = f"res://data/assets/modules/{module['id']}_icon.png"
+                if (ROOT / icon_texture_path.removeprefix("res://")).exists():
+                    texture_paths.append(icon_texture_path)
             for texture_path in texture_paths:
                 if texture_path not in resource_text:
                     raise RuntimeError(
