@@ -7,7 +7,7 @@ Energy      -> ENERGY      + energy_output
 Propulsion  -> PROPULSION  + thrust
 Weapon      -> WEAPON      + firepower
 Defense     -> DEFENSE     + protection
-Function    -> FUNCTION    + no type-specific field
+Function    -> FUNCTION    + storage_capacity
 Core        -> CORE        + no type-specific field
 """
 from __future__ import annotations
@@ -68,30 +68,7 @@ WEAPON_FIELDS = [
 WEAPON_TEXTURE_FIELD = "turret_texture_path"
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
-BUILTIN_MODULES = [
-    {
-        "id": "function_cargo_hold",
-        "display_name": "标准货舱",
-        "module_type": "FUNCTION",
-        "description": "2×2 仓储模块，为当前 Run 提供 16 点模块仓储容量。当前暂用功能模块占位贴图。",
-        "width": 2,
-        "height": 2,
-        "energy_cost": 2.0,
-        "texture_path": "res://data/assets/modules/function_radar.png",
-        "turret_texture_path": "",
-        "energy_output": 0.0,
-        "thrust": 0.0,
-        "firepower": 0.0,
-        "protection": 0.0,
-        "attack_range": 0.0,
-        "fire_interval": 0.0,
-        "turn_speed_degrees": 0.0,
-        "projectile_speed": 0.0,
-        "fire_angle_tolerance_degrees": 0.0,
-        "firing_arc_degrees": 0.0,
-        "storage_capacity": 16,
-    },
-]
+FUNCTION_FIELD = "storage_capacity"
 
 HEADER_ALIASES = {
     "标识": "id",
@@ -113,6 +90,7 @@ HEADER_ALIASES = {
     "炮塔贴图路径": "turret_texture_path",
     "生命值": "hp",
     "防护": "protection",
+    "仓储容量": "storage_capacity",
 }
 
 
@@ -257,6 +235,8 @@ def parse_sheet(
     required_columns = list(BASE_COLUMNS)
     if module_type == "DEFENSE":
         required_columns.append("hp")
+    if module_type == "FUNCTION":
+        required_columns.append(FUNCTION_FIELD)
     if type_field:
         required_columns.append(type_field)
     if module_type == "WEAPON":
@@ -304,6 +284,11 @@ def parse_sheet(
             else 0.0
         )
         texture_path = str(get("texture_path") or "").strip()
+        storage_capacity = (
+            as_int(get(FUNCTION_FIELD), FUNCTION_FIELD, sheet_name, row_idx, errors)
+            if module_type == "FUNCTION"
+            else 0
+        )
 
         if not ID_PATTERN.match(raw_id):
             errors.append(f"{sheet_name}!第 {row_idx} 行：id '{raw_id}' 只能使用小写英文、数字和下划线，并以字母开头")
@@ -318,6 +303,8 @@ def parse_sheet(
             errors.append(f"{sheet_name}!第 {row_idx} 行：energy_cost 不能为负数")
         if module_type == "DEFENSE" and hp <= 0:
             errors.append(f"{sheet_name}!第 {row_idx} 行：DEFENSE 模块 hp 必须 > 0")
+        if module_type == "FUNCTION" and storage_capacity < 0:
+            errors.append(f"{sheet_name}!第 {row_idx} 行：storage_capacity 不能为负数")
         if not texture_path:
             errors.append(f"{sheet_name}!第 {row_idx} 行：texture_path 不能为空")
         elif not texture_path.startswith("res://"):
@@ -370,6 +357,8 @@ def parse_sheet(
         }
         if module_type == "DEFENSE":
             module["hp"] = hp
+        if module_type == "FUNCTION":
+            module[FUNCTION_FIELD] = storage_capacity
         if type_field:
             module[type_field] = type_value
         if module_type == "WEAPON":
@@ -406,14 +395,6 @@ def parse_modules(xlsx: Path) -> dict[str, Any]:
             errors.append(f"读取 {sheet_name} 工作表失败：{exc}")
             counts[sheet_name] = 0
 
-    for builtin in BUILTIN_MODULES:
-        if builtin["id"] in seen_ids:
-            errors.append(f"内建模块 ID 与 Excel 重复：{builtin['id']}")
-            continue
-        modules.append(dict(builtin))
-        seen_ids.add(builtin["id"])
-        if builtin["module_type"] == "FUNCTION":
-            counts["Function"] = counts.get("Function", 0) + 1
 
     return {
         "ok": not errors,
