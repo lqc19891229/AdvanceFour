@@ -6,6 +6,7 @@
 当前：
 - modules/：Equipment PNG，包括 Weapon base / turret。
 - Weapon turret PNG 的默认炮口方向为向右，编辑器与 Runtime 共用这一美术方向约定。
+- <module_id>_icon.png：可选 UI 图标，导入器自动挂载；武器组合图标可用 tools/generate_weapon_icon.gd 从正式 base / turret 重建。
 - ship/hull/human_basic/：第一版 16 个 Hull 邻接 Tile。
 
 规则：

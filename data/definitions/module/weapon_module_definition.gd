@@ -13,5 +13,10 @@ extends ShipModuleDefinition
 @export_group("武器美术")
 @export var turret_texture: Texture2D
 
+func get_display_texture() -> Texture2D:
+	if icon_texture != null:
+		return icon_texture
+	return turret_texture if turret_texture != null else texture
+
 func _init() -> void:
 	module_type = ModuleType.WEAPON
