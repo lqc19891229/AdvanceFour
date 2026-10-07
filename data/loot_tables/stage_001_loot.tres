@@ -7,37 +7,31 @@
 script = ExtResource("2")
 module_id = &"defense_lightarmor"
 weight = 35.0
-rarity = 0
 
 [sub_resource type="Resource" id="Radar"]
 script = ExtResource("2")
 module_id = &"function_radar"
 weight = 25.0
-rarity = 0
 
 [sub_resource type="Resource" id="Cannon"]
 script = ExtResource("2")
 module_id = &"weapon_cannon"
 weight = 30.0
-rarity = 1
 
 [sub_resource type="Resource" id="Engine"]
 script = ExtResource("2")
 module_id = &"propulsion_smallengine"
 weight = 20.0
-rarity = 0
 
 [sub_resource type="Resource" id="Reactor"]
 script = ExtResource("2")
 module_id = &"energy_smallreactor"
 weight = 20.0
-rarity = 0
 
 [sub_resource type="Resource" id="Cargo"]
 script = ExtResource("2")
 module_id = &"function_cargo_hold"
 weight = 8.0
-rarity = 2
 
 [resource]
 script = ExtResource("1")
