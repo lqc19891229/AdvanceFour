@@ -16,6 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://c1b4u0nqfqlsy" path="res://data/assets/modules/function_radar.png" id="12_wkwuo"]
 [ext_resource type="Texture2D" uid="uid://c8adudcii7yi" path="res://data/assets/modules/function_cargo_hold.png" id="13_cargo"]
 [ext_resource type="Texture2D" uid="uid://hxc54cdwkr8k" path="res://data/assets/modules/core_bridge.png" id="14_8q15v"]
+[ext_resource type="Texture2D" path="res://data/assets/modules/weapon_cannon_icon.png" id="15_cannon_icon"]
 
 [sub_resource type="Resource" id="Resource_lpla0"]
 script = ExtResource("2_vue2a")
@@ -41,6 +42,7 @@ script = ExtResource("4_w5ypd")
 firepower = 10.0
 firing_arc_degrees = 180.0
 turret_texture = ExtResource("8_t4fk4")
+icon_texture = ExtResource("15_cannon_icon")
 id = &"weapon_cannon"
 display_name = "机炮"
 module_type = 2
