@@ -240,6 +240,13 @@ func get_firepower() -> float:
 			total += (module.definition as WeaponModuleDefinition).firepower
 	return total
 
+func get_storage_capacity() -> int:
+	var total := 0
+	for module in modules:
+		if module.definition is FunctionModuleDefinition:
+			total += maxi((module.definition as FunctionModuleDefinition).storage_capacity, 0)
+	return total
+
 func get_protection() -> float:
 	var total := 0.0
 	for module in modules:
