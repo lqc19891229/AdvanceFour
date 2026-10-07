@@ -1,3 +1,15 @@
+v0.38.0
+- 新增模块仓库容量系统；基础仓储容量 12。
+- 模块在仓库中的占用统一为 width × height，旋转不影响占用。
+- Hull Stock 不计入模块仓储。
+- FunctionModuleDefinition 新增 storage_capacity。
+- 新增 2×2 标准货舱 function_cargo_hold：提供 +16 仓储，自身库存占用 4。
+- 标准货舱加入 ModuleDatabase 与基础商店商品池。
+- 商店购买、战斗固定模块奖励、成长模块奖励接入仓储容量检查；容量不足时不扣 Credits、不写库存、不标记领取。
+- 整备与商店界面显示仓库占用 / 容量。
+- 数据导入器新增 BUILTIN_MODULES，确保标准货舱在清理重建后不会消失，并保持 Excel/cache 自动验证通过。
+- Run regression 新增仓储面积、满仓拒绝、商店原子失败与货舱扩容测试。
+
 v0.37.1
 - 商店节点固定为 4 个商品槽。
 - basic_shop 使用 combat / systems / utility / any 四槽规则，从 6 个候选商品中无重复生成。
