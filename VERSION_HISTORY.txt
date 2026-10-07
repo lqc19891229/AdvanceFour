@@ -1,3 +1,15 @@
+v0.44.0
+- 新增 StationDefinition / StationCraftItemDefinition。
+- 新增 data/stations/basic_station.tres，第一版提供 6 种模块制造配方。
+- 新增 game/run/station 空间站场景。
+- Prototype Route 原 refit_001 升级为“维修改装空间站”，并引用 basic_station.tres。
+- 进入空间站时免费将当前 Run 飞船全部 Hull 修复至满血，不消耗零件或能量结晶。
+- 空间站可使用零件制造轻型装甲、机炮、小型引擎、小型反应堆、雷达、标准货舱。
+- 制造模块进入 Run Warehouse，不直接安装；受现有仓储容量限制。
+- 零件不足或仓库空间不足时制造原子失败，不扣零件。
+- 空间站保留“进入飞船改装”，继续复用现有 Run Refit 编辑器。
+- Run regression 增加空间站免费全修、制造扣零件、库存写入和失败原子性验证。
+
 v0.43.0
 - 将 Prototype 临时 Credits 正式替换为“能量结晶”。
 - RunState 新增 energy_crystals 与 parts，并增加独立 add / can_spend / spend API。
