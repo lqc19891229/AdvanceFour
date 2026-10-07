@@ -21,6 +21,9 @@ enum ModuleType {
 @export_group("美术资源")
 @export var texture: Texture2D
 
+func get_storage_cost() -> int:
+	return maxi(size.x, 0) * maxi(size.y, 0)
+
 func get_type_name() -> String:
 	match module_type:
 		ModuleType.ENERGY:
