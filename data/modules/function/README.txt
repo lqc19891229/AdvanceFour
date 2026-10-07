@@ -8,4 +8,7 @@
 
 通常禁止手工修改本目录中的模块 .tres；请修改数据源后重新执行“前进四：导入模块数据”。
 
-v0.38.0：function_cargo_hold 为内建系统模块，由 tools/import/import_excel.py 的 BUILTIN_MODULES 注入缓存并由 Godot 导入器稳定重建，不依赖 Excel Function Sheet。
+v0.39.0：
+- Function Sheet 正式增加“仓储容量 / storage_capacity”字段。
+- function_cargo_hold 已写入 tools/data_source/game_data.xlsx，不再由代码内建注入。
+- 仓库模块贴图使用 data/assets/modules/function_cargo_hold.png。
