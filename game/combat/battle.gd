@@ -257,8 +257,16 @@ func _finish_battle(victory: bool) -> void:
 	pending_result.next_battle_path = battle_definition.next_battle_path
 	pending_result.reward_credits = battle_definition.reward_credits if victory else 0
 	if victory:
-		pending_result.reward_module_ids.assign(battle_definition.reward_module_ids)
-		pending_result.reward_module_counts.assign(battle_definition.reward_module_counts)
+		if battle_definition.loot_table != null:
+			for rolled in battle_definition.loot_table.roll():
+				pending_result.reward_module_ids.append(StringName(rolled["module_id"]))
+				pending_result.reward_module_counts.append(int(rolled["count"]))
+				pending_result.reward_module_rarities.append(int(rolled["rarity"]))
+		else:
+			pending_result.reward_module_ids.assign(battle_definition.reward_module_ids)
+			pending_result.reward_module_counts.assign(battle_definition.reward_module_counts)
+			for _index in range(pending_result.reward_module_ids.size()):
+				pending_result.reward_module_rarities.append(LootTableEntry.Rarity.COMMON)
 		pending_result.reward_hull_cells = battle_definition.reward_hull_cells
 		pending_result.reward_choices.assign(battle_definition.reward_choices)
 	pending_result.enemies_destroyed = defeated_enemies
@@ -292,16 +300,17 @@ func _format_battle_reward() -> String:
 		parts.append("%d Credits" % battle_definition.reward_credits)
 	if battle_definition.reward_hull_cells > 0:
 		parts.append("%d Hull" % battle_definition.reward_hull_cells)
-	for index in range(battle_definition.reward_module_ids.size()):
-		var module_id := battle_definition.reward_module_ids[index]
-		var count := 1
-		if index < battle_definition.reward_module_counts.size():
-			count = battle_definition.reward_module_counts[index]
-		var definition := DATABASE.get_by_id(module_id)
-		var name := String(module_id) if definition == null else definition.display_name
-		parts.append("%s ×%d" % [name, count])
-	if not battle_definition.reward_module_ids.is_empty():
-		parts.append("%d 件模块战利品待处理" % battle_definition.reward_module_ids.size())
+	if battle_definition.loot_table != null:
+		parts.append("%d 件随机模块战利品" % battle_definition.loot_table.drop_count)
+	else:
+		for index in range(battle_definition.reward_module_ids.size()):
+			var module_id := battle_definition.reward_module_ids[index]
+			var count := 1
+			if index < battle_definition.reward_module_counts.size():
+				count = battle_definition.reward_module_counts[index]
+			var definition := DATABASE.get_by_id(module_id)
+			var name := String(module_id) if definition == null else definition.display_name
+			parts.append("%s ×%d" % [name, count])
 	return "奖励：" + ("无" if parts.is_empty() else " / ".join(parts))
 
 func _show_error(message: String) -> void:
