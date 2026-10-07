@@ -3,10 +3,10 @@ extends Control
 const RESULT_SCENE_PATH := "res://game/run/battle_result/battle_result_screen.tscn"
 const DATABASE := preload("res://data/modules/module_database.tres")
 
-@onready var capacity_label: Label = $Margin/Layout/Header/Capacity
-@onready var status_label: Label = $Margin/Layout/Header/Status
-@onready var loot_list: VBoxContainer = $Margin/Layout/LootScroll/LootList
-@onready var continue_button: Button = $Margin/Layout/Footer/Continue
+@onready var capacity_label: Label = $Center/Panel/Margin/Layout/Header/Capacity
+@onready var status_label: Label = $Center/Panel/Margin/Layout/Header/Status
+@onready var loot_list: VBoxContainer = $Center/Panel/Margin/Layout/LootScroll/LootList
+@onready var continue_button: Button = $Center/Panel/Margin/Layout/Footer/Continue
 
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
@@ -57,14 +57,14 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 	var taken := resolved and index < result.loot_taken.size() and result.loot_taken[index]
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(0, 112)
+	panel.custom_minimum_size = Vector2(0, 84)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 12)
 	panel.add_child(row)
 
 	var texture := TextureRect.new()
-	texture.custom_minimum_size = Vector2(96, 96)
+	texture.custom_minimum_size = Vector2(68, 68)
 	texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture.texture = null if definition == null else definition.texture
@@ -75,7 +75,7 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 	row.add_child(info)
 
 	var title := Label.new()
-	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_font_size_override("font_size", 18)
 	title.text = String(module_id) if definition == null else definition.display_name
 	info.add_child(title)
 
@@ -84,10 +84,8 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 		detail.text = "未知模块"
 	else:
 		var storage := int(_run_state().call("get_module_storage_cost", module_id, count))
-		detail.text = "%s｜%d×%d｜×%d｜仓储占用 %d" % [
+		detail.text = "%s｜数量：%d｜仓储占用 %d" % [
 			definition.get_type_name(),
-			definition.size.x,
-			definition.size.y,
 			count,
 			storage
 		]
@@ -98,7 +96,7 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 	info.add_child(state)
 
 	var actions := VBoxContainer.new()
-	actions.custom_minimum_size = Vector2(130, 0)
+	actions.custom_minimum_size = Vector2(112, 0)
 	row.add_child(actions)
 
 	var take := Button.new()
