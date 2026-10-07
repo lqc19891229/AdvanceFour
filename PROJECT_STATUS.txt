@@ -1,6 +1,8 @@
-《前进四》开发状态 v0.41.0
+《前进四》开发状态 v0.41.1
 
 当前阶段：模块化飞船战斗 Prototype，已建立第一版连续战斗 / 战后整备闭环，尚未形成完整 Roguelike 游戏。
+
+v0.41.1 整理战斗数据目录：data/battles 改为按 battle_id 建立配置包，每个目录包含 battle.tres 与 loot.tres。Battle 与 Loot 仍是独立 Resource，但物理上归档在一起；普通战、精英战与 Boss 后续均通过这两份数据表达差异，不新增专用战斗代码。
 
 v0.41.0 完成数据驱动随机掉落表：新增 LootTableDefinition / LootTableEntry；BattleDefinition 可引用掉落表，按权重抽取指定数量模块并支持是否重复与数量范围。当前不包含装备稀有度、随机词条或实例品质。
 
