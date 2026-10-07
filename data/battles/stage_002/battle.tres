@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="BattleDefinition" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/combat/battle_definition.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/combat/battle_wave_definition.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/scout.tres" id="3"]
+[ext_resource type="Resource" path="res://data/enemies/gunship.tres" id="4"]
+[ext_resource type="Resource" path="res://data/battles/stage_002/loot.tres" id="5"]
+
+[sub_resource type="Resource" id="Wave1"]
+script = ExtResource("2")
+enemies = Array[Resource]([ExtResource("4"), ExtResource("3")])
+counts = Array[int]([1, 2])
+
+[sub_resource type="Resource" id="Wave2"]
+script = ExtResource("2")
+enemies = Array[Resource]([ExtResource("4")])
+counts = Array[int]([2])
+
+[sub_resource type="Resource" id="Wave3"]
+script = ExtResource("2")
+enemies = Array[Resource]([ExtResource("4"), ExtResource("3")])
+counts = Array[int]([2, 1])
+spawn_interval_seconds = 0.9
+
+[resource]
+script = ExtResource("1")
+battle_id = &"stage_002"
+display_name = "第二战"
+waves = Array[Resource]([SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")])
+preparation_seconds = 2.0
+intermission_seconds = 3.0
+spawn_interval_seconds = 1.1
+spawn_radius = 500.0
+reward_credits = 150
+loot_table = ExtResource("5")
+return_scene_path = "res://game/ship/editor/ship_editor.tscn"
