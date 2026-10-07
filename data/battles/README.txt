@@ -13,6 +13,8 @@ data/battles/<battle_id>/
 - stage_001/loot.tres：第一战模块掉落表。
 - stage_002/battle.tres：第二场正式战斗配置；引用同目录 loot.tres。
 - stage_002/loot.tres：第二战模块掉落表。
+- elite_001/battle.tres：第一场精英战配置；3 波共 12 艘敌舰，220 Credits。
+- elite_001/loot.tres：精英战掉落表；抽取 4 件且不重复，高价值模块权重更高。
 
 依赖：
 - 数据结构：data/definitions/combat/
