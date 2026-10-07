@@ -32,7 +32,7 @@ func _run() -> void:
 	run_state.call("reset_run")
 	var design := Battle.build_starter_design()
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "A valid design must start a Run")
-	_check(int(run_state.get("currency")) == 0 and String(run_state.get("current_battle_path")) == STAGE_001_PATH, "A new Run must start with zero Credits at stage_001")
+	_check(int(run_state.get("energy_crystals")) == 0 and String(run_state.get("current_battle_path")) == STAGE_001_PATH, "A new Run must start with zero 能量结晶 at stage_001")
 
 	var stage_one_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
 	var stage_one_cell := _first_cell(stage_one_ship)
@@ -43,7 +43,8 @@ func _run() -> void:
 	victory.battle_path = STAGE_001_PATH
 	victory.next_battle_path = STAGE_002_PATH
 	victory.ship_after_battle = stage_one_ship
-	victory.reward_credits = 100
+	victory.reward_energy_crystals = 100
+	victory.reward_parts = 12
 	var stage_one_definition := load(STAGE_001_PATH) as BattleDefinition
 	victory.reward_choices.assign(stage_one_definition.reward_choices)
 	var stage_one_roll := stage_one_definition.loot_table.roll(41001)
@@ -65,7 +66,7 @@ func _run() -> void:
 	var current_ship := run_state.get("current_ship") as ShipData
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 8.0), "Victory must persist Hull damage into RunState")
 	var completed: Array = run_state.get("completed_battles")
-	_check(int(run_state.get("currency")) == 100 and completed.has(&"stage_001"), "Victory must grant Credits and mark the battle complete")
+	_check(int(run_state.get("energy_crystals")) == 100 and int(run_state.get("parts")) == 12 and completed.has(&"stage_001"), "Victory must grant energy crystals, parts and mark the battle complete")
 	_check(bool(run_state.call("has_pending_loot")), "Victory with fixed module loot must remain pending until loot is resolved")
 	_check(bool(run_state.call("has_pending_reward_choice")), "Victory with reward choices must remain pending until one choice is claimed")
 	var loot_absent_before_claim := true
@@ -73,7 +74,7 @@ func _run() -> void:
 		if int(run_state.call("get_module_inventory_count", loot_id)) != 0:
 			loot_absent_before_claim = false
 	_check(loot_absent_before_claim, "Committed battle loot must not enter warehouse automatically")
-	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("currency")) == 100, "The same victory must not be committed twice")
+	_check(not bool(run_state.call("commit_victory", victory)) and int(run_state.get("energy_crystals")) == 100, "The same victory must not be committed twice")
 
 	var loot_scene := load("res://game/run/loot/loot_screen.tscn") as PackedScene
 	var loot_screen := loot_scene.instantiate() as Control
@@ -106,7 +107,7 @@ func _run() -> void:
 	var result_summary := result_screen.get_node("Center/Panel/Margin/Content/Summary") as Label
 	var repair_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/RepairAll") as Button
 	var end_run_button := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/EndRun") as Button
-	_check(result_summary.text.contains("+100 Credits") and repair_button.text.contains("12 Credits"), "Battle result screen must expose fixed Credits and repair cost")
+	_check(result_summary.text.contains("+100 能量结晶") and result_summary.text.contains("+12 零件") and repair_button.text.contains("12 零件"), "Battle result screen must expose fixed 能量结晶 and repair cost")
 	var reward_choice_row := result_screen.get_node("Center/Panel/Margin/Content/RewardChoiceRow") as HBoxContainer
 	var next_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/NextBattle") as Button
 	var shop_button_first := result_screen.get_node("Center/Panel/Margin/Content/ActionRow/Shop") as Button
@@ -120,7 +121,7 @@ func _run() -> void:
 	var damage_button := damage_list.get_child(0) as Button
 	damage_button.pressed.emit()
 	await process_frame
-	_check(repair_selected.text.contains("12 Credits") and selected_detail.text.contains("8 / 20"), "Selecting a damaged Hull must expose its local repair action")
+	_check(repair_selected.text.contains("12 零件") and selected_detail.text.contains("8 / 20"), "Selecting a damaged Hull must expose its local repair action")
 	_check(not end_run_button.visible, "A result with a next battle must not show End Run as the primary progression action")
 	var cannon_before_growth := int(run_state.call("get_module_inventory_count", &"weapon_cannon"))
 	var inventory_before_growth: Dictionary = (run_state.get("module_inventory") as Dictionary).duplicate(true)
@@ -148,16 +149,17 @@ func _run() -> void:
 	_check(is_equal_approx(_first_cell(retry_ship).current_hp, 8.0), "Retry must restore the stage entry Hull snapshot")
 
 	var repair_cost := int(run_state.call("get_total_repair_cost"))
-	_check(repair_cost == 12, "Missing 12 base Hull HP must cost 12 Credits")
-	_check(bool(run_state.call("repair_all")), "Repair all must succeed when Credits are sufficient")
+	_check(repair_cost == 12, "Missing 12 base Hull HP must cost 12 能量结晶")
+	_check(bool(run_state.call("repair_all")), "Repair all must succeed when 能量结晶 are sufficient")
 	current_ship = run_state.get("current_ship") as ShipData
-	_check(int(run_state.get("currency")) == 88 and is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Repair all must restore Hull HP and deduct Credits")
+	_check(int(run_state.get("energy_crystals")) == 88 and is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Repair all must restore Hull HP and deduct 能量结晶")
 
 	_first_cell(current_ship).current_hp = 0.0
-	run_state.set("currency", 5)
+	run_state.set("parts", 5)
+	var crystals_before_failed_repair := int(run_state.get("energy_crystals"))
 	var hp_before := _first_cell(current_ship).current_hp
-	_check(not bool(run_state.call("repair_all")), "Repair all must fail atomically when Credits are insufficient")
-	_check(int(run_state.get("currency")) == 5 and is_equal_approx(_first_cell(current_ship).current_hp, hp_before), "Failed repair must not change Credits or Hull HP")
+	_check(not bool(run_state.call("repair_all")), "Repair all must fail atomically when 能量结晶 are insufficient")
+	_check(int(run_state.get("parts")) == 5 and int(run_state.get("energy_crystals")) == crystals_before_failed_repair and is_equal_approx(_first_cell(current_ship).current_hp, hp_before), "Failed repair must not change parts, energy crystals or Hull HP")
 
 	# Local repair must repair exactly one Hull Cell and charge only that cell.
 	run_state.call("reset_run")
@@ -168,18 +170,19 @@ func _run() -> void:
 	var local_b := local_cells[1]
 	local_a.current_hp = 8.0
 	local_b.current_hp = 10.0
-	run_state.set("currency", 12)
+	run_state.set("parts", 12)
+	var local_crystals_before := int(run_state.get("energy_crystals"))
 	_check(int(run_state.call("get_repair_cost_for_cell", local_a.grid_position)) == 12, "Local repair cost must equal missing Hull HP")
-	_check(bool(run_state.call("repair_cell", local_a.grid_position)), "Local repair must succeed when Credits are sufficient")
+	_check(bool(run_state.call("repair_cell", local_a.grid_position)), "Local repair must succeed when 能量结晶 are sufficient")
 	_check(is_equal_approx(local_a.current_hp, local_a.max_hp) and is_equal_approx(local_b.current_hp, 10.0), "Local repair must not repair other Hull Cells")
-	_check(int(run_state.get("currency")) == 0, "Local repair must deduct only the selected Hull cost")
-	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when Credits are insufficient")
-	_check(is_equal_approx(local_b.current_hp, 10.0) and int(run_state.get("currency")) == 0, "Failed local repair must be atomic")
+	_check(int(run_state.get("parts")) == 0 and int(run_state.get("energy_crystals")) == local_crystals_before, "Local repair must deduct only parts and preserve energy crystals")
+	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when 能量结晶 are insufficient")
+	_check(is_equal_approx(local_b.current_hp, 10.0) and int(run_state.get("parts")) == 0 and int(run_state.get("energy_crystals")) == local_crystals_before, "Failed local repair must be atomic")
 
 	# Shop nodes must generate four fixed slots, preserve them for the node lifetime, and sell each slot once.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Shop test must start a Run")
-	run_state.set("currency", 500)
+	run_state.set("energy_crystals", 500)
 	var shop_definition := load("res://data/shops/basic_shop.tres") as ShopDefinition
 	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 7 and shop_definition.slot_count == 4, "Basic shop data must expose a valid seven-item pool and four slots")
 	var generated_shop_slots: Array = run_state.call("get_shop_slots", shop_definition)
@@ -202,20 +205,20 @@ func _run() -> void:
 	root.add_child(shop_screen)
 	await process_frame
 	var shop_slots_ui := shop_screen.get_node("Center/Panel/Margin/Content/Slots") as HBoxContainer
-	var shop_credits := shop_screen.get_node("Center/Panel/Margin/Content/Credits") as Label
-	_check(shop_slots_ui.get_child_count() == 4 and shop_credits.text.contains("500"), "Shop screen must render four product cards and current Credits")
+	var shop_credits := shop_screen.get_node("Center/Panel/Margin/Content/能量结晶") as Label
+	_check(shop_slots_ui.get_child_count() == 4 and shop_credits.text.contains("500"), "Shop screen must render four product cards and current 能量结晶")
 
 	var first_item := generated_shop_slots[0] as ShopItemDefinition
-	var credits_before_first_purchase := int(run_state.get("currency"))
+	var credits_before_first_purchase := int(run_state.get("energy_crystals"))
 	_check(bool(run_state.call("purchase_shop_slot", shop_definition, 0)), "An affordable unsold shop slot must be purchasable")
-	_check(int(run_state.get("currency")) == credits_before_first_purchase - first_item.price_credits, "Shop purchase must deduct the selected slot price")
+	_check(int(run_state.get("energy_crystals")) == credits_before_first_purchase - first_item.price_energy_crystals, "Shop purchase must deduct the selected slot price")
 	if first_item.module_id != &"":
 		_check(int(run_state.call("get_module_inventory_count", first_item.module_id)) == first_item.module_count, "Purchased module must enter Run inventory")
 	else:
 		_check(int(run_state.get("hull_stock")) == first_item.hull_cells, "Purchased Hull must enter Run inventory")
 	_check(bool(run_state.call("is_shop_slot_purchased", shop_definition, 0)), "Purchased slot must be marked SOLD")
-	var credits_after_first_purchase := int(run_state.get("currency"))
-	_check(not bool(run_state.call("purchase_shop_slot", shop_definition, 0)) and int(run_state.get("currency")) == credits_after_first_purchase, "A SOLD slot must reject repeat purchase atomically")
+	var credits_after_first_purchase := int(run_state.get("energy_crystals"))
+	_check(not bool(run_state.call("purchase_shop_slot", shop_definition, 0)) and int(run_state.get("energy_crystals")) == credits_after_first_purchase, "A SOLD slot must reject repeat purchase atomically")
 
 	var generated_again: Array = run_state.call("get_shop_slots", shop_definition)
 	var ids_again: Array[StringName] = []
@@ -241,10 +244,10 @@ func _run() -> void:
 	_check(int(run_state.call("get_warehouse_used")) == 12 and int(run_state.call("get_warehouse_remaining")) == 0, "Twelve 1x1 modules must fill the base warehouse")
 	_check(not bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse must reject a module that exceeds capacity")
 	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 12, "Failed warehouse storage must preserve inventory atomically")
-	run_state.set("currency", 500)
+	run_state.set("energy_crystals", 500)
 	var cannon_shop_item := shop_definition.get_item_by_id(&"cannon")
 	_check(cannon_shop_item != null and not bool(run_state.call("can_purchase_shop_item", cannon_shop_item)), "A full warehouse must block module purchases")
-	_check(not bool(run_state.call("purchase_shop_item", cannon_shop_item)) and int(run_state.get("currency")) == 500, "Warehouse-full shop purchase must not deduct Credits")
+	_check(not bool(run_state.call("purchase_shop_item", cannon_shop_item)) and int(run_state.get("energy_crystals")) == 500, "Warehouse-full shop purchase must not deduct 能量结晶")
 
 	var capacity_ship := ShipData.new()
 	capacity_ship.ensure_hull_for_equipment(cargo_definition, Vector2i.ZERO, 0)
@@ -331,12 +334,13 @@ func _run() -> void:
 	defeat.battle_id = &"stage_001"
 	defeat.battle_path = STAGE_001_PATH
 	defeat.ship_after_battle = defeat_ship
-	defeat.reward_credits = 100
+	defeat.reward_energy_crystals = 100
+	defeat.reward_parts = 12
 	run_state.call("record_defeat", defeat)
 	current_ship = run_state.get("current_ship") as ShipData
 	_check(is_equal_approx(_first_cell(current_ship).current_hp, 20.0), "Defeat must not commit battle damage")
 	completed = run_state.get("completed_battles")
-	_check(int(run_state.get("currency")) == 0 and completed.is_empty(), "Defeat must not grant rewards or completion")
+	_check(int(run_state.get("energy_crystals")) == 0 and completed.is_empty(), "Defeat must not grant rewards or completion")
 
 	# Current final-stage result must expose a way to leave the Run.
 	run_state.call("reset_run")
@@ -350,7 +354,8 @@ func _run() -> void:
 	final_victory.battle_path = STAGE_002_PATH
 	final_victory.next_battle_path = ""
 	final_victory.ship_after_battle = final_ship
-	final_victory.reward_credits = 150
+	final_victory.reward_energy_crystals = 150
+	final_victory.reward_parts = 20
 	final_victory.reward_module_ids.assign([&"weapon_cannon"])
 	final_victory.reward_module_counts.assign([1])
 	_check(bool(run_state.call("commit_victory", final_victory)), "Final-stage victory must commit")
@@ -381,7 +386,8 @@ func _run() -> void:
 	route_victory.battle_id = &"stage_001"
 	route_victory.battle_path = STAGE_001_PATH
 	route_victory.ship_after_battle = route_ship
-	route_victory.reward_credits = 100
+	route_victory.reward_energy_crystals = 100
+	route_victory.reward_parts = 12
 	var route_stage_one := load(STAGE_001_PATH) as BattleDefinition
 	route_victory.reward_choices.assign(route_stage_one.reward_choices)
 	_check(bool(run_state.call("commit_victory", route_victory)), "Route battle victory must commit")
@@ -454,7 +460,7 @@ func _run() -> void:
 	var elite_enemy_total := 0
 	for wave_index in range(elite_definition.get_wave_count()):
 		elite_enemy_total += elite_definition.get_wave(wave_index).get_total_enemy_count()
-	_check(elite_definition.reward_credits == 220 and elite_enemy_total == 12, "Elite battle difficulty and Credits must be expressed by battle data")
+	_check(elite_definition.reward_energy_crystals == 220 and elite_definition.reward_parts == 30 and elite_enemy_total == 12, "Elite battle difficulty and dual resource rewards must be expressed by battle data")
 	_check(elite_definition.loot_table != null and elite_definition.loot_table.is_valid() and elite_definition.loot_table.drop_count == 4 and not elite_definition.loot_table.allow_duplicates, "Elite loot data must grant four non-duplicate weighted drops")
 	var elite_roll := elite_definition.loot_table.roll(42001)
 	var elite_unique: Dictionary = {}
@@ -482,9 +488,10 @@ func _run() -> void:
 	elite_victory.battle_id = &"elite_001"
 	elite_victory.battle_path = ELITE_001_PATH
 	elite_victory.ship_after_battle = elite_ship
-	elite_victory.reward_credits = elite_definition.reward_credits
+	elite_victory.reward_energy_crystals = elite_definition.reward_energy_crystals
+	elite_victory.reward_parts = elite_definition.reward_parts
 	_check(bool(run_state.call("commit_victory", elite_victory)), "Elite battle victory must commit through the shared battle flow")
-	_check(int(run_state.get("currency")) == 220, "Elite Credits reward must come from elite battle data")
+	_check(int(run_state.get("energy_crystals")) == 220 and int(run_state.get("parts")) == 30, "Elite dual resource rewards must come from elite battle data")
 	branch_ids = run_state.call("get_available_route_node_ids")
 	_check(branch_ids.size() == 1 and branch_ids[0] == &"battle_002", "Completed Elite battle must converge on stage_002")
 
