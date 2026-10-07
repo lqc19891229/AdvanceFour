@@ -1,20 +1,18 @@
-《前进四》data/shops 目录说明
+data/shops
 
 职责：
-保存具体 ShopDefinition 商店实例。
+- 保存 Runtime 正式商店配置实例。
+- 商店配置使用 ShopDefinition / ShopItemDefinition。
 
-当前：
-- basic_shop.tres：Prototype 补给商店。
+当前规则（v0.37.1）：
+- basic_shop.tres 提供 6 个候选商品。
+- 每个商店节点固定 4 个商品槽。
+- 四槽规则依次为 combat / systems / utility / any。
+- 每次进入一个新的商店节点时，从商品池按槽规则无重复生成 4 件商品。
+- 生成结果由 RunState 按路线节点保存；刷新或重新进入同一节点不会重新抽取。
+- 每槽只能购买一次，购买后为 SOLD，不补货。
+- 商品只提供模块或 Hull 中的一种，购买结果直接进入 Run Inventory。
 
-当前商品：
-- 轻型装甲 ×1：45 Credits
-- 机炮 ×1：70 Credits
-- 小型引擎 ×1：55 Credits
-- 小型反应堆 ×1：60 Credits
-- 雷达 ×1：50 Credits
-- Hull ×1：25 Credits
-
-规则：
-- 商店实例只描述商品与价格，不直接修改 RunState。
-- 购买执行由 core/autoload/run_state.gd 负责。
-- 当前第一版无限库存，不做出售、随机刷新、限购。
+边界：
+- 当前没有稀有度、权重、刷新、出售和库存数量系统。
+- 具体购买执行属于 core/autoload/run_state.gd，UI 属于 game/run/shop。
