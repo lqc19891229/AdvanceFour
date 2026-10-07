@@ -1,16 +1,20 @@
-《前进四》game/run/shop 目录说明
+game/run/shop
 
 职责：
-负责 Run 内补给商店 UI 与购买交互。
+- 当前 Run 的补给商店玩法场景。
+- 根据当前 SHOP 路线节点加载 ShopDefinition。
+- 展示 4 张商品卡、Credits、Run Inventory 与 SOLD 状态。
 
-当前：
-- shop_screen.tscn / shop_screen.gd
-- 读取 data/shops/basic_shop.tres。
-- 显示当前 Credits、商品列表与 Run Inventory。
-- 购买成功后刷新 Credits / Inventory。
-- 返回战果页时保留当前 RunState。
+流程：
+Route Map → SHOP Node → shop_screen.tscn → 购买 / 离开 → Route Map。
 
-边界：
-- 商品与价格定义属于 data。
-- Credits / Inventory 状态属于 RunState。
-- 商店场景不直接生成或修改 ShipData。
+规则（v0.37.1）：
+- UI 不自行随机商品；四槽结果由 RunState.get_shop_slots() 生成并保存。
+- 每槽显示商品名称、类型、内容、价格和模块贴图（Hull 暂无独立商品图）。
+- 已购买槽显示 SOLD 且不可再次购买。
+- Credits 不足时购买按钮禁用。
+- 离开路线商店时完成当前 SHOP 节点。
+
+依赖：
+- data/shops/ShopDefinition 配置。
+- RunState 的四槽状态与购买接口。
