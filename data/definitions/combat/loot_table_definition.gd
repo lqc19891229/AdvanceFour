@@ -71,7 +71,7 @@ func roll(seed_value: int = -1) -> Array[Dictionary]:
 			total_weight += entry.weight
 		var roll_value := rng.randf_range(0.0, total_weight)
 		var accumulated := 0.0
-		var selected := pool.back()
+		var selected: LootTableEntry = pool.back()
 		for entry in pool:
 			accumulated += entry.weight
 			if roll_value <= accumulated:
