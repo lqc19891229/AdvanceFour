@@ -93,13 +93,8 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 		]
 	info.add_child(detail)
 
-	var rarity := LootTableEntry.Rarity.COMMON
-	if index < result.reward_module_rarities.size():
-		rarity = result.reward_module_rarities[index]
-	var rarity_label := LootTableEntry.new()
-	rarity_label.rarity = rarity
 	var state := Label.new()
-	state.text = "%s｜%s" % [rarity_label.get_rarity_label(), "已带走" if taken else ("已放弃" if resolved else "待处理")]
+	state.text = "已带走" if taken else ("已放弃" if resolved else "待处理")
 	info.add_child(state)
 
 	var actions := VBoxContainer.new()
