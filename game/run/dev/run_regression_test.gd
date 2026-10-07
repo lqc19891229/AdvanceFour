@@ -126,43 +126,57 @@ func _run() -> void:
 	_check(not bool(run_state.call("repair_cell", local_b.grid_position)), "Local repair must fail when Credits are insufficient")
 	_check(is_equal_approx(local_b.current_hp, 10.0) and int(run_state.get("currency")) == 0, "Failed local repair must be atomic")
 
-	# Shop purchases must deduct Credits atomically and add to Run inventory.
+	# Shop nodes must generate four fixed slots, preserve them for the node lifetime, and sell each slot once.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Shop test must start a Run")
-	run_state.set("currency", 100)
+	run_state.set("currency", 500)
 	var shop_definition := load("res://data/shops/basic_shop.tres") as ShopDefinition
-	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 6, "Basic shop data must expose six valid products")
+	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 6 and shop_definition.slot_count == 4, "Basic shop data must expose a valid six-item pool and four slots")
+	var generated_shop_slots: Array = run_state.call("get_shop_slots", shop_definition)
+	_check(generated_shop_slots.size() == 4, "Shop must generate exactly four product slots")
+	var generated_ids: Array[StringName] = []
+	var all_slots_match := true
+	for slot_index in range(generated_shop_slots.size()):
+		var generated_item := generated_shop_slots[slot_index] as ShopItemDefinition
+		generated_ids.append(generated_item.item_id)
+		if not shop_definition.item_matches_slot(generated_item, slot_index):
+			all_slots_match = false
+	_check(all_slots_match, "Each generated shop item must respect its slot group")
+	var unique_ids: Dictionary = {}
+	for item_id in generated_ids:
+		unique_ids[item_id] = true
+	_check(unique_ids.size() == 4, "Generated shop slots must not duplicate products")
+
 	var shop_scene := load("res://game/run/shop/shop_screen.tscn") as PackedScene
 	var shop_screen := shop_scene.instantiate() as Control
 	root.add_child(shop_screen)
 	await process_frame
-	var shop_item_list := shop_screen.get_node("Center/Panel/Margin/Content/ItemScroll/ItemList") as VBoxContainer
+	var shop_slots_ui := shop_screen.get_node("Center/Panel/Margin/Content/Slots") as HBoxContainer
 	var shop_credits := shop_screen.get_node("Center/Panel/Margin/Content/Credits") as Label
-	_check(shop_item_list.get_child_count() == 6 and shop_credits.text.contains("100"), "Shop screen must show all products and current Credits")
-	var cannon_button: Button
-	var hull_button: Button
-	for child in shop_item_list.get_children():
-		if child is Button:
-			var button := child as Button
-			if button.text.contains("机炮"):
-				cannon_button = button
-			elif button.text.contains("基础船体"):
-				hull_button = button
-	_check(cannon_button != null and hull_button != null, "Shop UI must expose cannon and Hull products")
-	cannon_button.pressed.emit()
+	_check(shop_slots_ui.get_child_count() == 4 and shop_credits.text.contains("500"), "Shop screen must render four product cards and current Credits")
+
+	var first_item := generated_shop_slots[0] as ShopItemDefinition
+	var credits_before_first_purchase := int(run_state.get("currency"))
+	_check(bool(run_state.call("purchase_shop_slot", shop_definition, 0)), "An affordable unsold shop slot must be purchasable")
+	_check(int(run_state.get("currency")) == credits_before_first_purchase - first_item.price_credits, "Shop purchase must deduct the selected slot price")
+	if first_item.module_id != &"":
+		_check(int(run_state.call("get_module_inventory_count", first_item.module_id)) == first_item.module_count, "Purchased module must enter Run inventory")
+	else:
+		_check(int(run_state.get("hull_stock")) == first_item.hull_cells, "Purchased Hull must enter Run inventory")
+	_check(bool(run_state.call("is_shop_slot_purchased", shop_definition, 0)), "Purchased slot must be marked SOLD")
+	var credits_after_first_purchase := int(run_state.get("currency"))
+	_check(not bool(run_state.call("purchase_shop_slot", shop_definition, 0)) and int(run_state.get("currency")) == credits_after_first_purchase, "A SOLD slot must reject repeat purchase atomically")
+
+	var generated_again: Array = run_state.call("get_shop_slots", shop_definition)
+	var ids_again: Array[StringName] = []
+	for raw_item in generated_again:
+		ids_again.append((raw_item as ShopItemDefinition).item_id)
+	_check(ids_again == generated_ids, "Refreshing the same shop state must preserve all four generated products")
+	shop_screen.call("_refresh")
 	await process_frame
-	_check(int(run_state.get("currency")) == 30 and int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 1, "Buying a cannon must deduct 70 Credits and add one cannon")
-	# Buttons are rebuilt after purchase.
-	shop_item_list = shop_screen.get_node("Center/Panel/Margin/Content/ItemScroll/ItemList") as VBoxContainer
-	for child in shop_item_list.get_children():
-		if child is Button and (child as Button).text.contains("基础船体"):
-			hull_button = child as Button
-	hull_button.pressed.emit()
-	await process_frame
-	_check(int(run_state.get("currency")) == 5 and int(run_state.get("hull_stock")) == 1, "Buying Hull must deduct 25 Credits and add one Hull stock")
-	var armor_item := shop_definition.items[0] as ShopItemDefinition
-	_check(not bool(run_state.call("purchase_shop_item", armor_item)), "Insufficient Credits must reject a shop purchase")
-	_check(int(run_state.get("currency")) == 5 and int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == 0, "Failed shop purchase must preserve Credits and inventory")
+	shop_slots_ui = shop_screen.get_node("Center/Panel/Margin/Content/Slots") as HBoxContainer
+	var sold_button := shop_slots_ui.get_child(0).get_node("Margin/Content/Buy") as Button
+	_check(sold_button.disabled and sold_button.text == "SOLD", "Purchased product card must remain SOLD after refresh")
 	shop_screen.queue_free()
 	await process_frame
 
