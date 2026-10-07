@@ -65,10 +65,11 @@ func _refresh() -> void:
 
 	var repair_cost := int(run_state.call("get_total_repair_cost"))
 	title.text = "战斗胜利"
-	summary.text = "%s\n%s｜当前 Credits：%d\nHull 完整：%d  受损：%d  摧毁：%d｜全部维修：%d Credits" % [
+	summary.text = "%s\n%s｜能量结晶：%d｜零件：%d\nHull 完整：%d  受损：%d  摧毁：%d｜全部维修：%d 零件" % [
 		String(result.battle_id),
 		_build_reward_text(result),
-		run_state.currency,
+		run_state.energy_crystals,
+		run_state.parts,
 		intact,
 		damaged,
 		destroyed,
@@ -79,8 +80,8 @@ func _refresh() -> void:
 	_refresh_damage_list()
 	_refresh_selected_detail()
 
-	repair_button.text = "全部维修（%d Credits）" % repair_cost
-	repair_button.disabled = repair_cost <= 0 or run_state.currency < repair_cost
+	repair_button.text = "全部维修（%d 零件）" % repair_cost
+	repair_button.disabled = repair_cost <= 0 or run_state.parts < repair_cost
 	var pending_choice := bool(run_state.call("has_pending_reward_choice"))
 	var pending_loot := bool(run_state.call("has_pending_loot"))
 	if bool(run_state.call("is_route_active")):
@@ -107,8 +108,10 @@ func _refresh() -> void:
 
 func _build_reward_text(result: BattleResult) -> String:
 	var parts: Array[String] = []
-	if result.reward_credits > 0:
-		parts.append("+%d Credits" % result.reward_credits)
+	if result.reward_energy_crystals > 0:
+		parts.append("+%d 能量结晶" % result.reward_energy_crystals)
+	if result.reward_parts > 0:
+		parts.append("+%d 零件" % result.reward_parts)
 	if result.reward_hull_cells > 0:
 		parts.append("+%d Hull" % result.reward_hull_cells)
 	for index in range(result.reward_module_ids.size()):
@@ -188,7 +191,7 @@ func _refresh_damage_list() -> void:
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 38)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.text = "%s (%d,%d)  %.0f/%.0f HP  |  %s  |  %d Credits" % [
+		button.text = "%s (%d,%d)  %.0f/%.0f HP  |  %s  |  %d 零件" % [
 			_get_damage_label(cell),
 			position.x,
 			position.y,
@@ -259,8 +262,8 @@ func _refresh_selected_detail() -> void:
 		cell.max_hp,
 		effect_line
 	]
-	repair_selected_button.text = "维修此格（%d Credits）" % cost
-	repair_selected_button.disabled = cost <= 0 or run_state.currency < cost
+	repair_selected_button.text = "维修此格（%d 零件）" % cost
+	repair_selected_button.disabled = cost <= 0 or run_state.parts < cost
 
 func _get_damage_label(cell: ShipHullCell) -> String:
 	if cell.current_hp <= 0.0:
