@@ -1,4 +1,4 @@
-《前进四》项目目录规划 V0.43.0
+《前进四》项目目录规划 V0.44.0
 
 res://
 ├─ core/                                  # 跨系统基础设施
@@ -411,3 +411,14 @@ Warehouse Screen（v0.39.0）
 - repair_cell() / repair_all()：当前只消耗零件，规则为 1 缺失 Hull HP = 1 零件。
 - 能量结晶与零件的增减均由 RunState API 负责，UI 不直接修改资源。
 - v0.43 不实现模块制造；空间站以零件制造模块属于 v0.44。
+
+
+维修改装空间站（v0.44.0）
+- data/definitions/run/station_definition.gd：空间站配置与制造列表。
+- data/definitions/run/station_craft_item_definition.gd：模块制造配方，包含 module_id / module_count / parts_cost。
+- data/stations/basic_station.tres：Prototype 基础空间站。
+- game/run/station/station_screen.tscn：空间站 UI 与制造入口。
+- REFIT 路线节点继续保留原 NodeType，但必须配置 StationDefinition target_path。
+- 进入空间站自动调用免费全修，不消耗零件。
+- 制造模块只消耗零件，先检查仓储容量再扣资源并写入仓库。
+- 空间站可进入 Ship Editor Run Refit 模式；离开后完成当前路线节点。
