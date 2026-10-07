@@ -1,3 +1,13 @@
+v0.41.0
+- 新增 LootTableEntry：module_id、weight、min_count、max_count、rarity。
+- 新增 LootTableDefinition：drop_count、allow_duplicates、entries 与加权 roll(seed)。
+- 稀有度第一版为普通、优秀、稀有、史诗。
+- BattleDefinition 新增 loot_table 引用；旧固定 reward_module_ids 保留为兼容回退。
+- stage_001 / stage_002 改为独立数据驱动掉落表，每战随机抽取 3 件且不重复。
+- Battle 胜利时只抽取一次并把实际 module/count/rarity 写入 BattleResult。
+- Loot Screen 显示实际抽取稀有度。
+- Run regression 增加固定 seed 可复现、无重复、掉落数量与 Loot Screen 稀有度验证。
+
 v0.40.0
 - 新增 game/run/loot/ 战利品临时区场景。
 - 固定模块战利品不再随 commit_victory() 自动进入仓库。
