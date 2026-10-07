@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://data/definitions/combat/battle_wave_definition.gd" id="2"]
 [ext_resource type="Resource" path="res://data/enemies/scout.tres" id="3"]
 [ext_resource type="Resource" path="res://data/enemies/gunship.tres" id="4"]
+[ext_resource type="Resource" path="res://data/loot_tables/stage_002_loot.tres" id="5"]
 
 [sub_resource type="Resource" id="Wave1"]
 script = ExtResource("2")
@@ -31,6 +32,5 @@ intermission_seconds = 3.0
 spawn_interval_seconds = 1.1
 spawn_radius = 500.0
 reward_credits = 150
-reward_module_ids = Array[StringName]([&"weapon_cannon", &"defense_lightarmor", &"function_cargo_hold"])
-reward_module_counts = Array[int]([1, 1, 1])
+loot_table = ExtResource("5")
 return_scene_path = "res://game/ship/editor/ship_editor.tscn"
