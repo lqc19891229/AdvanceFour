@@ -119,6 +119,10 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 			weapon.projectile_speed = float(row["projectile_speed"])
 			weapon.firing_arc_degrees = float(row["firing_arc_degrees"])
 			weapon.fire_angle_tolerance_degrees = float(row["fire_angle_tolerance_degrees"])
+			weapon.turret_size_cells = Vector2(row["turret_size_cells"][0], row["turret_size_cells"][1])
+			weapon.turret_pivot = Vector2(row["turret_pivot"][0], row["turret_pivot"][1])
+			weapon.turret_muzzle = Vector2(row["turret_muzzle"][0], row["turret_muzzle"][1])
+			weapon.turret_art_rotation_degrees = float(row.get("turret_art_rotation_degrees", 0.0))
 		"DEFENSE":
 			d = DefenseDef.new()
 			var defense := d as DefenseModuleDefinition

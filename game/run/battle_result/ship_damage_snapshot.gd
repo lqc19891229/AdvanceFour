@@ -34,6 +34,14 @@ func set_ship(value: ShipData) -> void:
 			bounds = Rect2(Vector2(cells[0].grid_position), Vector2.ONE)
 			for cell in cells:
 				bounds = bounds.merge(Rect2(Vector2(cell.grid_position), Vector2.ONE))
+			for module in ship.modules:
+				if not (module.definition is WeaponModuleDefinition):
+					continue
+				var center := Vector2(module.grid_position) + Vector2(module.get_rotated_size()) * 0.5
+				var rect := ModuleArtLibrary.get_turret_draw_rect(module.definition as WeaponModuleDefinition, 0.94)
+				var angle := float(module.rotation_quarters) * PI * 0.5
+				for corner in [rect.position, rect.end, Vector2(rect.end.x, rect.position.y), Vector2(rect.position.x, rect.end.y)]:
+					bounds = bounds.expand(center + corner.rotated(angle))
 	queue_redraw()
 
 func center_view() -> void:
@@ -120,6 +128,8 @@ func _draw() -> void:
 			draw_rect(rect, Color("#263747"))
 	for module in ship.modules:
 		_draw_module(module)
+	for module in ship.modules:
+		_draw_module_turret(module)
 	# Damage overlays sit above the module art, so every covered Hull stays readable.
 	for cell in ship.get_hull_cells():
 		var rect := Rect2(grid_to_screen(cell.grid_position), Vector2.ONE * cell_size).grow(-cell_size * 0.04)
@@ -146,10 +156,16 @@ func _draw_module(module: ShipModuleInstance) -> void:
 		_draw_texture(base, rect, 0.0 if module.definition is WeaponModuleDefinition else rotation)
 	else:
 		draw_rect(rect.grow(-2.0), Color("#506a7b"))
+
+func _draw_module_turret(module: ShipModuleInstance) -> void:
 	if module.definition is WeaponModuleDefinition:
+		var rect := Rect2(grid_to_screen(module.grid_position), Vector2(module.get_rotated_size()) * get_cell_size())
+		var rotation := float(module.rotation_quarters) * PI * 0.5
 		var turret := ModuleArtLibrary.get_turret_texture(module.definition)
 		if turret != null:
-			_draw_texture(turret, rect, rotation)
+			draw_set_transform(rect.get_center(), rotation, Vector2.ONE)
+			draw_texture_rect(turret, ModuleArtLibrary.get_turret_draw_rect(module.definition as WeaponModuleDefinition, get_cell_size() * 0.94), false)
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		else:
 			draw_line(rect.get_center(), rect.get_center() + ModuleArtLibrary.WEAPON_FORWARD.rotated(rotation) * get_cell_size() * 0.35, Color.WHITE, 2.0)
 

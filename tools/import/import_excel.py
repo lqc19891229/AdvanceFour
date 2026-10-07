@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 import zipfile
@@ -54,7 +55,7 @@ SHEET_SCHEMAS = {
 
 BASE_COLUMNS = [
     "id", "display_name", "description",
-    "width", "height", "energy_cost", "texture_path",
+    "size", "energy_cost", "texture_path",
 ]
 TYPE_FIELDS = ["energy_output", "thrust", "firepower", "protection"]
 WEAPON_FIELDS = [
@@ -76,6 +77,15 @@ HEADER_ALIASES = {
     "描述": "description",
     "宽度": "width",
     "高度": "height",
+    "高X宽": "size",
+    "高x宽": "size",
+    "高×宽": "size",
+    "炮塔高X宽": "turret_size",
+    "炮塔高x宽": "turret_size",
+    "炮塔高×宽": "turret_size",
+    "炮塔轴点": "turret_pivot",
+    "炮口": "turret_muzzle",
+    "炮塔素材转角（度）": "turret_art_rotation_degrees",
     "能耗": "energy_cost",
     "贴图路径": "texture_path",
     "能量输出": "energy_output",
@@ -213,6 +223,30 @@ def normalize_headers(row: list[Any]) -> list[str]:
     ]
 
 
+def parse_size(value: Any, field: str, sheet: str, row: int, errors: list[str]) -> tuple[int, int]:
+    """Authoring order is height x width; runtime order remains x/y (width/height)."""
+    match = re.fullmatch(r"\s*([0-9]+)\s*[xX×]\s*([0-9]+)\s*", str(value))
+    if not match or int(match[1]) <= 0 or int(match[2]) <= 0:
+        errors.append(f"{sheet}!第 {row} 行：{field} 必须填写正整数高x宽，例如 2x1")
+        return (0, 0)
+    return (int(match[2]), int(match[1]))
+
+
+def parse_point(value: Any, field: str, sheet: str, row: int, errors: list[str]) -> list[float]:
+    """Normalized x,y from the bottom left of the upright texture canvas."""
+    try:
+        pieces = str(value).replace("，", ",").split(",")
+        if len(pieces) != 2:
+            raise ValueError
+        point = [float(piece.strip()) for piece in pieces]
+        if not all(math.isfinite(number) and 0 <= number <= 1 for number in point):
+            raise ValueError
+        return point
+    except (TypeError, ValueError):
+        errors.append(f"{sheet}!第 {row} 行：{field} 必须填写 0～1 的 X,Y，例如 0.5,0.25（左下角起算）")
+        return [0.5, 0.5]
+
+
 def find_header_row(rows: list[list[Any]], required_columns: list[str]) -> int | None:
     """Allow an optional note row before the header row."""
     for idx, row in enumerate(rows[:10]):
@@ -242,6 +276,7 @@ def parse_sheet(
     if module_type == "WEAPON":
         required_columns.extend(WEAPON_FIELDS)
         required_columns.append(WEAPON_TEXTURE_FIELD)
+        required_columns.extend(["turret_size", "turret_pivot", "turret_muzzle"])
 
     if not rows:
         errors.append(f"{sheet_name} 工作表为空")
@@ -258,12 +293,12 @@ def parse_sheet(
         errors.append(f"{sheet_name} 缺少列：{', '.join(missing)}")
         return []
 
-    col = {name: headers.index(name) for name in required_columns}
+    col = {name: index for index, name in enumerate(headers)}
     modules: list[dict[str, Any]] = []
 
     for row_idx, row in enumerate(rows[header_idx + 1:], start=header_idx + 2):
         def get(name: str) -> Any:
-            idx = col[name]
+            idx = col.get(name, len(row))
             return row[idx] if idx < len(row) else ""
 
         raw_id = str(get("id") or "").strip()
@@ -275,8 +310,7 @@ def parse_sheet(
 
         display_name = str(get("display_name") or "").strip()
         description = str(get("description") or "").strip()
-        width = as_int(get("width"), "width", sheet_name, row_idx, errors)
-        height = as_int(get("height"), "height", sheet_name, row_idx, errors)
+        width, height = parse_size(get("size"), "高X宽", sheet_name, row_idx, errors)
         energy_cost = as_float(get("energy_cost"), "energy_cost", sheet_name, row_idx, errors)
         hp = (
             as_float(get("hp"), "hp", sheet_name, row_idx, errors)
@@ -316,9 +350,17 @@ def parse_sheet(
             if type_value <= 0:
                 errors.append(f"{sheet_name}!第 {row_idx} 行：{module_type} 模块必须填写 {type_field} > 0")
 
-        weapon_values: dict[str, float] = {}
+        weapon_values: dict[str, Any] = {}
         turret_texture_path = ""
         if module_type == "WEAPON":
+            turret_width, turret_height = parse_size(get("turret_size"), "炮塔高X宽", sheet_name, row_idx, errors)
+            weapon_values["turret_size_cells"] = [turret_width, turret_height]
+            weapon_values["turret_pivot"] = parse_point(get("turret_pivot"), "炮塔轴点", sheet_name, row_idx, errors)
+            weapon_values["turret_muzzle"] = parse_point(get("turret_muzzle"), "炮口", sheet_name, row_idx, errors)
+            art_rotation = as_float(get("turret_art_rotation_degrees"), "炮塔素材转角（度）", sheet_name, row_idx, errors)
+            if not math.isfinite(art_rotation) or art_rotation % 90 != 0:
+                errors.append(f"{sheet_name}!第 {row_idx} 行：炮塔素材转角（度）必须是 90 的整数倍，默认 0")
+            weapon_values["turret_art_rotation_degrees"] = art_rotation
             for field in WEAPON_FIELDS:
                 value = as_float(get(field), field, sheet_name, row_idx, errors)
                 if value <= 0:

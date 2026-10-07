@@ -53,6 +53,7 @@ def main() -> int:
         if parsed != cached:
             raise RuntimeError("Excel source differs from modules.json; run the data importer")
         print("Workbook archive and source/cache parity: OK")
+        print(run([sys.executable, "-m", "unittest", "discover", "-s", "tools/import", "-p", "test_*.py"], environment).strip())
 
         database_text = (ROOT / "data/modules/module_database.tres").read_text(encoding="utf-8")
         for module in parsed["modules"]:

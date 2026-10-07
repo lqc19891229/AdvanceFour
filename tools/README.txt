@@ -13,7 +13,7 @@ tools 只保存内容生产工具、策划源数据和验证工具，不保存�
 重建武器图标：
 godot --headless --path . --script tools/generate_weapon_icon.gd -- weapon_cannon
 在项目根目录执行，末尾替换为缓存中存在的武器 ID。
-命令覆盖 data/assets/modules/<module_id>_icon.png；两层按模块尺寸对齐，每格 128 像素，保留透明背景和向右炮口。
+命令覆盖 data/assets/modules/<module_id>_icon.png；每格 128 像素，按独立炮塔尺寸及轴点组合，自动扩展画布容纳长炮管，保留透明背景和向上炮口。
 完成后让 Godot 导入新 PNG，再运行 Data Importer 挂载图标。
 
 规则：

@@ -12,6 +12,12 @@ extends ShipModuleDefinition
 
 @export_group("武器美术")
 @export var turret_texture: Texture2D
+@export var turret_size_cells := Vector2.ONE
+# Coordinates in the upright canvas: left-bottom (0,0), right-top (1,1).
+@export var turret_pivot := Vector2(0.5, 0.5)
+@export var turret_muzzle := Vector2(0.5, 1.0)
+# Compatibility for older source art. New textures point up and use zero.
+@export var turret_art_rotation_degrees := 0.0
 
 func get_display_texture() -> Texture2D:
 	if icon_texture != null:

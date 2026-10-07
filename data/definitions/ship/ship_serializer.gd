@@ -1,7 +1,8 @@
 class_name ShipSerializer
 extends RefCounted
 
-const FORMAT_VERSION := 2
+const FORMAT_VERSION := 3
+const RIGHT_FORWARD_FORMAT_VERSION := 2
 const LEGACY_FORMAT_VERSION := 1
 
 static func to_dictionary(ship: ShipData) -> Dictionary:
@@ -43,7 +44,7 @@ static func from_dictionary(data: Dictionary, module_database: ModuleDatabase) -
 	var version := int(data.get("version", 0))
 	if version == LEGACY_FORMAT_VERSION:
 		return _from_legacy_v1(data, module_database)
-	if version != FORMAT_VERSION:
+	if version not in [FORMAT_VERSION, RIGHT_FORWARD_FORMAT_VERSION]:
 		return _failure("不支持的飞船存档版本：%d" % version)
 
 	var hull_rows = data.get("hull_cells", null)
@@ -67,7 +68,7 @@ static func from_dictionary(data: Dictionary, module_database: ModuleDatabase) -
 		if ship.add_hull_cell(pos, hull_type, max_hp, mass, current_hp) == null:
 			return _failure("重复船体格：(%d, %d)" % [pos.x, pos.y])
 
-	var module_result := _restore_modules(ship, rows, module_database)
+	var module_result := _restore_modules(ship, rows, module_database, version == RIGHT_FORWARD_FORMAT_VERSION)
 	if not module_result["ok"]:
 		return module_result
 	return {"ok": true, "ship": ship, "error": ""}
@@ -89,12 +90,14 @@ static func _from_legacy_v1(data: Dictionary, module_database: ModuleDatabase) -
 			return _failure("找不到模块定义：%s" % module_id_text)
 		var pos := Vector2i(int(row.get("x", 0)), int(row.get("y", 0)))
 		var rotation := posmod(int(row.get("rotation", 0)), 4)
+		if definition is WeaponModuleDefinition:
+			rotation = posmod(rotation + 1, 4)
 		var temp := ShipModuleInstance.new(-1, definition, pos, rotation)
 		for cell in temp.get_cells():
 			if not ship.has_hull_cell(cell):
 				ship.add_hull_cell(cell)
 
-	var module_result := _restore_modules(ship, rows, module_database)
+	var module_result := _restore_modules(ship, rows, module_database, true)
 	if not module_result["ok"]:
 		return module_result
 	return {"ok": true, "ship": ship, "error": ""}
@@ -102,7 +105,8 @@ static func _from_legacy_v1(data: Dictionary, module_database: ModuleDatabase) -
 static func _restore_modules(
 	ship: ShipData,
 	rows: Array,
-	module_database: ModuleDatabase
+	module_database: ModuleDatabase,
+	legacy_right_forward: bool = false
 ) -> Dictionary:
 	for index in range(rows.size()):
 		var row = rows[index]
@@ -119,6 +123,8 @@ static func _restore_modules(
 
 		var pos := Vector2i(int(row.get("x", 0)), int(row.get("y", 0)))
 		var rotation := posmod(int(row.get("rotation", 0)), 4)
+		if legacy_right_forward and definition is WeaponModuleDefinition:
+			rotation = posmod(rotation + 1, 4)
 		var check := ship.can_place(definition, pos, rotation)
 		if not check["ok"]:
 			return _failure("无法恢复设备 %s：%s" % [module_id_text, check["reason"]])

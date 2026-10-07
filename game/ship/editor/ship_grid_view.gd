@@ -358,6 +358,11 @@ func _draw() -> void:
 		_draw_hull_cell(hull_cell)
 	for module in ship.modules:
 		_draw_module(module)
+	for module in ship.modules:
+		_draw_module_turret(module)
+	if selected_module != null:
+		var selected_rect := Rect2(grid_to_screen(selected_module.grid_position), Vector2(selected_module.get_rotated_size()) * CELL_SIZE)
+		draw_rect(selected_rect.grow(-1), Color.WHITE, false, 3.0)
 	_draw_preview()
 
 func _draw_hull_cell(hull_cell: ShipHullCell) -> void:
@@ -396,16 +401,21 @@ func _draw_module(module: ShipModuleInstance) -> void:
 	if not base_drawn:
 		_draw_module_fallback(module, rect)
 
+
+func _draw_module_turret(module: ShipModuleInstance) -> void:
 	if module.definition is WeaponModuleDefinition:
+		var rect := Rect2(grid_to_screen(module.grid_position), Vector2(module.get_rotated_size()) * CELL_SIZE)
 		var turret_rotation := float(module.rotation_quarters) * PI * 0.5
 		var turret_texture := ModuleArtLibrary.get_turret_texture(module.definition)
 		if turret_texture != null:
-			_draw_module_texture(turret_texture, rect, turret_rotation)
+			_draw_turret(module.definition as WeaponModuleDefinition, rect.get_center(), turret_rotation)
 		else:
 			_draw_weapon_turret_fallback(rect, turret_rotation)
 
-	if module == selected_module:
-		draw_rect(rect.grow(-1), Color.WHITE, false, 3.0)
+func _draw_turret(definition: WeaponModuleDefinition, center: Vector2, rotation_radians: float) -> void:
+	draw_set_transform(center, rotation_radians, Vector2.ONE)
+	draw_texture_rect(ModuleArtLibrary.get_turret_texture(definition), ModuleArtLibrary.get_turret_draw_rect(definition, CELL_SIZE - 6.0), false)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_module_texture(
 	texture: Texture2D,
@@ -483,7 +493,7 @@ func _draw_module_preview(
 	if definition is WeaponModuleDefinition:
 		var turret_texture: Texture2D = textures["turret"]
 		if turret_texture != null:
-			_draw_module_texture(turret_texture, rect, rotation_radians)
+			_draw_turret(definition as WeaponModuleDefinition, rect.get_center(), rotation_radians)
 		else:
 			_draw_weapon_turret_fallback(rect, rotation_radians)
 

@@ -26,14 +26,17 @@ var cooldown_remaining := 0.0
 var operational := true
 var powered := true
 var efficiency := 1.0
+var cell_size := 36.0
 
 func setup(
 	ship: Node2D,
 	module: ShipModuleInstance,
 	local_position: Vector2,
-	p_target_group: StringName = &"enemy_targets"
+	p_target_group: StringName = &"enemy_targets",
+	p_cell_size: float = 36.0
 ) -> void:
 	owner_ship = ship
+	cell_size = p_cell_size
 	module_instance = module
 	weapon_definition = module.definition as WeaponModuleDefinition
 	if weapon_definition != null:
@@ -62,7 +65,7 @@ func _build_turret_visual() -> void:
 		turret_visual.queue_free()
 	turret_visual = null
 
-	if weapon_definition == null or weapon_definition.size != Vector2i.ONE:
+	if weapon_definition == null:
 		return
 
 	var texture := ModuleArtLibrary.get_turret_texture(weapon_definition)
@@ -71,11 +74,13 @@ func _build_turret_visual() -> void:
 
 	turret_visual = Sprite2D.new()
 	turret_visual.texture = texture
-	turret_visual.centered = true
+	turret_visual.centered = false
+	var rect := ModuleArtLibrary.get_turret_draw_rect(weapon_definition, cell_size - 4.0)
 	turret_visual.scale = ModuleArtLibrary.get_texture_scale(
 		texture,
-		Vector2(32.0, 32.0)
+		rect.size
 	)
+	turret_visual.position = rect.position
 	add_child(turret_visual)
 
 func set_operational(value: bool) -> void:
@@ -198,6 +203,11 @@ func get_firing_arc_center_global_rotation() -> float:
 func get_muzzle_world_direction() -> Vector2:
 	return ModuleArtLibrary.WEAPON_FORWARD.rotated(global_rotation).normalized()
 
+func get_muzzle_world_position() -> Vector2:
+	if weapon_definition == null:
+		return global_position
+	return to_global(ModuleArtLibrary.get_turret_muzzle_offset(weapon_definition, cell_size - 4.0))
+
 func is_world_direction_inside_firing_arc(world_direction: Vector2) -> bool:
 	if world_direction.is_zero_approx():
 		return true
@@ -276,7 +286,7 @@ func _emit_fire() -> void:
 	fired.emit(
 		module_instance,
 		weapon_definition.firepower * efficiency,
-		global_position,
+		get_muzzle_world_position(),
 		direction
 	)
 

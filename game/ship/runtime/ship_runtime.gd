@@ -396,7 +396,7 @@ func _build_weapon_runtimes() -> void:
 			continue
 		var runtime := WEAPON_RUNTIME_SCENE.instantiate() as WeaponRuntime
 		add_child(runtime)
-		runtime.setup(self, module, _get_module_local_center(module), weapon_target_group)
+		runtime.setup(self, module, _get_module_local_center(module), weapon_target_group, cell_size)
 		runtime.fired.connect(_on_weapon_runtime_fired)
 		weapon_runtimes.append(runtime)
 		weapon_runtime_by_uid[module.uid] = runtime
