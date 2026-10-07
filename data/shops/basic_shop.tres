@@ -9,7 +9,7 @@ item_id = &"armor"
 display_name = "轻型装甲"
 module_id = &"defense_lightarmor"
 module_count = 1
-price_credits = 45
+price_energy_crystals = 45
 shop_groups = Array[StringName]([&"combat", &"utility"])
 
 [sub_resource type="Resource" id="Cannon"]
@@ -18,7 +18,7 @@ item_id = &"cannon"
 display_name = "机炮"
 module_id = &"weapon_cannon"
 module_count = 1
-price_credits = 70
+price_energy_crystals = 70
 shop_groups = Array[StringName]([&"combat"])
 
 [sub_resource type="Resource" id="Engine"]
@@ -27,7 +27,7 @@ item_id = &"engine"
 display_name = "小型引擎"
 module_id = &"propulsion_smallengine"
 module_count = 1
-price_credits = 55
+price_energy_crystals = 55
 shop_groups = Array[StringName]([&"systems"])
 
 [sub_resource type="Resource" id="Reactor"]
@@ -36,7 +36,7 @@ item_id = &"reactor"
 display_name = "小型反应堆"
 module_id = &"energy_smallreactor"
 module_count = 1
-price_credits = 60
+price_energy_crystals = 60
 shop_groups = Array[StringName]([&"systems"])
 
 [sub_resource type="Resource" id="Radar"]
@@ -45,7 +45,7 @@ item_id = &"radar"
 display_name = "雷达"
 module_id = &"function_radar"
 module_count = 1
-price_credits = 50
+price_energy_crystals = 50
 shop_groups = Array[StringName]([&"utility"])
 
 [sub_resource type="Resource" id="CargoHold"]
@@ -54,7 +54,7 @@ item_id = &"cargo_hold"
 display_name = "标准货舱"
 module_id = &"function_cargo_hold"
 module_count = 1
-price_credits = 80
+price_energy_crystals = 80
 shop_groups = Array[StringName]([&"utility", &"systems"])
 
 [sub_resource type="Resource" id="Hull"]
@@ -62,7 +62,7 @@ script = ExtResource("2")
 item_id = &"hull"
 display_name = "基础船体"
 hull_cells = 1
-price_credits = 25
+price_energy_crystals = 25
 shop_groups = Array[StringName]([&"structure"])
 
 [resource]
