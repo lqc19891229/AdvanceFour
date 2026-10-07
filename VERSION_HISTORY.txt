@@ -1,3 +1,12 @@
+v0.42.0
+- 新增 data/battles/elite_001/battle.tres 与 loot.tres。
+- 精英战继续复用共享 battle.tscn、BattleDefinition 与 LootTableDefinition，不新增专用 EliteBattle 代码。
+- elite_001 配置 3 波共 12 艘敌舰，生成节奏快于 stage_001，胜利奖励 220 Credits。
+- elite_001 loot 每战抽取 4 件且不重复，提高机炮、动力、能源与标准货舱等高价值模块权重。
+- Prototype Route 第一战后增加第三条 elite_001 分支，与商店、整备并列，完成后汇合到 stage_002。
+- 精英路线节点仍使用普通 BATTLE NodeType；“精英”由路线显示名称与 battle/loot 数据差异表达。
+- Run regression 增加精英配置合法性、敌舰总量、Credits、4 件不重复掉落、路线选择和汇合验证。
+
 v0.41.1
 - data/battles 改为按 battle_id 组织战斗配置包。
 - stage_001 / stage_002 现在各自包含 battle.tres 与 loot.tres。
