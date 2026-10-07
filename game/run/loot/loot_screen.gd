@@ -67,7 +67,7 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 	texture.custom_minimum_size = Vector2(68, 68)
 	texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	texture.texture = null if definition == null else definition.texture
+	texture.texture = null if definition == null else definition.get_display_texture()
 	row.add_child(texture)
 
 	var info := VBoxContainer.new()
