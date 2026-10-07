@@ -8,7 +8,7 @@
 - run_state.gd
   功能：当前 Roguelike Run 的跨场景状态，保存 current_ship、战前快照、Credits、完成关卡和最近 BattleResult。
   规则：胜利提交战损与奖励；失败不提交；Retry 使用 battle_entry_ship；战后维修通过 Hull Cell 缺失 HP 扣除 Credits。
-  Run Inventory：module_inventory 保存模块数量，hull_stock 保存可新增 Hull Cell 数量。
+  Run Warehouse：module_inventory 保存模块仓库数量；模块按自身 size.x × size.y 计算仓储占用。hull_stock 独立保存，不计入模块仓储。
   Reward Choice：has_pending_reward_choice() 判断是否还有未领取成长奖励；claim_reward_choice(index) 负责一次性领取并写入 Inventory。
   Shop：can_purchase_shop_item(item) 检查 Credits；purchase_shop_item(item) 原子扣款并把商品内容写入 Run Inventory。
   Route：route_definition / current_route_node_id / completed_route_nodes 保存星系路线状态；start_run_with_route()、get_available_route_node_ids()、select_route_node()、complete_current_route_node() 负责节点推进。
@@ -29,3 +29,12 @@ v0.37.1 Shop Node 状态：
 - get_shop_slots() 首次访问时生成四个无重复商品，之后保持固定。
 - purchase_shop_slot() 按槽购买并标记 SOLD；重复购买与资金不足均失败且不改变状态。
 - reset_run() 会清空全部商店节点状态。
+
+
+v0.38.0 Warehouse：
+- BASE_WAREHOUSE_CAPACITY = 12。
+- get_module_storage_cost()：模块长×宽×数量。
+- get_warehouse_used() / get_warehouse_capacity() / get_warehouse_remaining()：仓储统计。
+- can_store_module() / store_module()：容量检查与原子入库。
+- 已安装 FunctionModuleDefinition.storage_capacity 会增加容量。
+- 商店购买与模块奖励统一经过仓储检查；Hull 不经过模块仓储。
