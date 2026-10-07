@@ -59,6 +59,15 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(680, 540)
 layout_mode = 2
 
+[node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+alignment = 1
+
+[node name="Warehouse" type="Button" parent="Margin/Layout/Actions"]
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+text = "查看仓库"
+
 [node name="Hint" type="Label" parent="Margin/Layout"]
 layout_mode = 2
 text = "选择高亮节点继续前进。"
