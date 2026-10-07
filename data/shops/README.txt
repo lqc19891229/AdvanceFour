@@ -16,3 +16,7 @@ data/shops
 边界：
 - 当前没有稀有度、权重、刷新、出售和库存数量系统。
 - 具体购买执行属于 core/autoload/run_state.gd，UI 属于 game/run/shop。
+
+资源规则（v0.43.0）：
+- ShopItemDefinition 使用 price_energy_crystals 定价。
+- 商店只接受能量结晶，不接受零件。
