@@ -1,11 +1,18 @@
 《前进四》data/battles 目录说明
 
 职责：
-保存具体 BattleDefinition 关卡实例。
+按“战斗配置包”保存具体 BattleDefinition 与对应 LootTable。
+
+目录约定：
+data/battles/<battle_id>/
+├─ battle.tres
+└─ loot.tres
 
 当前：
-- stage_001.tres：第一场正式战斗配置；胜利固定奖励 100 Credits，并提供轻型装甲×1 / 机炮×1 / Hull×2 三选一，下一战 stage_002。
-- stage_002.tres：第二场正式战斗配置；胜利固定奖励 150 Credits + 机炮×1，当前为 Run 末端。
+- stage_001/battle.tres：第一场正式战斗配置；引用同目录 loot.tres。
+- stage_001/loot.tres：第一战模块掉落表。
+- stage_002/battle.tres：第二场正式战斗配置；引用同目录 loot.tres。
+- stage_002/loot.tres：第二战模块掉落表。
 
 依赖：
 - 数据结构：data/definitions/combat/
@@ -13,4 +20,8 @@
 - 执行容器：game/combat/battle.tscn
 
 原则：
-新增关卡只新增/组合数据，不复制 battle.tscn，不在 battle.gd 写具体关卡分支。
+1. BattleDefinition 决定“打什么”。
+2. LootTableDefinition 决定“掉什么”。
+3. battle.tres 与 loot.tres 保持独立 Resource，但放在同一个 battle_id 目录中。
+4. 普通战 / 精英战 / Boss 不需要复制 Battle Runtime；通过各自 battle.tres + loot.tres 的数据差异表达。
+5. 新增关卡时新增目录与数据，不在 battle.gd 写具体关卡分支。
