@@ -261,12 +261,9 @@ func _finish_battle(victory: bool) -> void:
 			for rolled in battle_definition.loot_table.roll():
 				pending_result.reward_module_ids.append(StringName(rolled["module_id"]))
 				pending_result.reward_module_counts.append(int(rolled["count"]))
-				pending_result.reward_module_rarities.append(int(rolled["rarity"]))
 		else:
 			pending_result.reward_module_ids.assign(battle_definition.reward_module_ids)
 			pending_result.reward_module_counts.assign(battle_definition.reward_module_counts)
-			for _index in range(pending_result.reward_module_ids.size()):
-				pending_result.reward_module_rarities.append(LootTableEntry.Rarity.COMMON)
 		pending_result.reward_hull_cells = battle_definition.reward_hull_cells
 		pending_result.reward_choices.assign(battle_definition.reward_choices)
 	pending_result.enemies_destroyed = defeated_enemies
