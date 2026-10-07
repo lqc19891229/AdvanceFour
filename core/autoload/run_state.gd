@@ -11,7 +11,8 @@ var current_battle_path := ""
 var route_definition: RunRouteDefinition
 var current_route_node_id: StringName = &""
 var completed_route_nodes: Array[StringName] = []
-var currency := 0
+var energy_crystals := 0
+var parts := 0
 var module_inventory: Dictionary = {}
 var hull_stock := 0
 var shop_node_states: Dictionary = {}
@@ -26,7 +27,8 @@ func reset_run() -> void:
 	route_definition = null
 	current_route_node_id = &""
 	completed_route_nodes.clear()
-	currency = 0
+	energy_crystals = 0
+	parts = 0
 	module_inventory.clear()
 	hull_stock = 0
 	shop_node_states.clear()
@@ -145,7 +147,8 @@ func commit_victory(result: BattleResult) -> bool:
 	if copy == null:
 		return false
 	current_ship = copy
-	currency += maxi(result.reward_credits, 0)
+	energy_crystals += maxi(result.reward_energy_crystals, 0)
+	parts += maxi(result.reward_parts, 0)
 	hull_stock += maxi(result.reward_hull_cells, 0)
 	result.initialize_loot_state()
 	if result.battle_id != &"" and not completed_battles.has(result.battle_id):
@@ -257,6 +260,33 @@ func record_defeat(result: BattleResult) -> void:
 		return
 	last_result = result
 
+
+
+func add_energy_crystals(amount: int) -> void:
+	if amount > 0:
+		energy_crystals += amount
+
+func can_spend_energy_crystals(amount: int) -> bool:
+	return amount >= 0 and energy_crystals >= amount
+
+func spend_energy_crystals(amount: int) -> bool:
+	if amount < 0 or energy_crystals < amount:
+		return false
+	energy_crystals -= amount
+	return true
+
+func add_parts(amount: int) -> void:
+	if amount > 0:
+		parts += amount
+
+func can_spend_parts(amount: int) -> bool:
+	return amount >= 0 and parts >= amount
+
+func spend_parts(amount: int) -> bool:
+	if amount < 0 or parts < amount:
+		return false
+	parts -= amount
+	return true
 
 func get_module_inventory_count(module_id: StringName) -> int:
 	return int(module_inventory.get(module_id, 0))
@@ -428,7 +458,7 @@ func purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
 	return true
 
 func can_purchase_shop_item(item: ShopItemDefinition) -> bool:
-	if not run_active or item == null or not item.is_valid() or currency < item.price_credits:
+	if not run_active or item == null or not item.is_valid() or energy_crystals < item.price_energy_crystals:
 		return false
 	if item.module_id != &"" and item.module_count > 0:
 		return can_store_module(item.module_id, item.module_count)
@@ -440,7 +470,7 @@ func purchase_shop_item(item: ShopItemDefinition) -> bool:
 	if item.module_id != &"" and item.module_count > 0:
 		if not store_module(item.module_id, item.module_count):
 			return false
-	currency -= item.price_credits
+	energy_crystals -= item.price_energy_crystals
 	if item.hull_cells > 0:
 		add_hull_stock(item.hull_cells)
 	return true
@@ -462,9 +492,9 @@ func repair_cell(position: Vector2i) -> bool:
 	var cost := get_repair_cost_for_cell(position)
 	if cost <= 0:
 		return true
-	if currency < cost:
+	if parts < cost:
 		return false
-	currency -= cost
+	parts -= cost
 	cell.repair_full()
 	return true
 
@@ -480,9 +510,9 @@ func repair_all() -> bool:
 	var cost := get_total_repair_cost()
 	if cost <= 0:
 		return true
-	if currency < cost or current_ship == null:
+	if parts < cost or current_ship == null:
 		return false
-	currency -= cost
+	parts -= cost
 	for cell in current_ship.get_hull_cells():
 		cell.current_hp = cell.max_hp
 	return true
