@@ -1,5 +1,8 @@
 extends Control
 
+signal close_requested
+var embedded_holo := false
+
 const MAP := "res://game/run/route/route_map_screen.tscn"
 
 var heading: Label
@@ -82,4 +85,7 @@ func _leave() -> void:
 	var state := _state()
 	if state != null and bool(state.call("is_current_tavern_active")):
 		state.call("complete_current_route_node")
-	get_tree().change_scene_to_file(MAP)
+	if embedded_holo:
+		close_requested.emit()
+	else:
+		get_tree().change_scene_to_file(MAP)
