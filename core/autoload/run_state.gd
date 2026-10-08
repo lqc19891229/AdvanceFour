@@ -174,13 +174,17 @@ func update_current_ship(ship: ShipData) -> bool:
 	if copy == null:
 		return false
 	current_ship = copy
+	_sync_bridge_capacity()
 	return true
 
 func commit_victory(result: BattleResult) -> bool:
 	if not run_active or result == null or not result.is_victory() or result.ship_after_battle == null:
 		return false
 	if is_route_active():
-		if is_current_route_node_complete():
+		var current_node := get_current_route_node()
+		if current_node == null or current_node.node_type != RunRouteNodeDefinition.NodeType.BATTLE:
+			return false
+		if is_current_route_node_complete() or current_node.target_path != result.battle_path or current_battle_path != result.battle_path:
 			return false
 	elif result.battle_id != &"" and completed_battles.has(result.battle_id):
 		return false
@@ -188,6 +192,7 @@ func commit_victory(result: BattleResult) -> bool:
 	if copy == null:
 		return false
 	current_ship = copy
+	_sync_bridge_capacity()
 	energy_crystals += maxi(result.reward_energy_crystals, 0)
 	parts += maxi(result.reward_parts, 0)
 	hull_stock += maxi(result.reward_hull_cells, 0)
@@ -434,18 +439,30 @@ func is_shop_slot_purchased(shop: ShopDefinition, slot_index: int) -> bool:
 		return false
 	return bool(purchased_slots[slot_index])
 
+func _is_current_shop(shop: ShopDefinition) -> bool:
+	if not is_route_active() or shop == null:
+		return false
+	var node := get_current_route_node()
+	if node == null or node.node_type != RunRouteNodeDefinition.NodeType.SHOP or is_current_route_node_complete():
+		return false
+	if node.target_path.is_empty() or not ResourceLoader.exists(node.target_path):
+		return false
+	return ResourceLoader.load(node.target_path) == shop
+
 func can_purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
+	if not _is_current_shop(shop):
+		return false
 	var slots := get_shop_slots(shop)
 	if slot_index < 0 or slot_index >= slots.size() or is_shop_slot_purchased(shop, slot_index):
 		return false
-	return can_purchase_shop_item(slots[slot_index])
+	return _can_purchase_shop_contents(slots[slot_index])
 
 func purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
 	if not can_purchase_shop_slot(shop, slot_index):
 		return false
 	var slots := get_shop_slots(shop)
 	var item := slots[slot_index]
-	if not purchase_shop_item(item):
+	if not _purchase_shop_contents(item):
 		return false
 	var key := _get_shop_state_key(shop)
 	var state: Dictionary = shop_node_states[key]
@@ -455,15 +472,15 @@ func purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
 	shop_node_states[key] = state
 	return true
 
-func can_purchase_shop_item(item: ShopItemDefinition) -> bool:
+func _can_purchase_shop_contents(item: ShopItemDefinition) -> bool:
 	if not run_active or item == null or not item.is_valid() or energy_crystals < item.price_energy_crystals:
 		return false
 	if item.module_id != &"" and item.module_count > 0:
 		return can_store_module(item.module_id, item.module_count)
 	return true
 
-func purchase_shop_item(item: ShopItemDefinition) -> bool:
-	if not can_purchase_shop_item(item):
+func _purchase_shop_contents(item: ShopItemDefinition) -> bool:
+	if not _can_purchase_shop_contents(item):
 		return false
 	if item.module_id != &"" and item.module_count > 0:
 		if not store_module(item.module_id, item.module_count):
@@ -472,6 +489,13 @@ func purchase_shop_item(item: ShopItemDefinition) -> bool:
 	if item.hull_cells > 0:
 		add_hull_stock(item.hull_cells)
 	return true
+
+# Direct purchases are disabled: a purchase must be attached to an unsold shop slot.
+func can_purchase_shop_item(_item: ShopItemDefinition) -> bool:
+	return false
+
+func purchase_shop_item(_item: ShopItemDefinition) -> bool:
+	return false
 
 func _get_current_station_definition() -> StationDefinition:
 	if not is_route_active():
@@ -601,6 +625,28 @@ func _bridge_definition_exists(kind: String, id: StringName) -> bool:
 		return db.find_chip(id) != null
 	return false
 
+func _sync_bridge_capacity() -> void:
+	for kind in ["crew", "chip"]:
+		var capacity := _bridge_capacity(kind)
+		var slots := bridge_crew_slots if kind == "crew" else bridge_chip_slots
+		var inventory := bridge_crew_inventory if kind == "crew" else bridge_chip_inventory
+		while slots.size() > capacity:
+			var id: StringName = slots.pop_back()
+			if id != &"":
+				inventory[id] = int(inventory.get(id, 0)) + 1
+
+func _bridge_can_refit() -> bool:
+	if not run_active or current_ship == null:
+		return false
+	if not is_route_active():
+		return true
+	var node := get_current_route_node()
+	return node != null and (
+		node.node_type == RunRouteNodeDefinition.NodeType.REFIT
+		or node.node_type == RunRouteNodeDefinition.NodeType.SHOP
+		or node.node_type == RunRouteNodeDefinition.NodeType.BATTLE
+	) and not has_pending_loot()
+
 func _bridge_capacity(kind: String) -> int:
 	if current_ship == null:
 		return 0
@@ -628,8 +674,9 @@ func get_bridge_equipped(kind: String, index: int) -> StringName:
 	return slots[index]
 
 func equip_bridge_item(kind: String, id: String, index: int) -> bool:
-	if not run_active or not _bridge_definition_exists(kind, StringName(id)):
+	if not _bridge_can_refit() or not _bridge_definition_exists(kind, StringName(id)):
 		return false
+	_sync_bridge_capacity()
 	var capacity := _bridge_capacity(kind)
 	if index < 0 or index >= capacity:
 		return false
@@ -648,8 +695,9 @@ func equip_bridge_item(kind: String, id: String, index: int) -> bool:
 	return true
 
 func unequip_bridge_item(kind: String, index: int) -> bool:
-	if not run_active:
+	if not _bridge_can_refit():
 		return false
+	_sync_bridge_capacity()
 	var slots := _bridge_slots(kind)
 	if index < 0 or index >= slots.size() or slots[index] == &"":
 		return false
@@ -662,4 +710,22 @@ func unequip_bridge_item(kind: String, index: int) -> bool:
 		return false
 	var inventory := _bridge_inventory(kind)
 	inventory[id] = int(inventory.get(id, 0)) + 1
+	return true
+
+func replace_bridge_item(kind: String, id: String, index: int) -> bool:
+	if not _bridge_can_refit() or not _bridge_definition_exists(kind, StringName(id)):
+		return false
+	_sync_bridge_capacity()
+	var slots := _bridge_slots(kind)
+	if index < 0 or index >= slots.size() or slots[index] == &"" or get_bridge_item_count(kind, id) <= 0:
+		return false
+	var inventory := _bridge_inventory(kind)
+	var old_id := slots[index]
+	var new_id := StringName(id)
+	inventory[new_id] = int(inventory[new_id]) - 1
+	inventory[old_id] = int(inventory.get(old_id, 0)) + 1
+	if kind == "crew":
+		bridge_crew_slots[index] = new_id
+	else:
+		bridge_chip_slots[index] = new_id
 	return true

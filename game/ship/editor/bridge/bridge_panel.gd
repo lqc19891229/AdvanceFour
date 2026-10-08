@@ -95,6 +95,12 @@ func _on_slot_pressed(kind: String, index: int, equipped: String) -> void:
 		hint.text = "请先进入 Run 后再配置舰桥"
 		return
 	if not equipped.is_empty():
+		if kind == selected_kind and not selected_id.is_empty():
+			if bool(run_state.call("replace_bridge_item", kind, selected_id, index)):
+				selected_kind = ""
+				selected_id = ""
+				refresh()
+			return
 		if bool(run_state.call("unequip_bridge_item", kind, index)):
 			refresh()
 		return
