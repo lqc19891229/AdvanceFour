@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://game/run/route/route_node_view.gd" id="1"]
+[node name="RouteNodeView" type="Button"]
+custom_minimum_size = Vector2(160, 90)
+size = Vector2(160, 90)
+theme_override_font_sizes/font_size = 16
+text = "航线节点"
+script = ExtResource("1")
