@@ -485,7 +485,7 @@ func _run() -> void:
 	_check(found_armor_inventory and found_hull_inventory, "Run refit buttons must show module and Hull inventory counts")
 	_check(bool(run_state.call("add_bridge_item", "crew", "crew_human_01")), "Crew item added to Run inventory for UI regression")
 	_check(bool(run_state.call("add_bridge_item", "chip", "chip_fire_01")), "Chip item added to Run inventory for UI regression")
-	var inventory_panel := refit_editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel")
+	var inventory_panel: Control = refit_editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel") as Control
 	var item_list := inventory_panel.get_node("Inventory/InventoryScroll/InventoryItems") as VBoxContainer
 	refit_editor.call("_set_resource_tab", "crew")
 	var crew_visible := false
