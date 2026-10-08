@@ -10,7 +10,7 @@ const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
 
 @onready var grid: ShipGridView = $WorkSections/TopSection/MainLayout/Center/Grid
-@onready var module_buttons: VBoxContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons
+@onready var module_buttons: VBoxContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll/ModuleButtons
 @onready var stats_label: Label = $WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll/StatsLabel
 @onready var speed_label: Label = $WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/SpeedLabel
 @onready var status_label: Label = $BottomBar/BottomMargin/StatusLabel
@@ -47,6 +47,7 @@ func _ready() -> void:
 			$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.disabled = true
 			_refresh_inventory_button_labels()
 			_show_status("Run 整备模式｜能量结晶：%d｜零件：%d｜模块/Hull 安装受库存限制" % [int(_run_state().get("energy_crystals")), int(_run_state().get("parts"))])
+			$WorkSections/BridgeSection/BridgePanel.refresh()
 	elif get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
