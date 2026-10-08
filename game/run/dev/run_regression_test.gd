@@ -235,7 +235,7 @@ func _run() -> void:
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Shop test must start at an active SHOP node")
 	run_state.set("energy_crystals", 500)
 	var shop_definition := load("res://data/shops/basic_shop.tres") as ShopDefinition
-	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 7 and shop_definition.slot_count == 4, "Basic shop data must expose a valid seven-item pool and four slots")
+	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 9 and shop_definition.slot_count == 4, "Basic shop data must expose a valid nine-item pool and four slots")
 	var generated_shop_slots: Array = run_state.call("get_shop_slots", shop_definition)
 	_check(generated_shop_slots.size() == 4, "Shop must generate exactly four product slots")
 	var generated_ids: Array[StringName] = []
@@ -270,6 +270,8 @@ func _run() -> void:
 	_check(int(run_state.get("energy_crystals")) == credits_before_first_purchase - first_item.get_price(), "Shop purchase must deduct the selected slot price")
 	if first_item.module_id != &"":
 		_check(int(run_state.call("get_module_inventory_count", first_item.module_id)) == first_item.module_count, "Purchased module must enter Run inventory")
+	elif first_item.chip_id != &"":
+		_check(int(run_state.call("get_bridge_item_count", "chip", String(first_item.chip_id))) == 1, "Purchased chip must enter Run inventory")
 	else:
 		_check(int(run_state.get("hull_stock")) == first_item.hull_cells, "Purchased Hull must enter Run inventory")
 	_check(bool(run_state.call("is_shop_slot_purchased", shop_definition, 0)), "Purchased slot must be marked SOLD")
@@ -288,6 +290,28 @@ func _run() -> void:
 	_check(sold_button.disabled and sold_button.text == "SOLD", "Purchased product card must remain SOLD after refresh")
 	shop_screen.queue_free()
 	await process_frame
+
+	# Pin a chip to the current unsold slot so the price/inventory transaction is deterministic.
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run_with_test_route", design)), "Chip shop test must start on shop node")
+	run_state.set("energy_crystals", 79)
+	run_state.call("get_shop_slots", shop_definition)
+	var chip_shop_key := StringName("route:shop")
+	var chip_shop_states: Dictionary = run_state.get("shop_node_states")
+	var chip_shop_state: Dictionary = chip_shop_states[chip_shop_key]
+	var chip_shop_ids: Array = chip_shop_state["item_ids"]
+	chip_shop_ids[0] = &"chip_fire"
+	chip_shop_state["item_ids"] = chip_shop_ids
+	chip_shop_states[chip_shop_key] = chip_shop_state
+	run_state.set("shop_node_states", chip_shop_states)
+	var fire_chip_item := shop_definition.get_item_by_id(&"chip_fire")
+	_check(fire_chip_item.get_price() == 80, "Chip shop price must come from bridge definition")
+	_check(not bool(run_state.call("purchase_shop_slot", shop_definition, 0)) and int(run_state.get("energy_crystals")) == 79, "Insufficient chip funds must not charge or grant")
+	_check(int(run_state.call("get_bridge_item_count", "chip", "chip_fire_01")) == 0, "Failed chip purchase must preserve inventory")
+	run_state.set("energy_crystals", 100)
+	_check(bool(run_state.call("purchase_shop_slot", shop_definition, 0)), "Chip should be purchasable in shop")
+	_check(int(run_state.get("energy_crystals")) == 20 and int(run_state.call("get_bridge_item_count", "chip", "chip_fire_01")) == 1, "Chip purchase must deduct Excel price and grant exactly one chip")
+	_check(not bool(run_state.call("purchase_shop_slot", shop_definition, 0)) and int(run_state.get("energy_crystals")) == 20 and int(run_state.call("get_bridge_item_count", "chip", "chip_fire_01")) == 1, "Purchased chip slot cannot be exploited repeatedly")
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Warehouse test must start a clean Run")
