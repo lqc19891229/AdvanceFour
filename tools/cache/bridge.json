@@ -1,0 +1,83 @@
+{
+  "ok": true,
+  "errors": [],
+  "chips": [
+    {
+      "chip_id": "chip_fire_01",
+      "display_name": "火控强化 I",
+      "rarity": "COMMON",
+      "description": "全舰武器伤害提高",
+      "icon_path": ""
+    },
+    {
+      "chip_id": "chip_energy_01",
+      "display_name": "反应堆优化",
+      "rarity": "COMMON",
+      "description": "能源输出提高",
+      "icon_path": ""
+    }
+  ],
+  "crew": [
+    {
+      "crew_id": "crew_human_01",
+      "display_name": "莱恩",
+      "race": "HUMAN",
+      "rarity": "COMMON",
+      "description": "改善武器射程",
+      "portrait_path": ""
+    },
+    {
+      "crew_id": "crew_machine_01",
+      "display_name": "AX-07",
+      "race": "MACHINE",
+      "rarity": "UNCOMMON",
+      "description": "提高武器伤害",
+      "portrait_path": ""
+    }
+  ],
+  "effects": [
+    {
+      "effect_id": "effect_fire_01",
+      "owner_id": "chip_fire_01",
+      "stat": "weapon_damage",
+      "operation": "PERCENT_ADD",
+      "value": 0.15,
+      "target_filter": "ALL",
+      "condition_id": ""
+    },
+    {
+      "effect_id": "effect_energy_01",
+      "owner_id": "chip_energy_01",
+      "stat": "energy_output",
+      "operation": "PERCENT_ADD",
+      "value": 0.2,
+      "target_filter": "ALL",
+      "condition_id": ""
+    },
+    {
+      "effect_id": "effect_human_01",
+      "owner_id": "crew_human_01",
+      "stat": "weapon_range",
+      "operation": "PERCENT_ADD",
+      "value": 0.08,
+      "target_filter": "ALL",
+      "condition_id": ""
+    },
+    {
+      "effect_id": "effect_machine_01",
+      "owner_id": "crew_machine_01",
+      "stat": "weapon_damage",
+      "operation": "PERCENT_ADD",
+      "value": 0.12,
+      "target_filter": "ALL",
+      "condition_id": ""
+    }
+  ],
+  "bridge_configs": [
+    {
+      "bridge_id": "basic_bridge",
+      "crew_slots": 4,
+      "chip_slots": 4
+    }
+  ]
+}

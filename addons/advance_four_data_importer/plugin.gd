@@ -5,6 +5,7 @@ const EXCEL_PATH := "res://tools/data_source/module_data.xlsx"
 const JSON_PATH := "res://tools/cache/modules.json"
 const MODULES_ROOT := "res://data/modules"
 const DATABASE_PATH := "res://data/modules/module_database.tres"
+const BridgeImporter = preload("res://addons/advance_four_data_importer/bridge_importer.gd")
 const BATTLES_EXCEL_PATH := "res://tools/data_source/battle_data.xlsx"
 const BATTLES_CACHE_PATH := "res://tools/cache/battles.json"
 
@@ -17,12 +18,16 @@ const CoreDef = preload("res://data/definitions/module/core_module_definition.gd
 const ModuleDatabaseScript = preload("res://data/definitions/module/module_database.gd")
 
 func _enter_tree() -> void:
+	add_tool_menu_item("前进四：导入舰桥数据", _import_bridge)
+	add_tool_menu_item("前进四：验证舰桥数据", _validate_bridge)
 	add_tool_menu_item("前进四：导入模块数据", _import_all)
 	add_tool_menu_item("前进四：验证模块数据", _validate_only)
 	add_tool_menu_item("前进四：验证战斗关卡 Excel", _validate_battles)
 	add_tool_menu_item("前进四：导入战斗关卡 Excel", _import_battles)
 
 func _exit_tree() -> void:
+	remove_tool_menu_item("前进四：导入舰桥数据")
+	remove_tool_menu_item("前进四：验证舰桥数据")
 	remove_tool_menu_item("前进四：导入模块数据")
 	remove_tool_menu_item("前进四：验证模块数据")
 	remove_tool_menu_item("前进四：验证战斗关卡 Excel")
@@ -446,3 +451,10 @@ func _import_battles() -> void:
 		written.append(path)
 	get_editor_interface().get_resource_filesystem().scan()
 	_notify("战斗关卡 Excel 导入成功：%d 个关卡" % prepared.size())
+
+func _validate_bridge() -> void:
+	BridgeImporter.validate_and_import(false)
+
+func _import_bridge() -> void:
+	if BridgeImporter.validate_and_import(true):
+		get_editor_interface().get_resource_filesystem().scan()
