@@ -8,6 +8,9 @@ const STATION_SCENE_PATH := "res://game/run/station/station_screen.tscn"
 const WAREHOUSE_SCENE_PATH := "res://game/run/warehouse/warehouse_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
+const HOLO_WINDOW := preload("res://game/run/ui/holo_window.gd")
+
+var active_holo: HoloWindow
 
 @onready var top_bar: HBoxContainer = $Margin/Layout/Header/TopBar
 @onready var status: Label = $Margin/Layout/Header/Status
@@ -151,17 +154,60 @@ func _select_node(node_id: StringName) -> void:
 			get_tree().set_meta(BATTLE_DEFINITION_META, node.target_path)
 			get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
 		RunRouteNodeDefinition.NodeType.SHOP:
-			get_tree().change_scene_to_file(SHOP_SCENE_PATH)
+			_open_holo(SHOP_SCENE_PATH, "TRADE CONSOLE / 贸易终端")
 		RunRouteNodeDefinition.NodeType.REFIT:
-			get_tree().change_scene_to_file(STATION_SCENE_PATH)
+			_open_holo(STATION_SCENE_PATH, "REFIT CONSOLE / 舰船维护")
 		RunRouteNodeDefinition.NodeType.TAVERN:
-			get_tree().change_scene_to_file(TAVERN_SCENE_PATH)
+			_open_holo(TAVERN_SCENE_PATH, "TAVERN UPLINK / 酒馆招募")
 		RunRouteNodeDefinition.NodeType.END:
 			run_state.call("complete_current_route_node")
 			run_state.call("reset_run")
 			get_tree().set_meta(&"restore_ship_design", true)
 			get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
 
+
+
+func _open_holo(scene_path: String, title_text: String) -> void:
+	if is_instance_valid(active_holo):
+		return
+	var scene := load(scene_path) as PackedScene
+	if scene == null:
+		return
+	var screen := scene.instantiate() as Control
+	if screen == null:
+		return
+	screen.set("embedded_holo", true)
+	active_holo = HOLO_WINDOW.new() as HoloWindow
+	active_holo.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(active_holo)
+	active_holo.show_screen(screen, title_text)
+	active_holo.close_requested.connect(_close_holo)
+	screen.connect("close_requested", _on_holo_node_completed)
+	warehouse_button.disabled = true
+
+
+func _close_holo() -> void:
+	if not is_instance_valid(active_holo):
+		return
+	var screen := active_holo.content_host.get_child(0) as Control
+	if screen != null:
+		match screen.name:
+			"ShopScreen":
+				screen.call("_return_from_shop")
+			"StationScreen":
+				screen.call("_leave_station")
+			"TavernScreen":
+				screen.call("_leave")
+	if is_instance_valid(active_holo) and not active_holo.is_queued_for_deletion():
+		_on_holo_node_completed()
+
+
+func _on_holo_node_completed() -> void:
+	if is_instance_valid(active_holo):
+		active_holo.queue_free()
+	active_holo = null
+	warehouse_button.disabled = false
+	_refresh()
 
 func _open_warehouse() -> void:
 	var run_state := _run_state()
