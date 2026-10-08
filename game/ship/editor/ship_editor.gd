@@ -24,6 +24,18 @@ func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
 
 func _ready() -> void:
+	var required_paths := [
+		"WorkSections/TopSection/MainLayout/Center/Grid",
+		"WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll/ModuleButtons",
+		"WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton",
+		"WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll/StatsLabel",
+		"WorkSections/BridgeSection/BridgePanel",
+		"BottomBar/BottomMargin/StatusLabel",
+	]
+	for path in required_paths:
+		if get_node_or_null(NodePath(path)) == null:
+			push_error("ShipEditor scene/script mismatch: missing '%s' in '%s'. Open res://game/ship/editor/ship_editor.tscn and confirm it matches ship_editor.gd; reload the project after updating Git." % [path, get_path()])
+			return
 	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "保存飞船并返回星图"
 	_build_module_buttons()
 	_bind_common_buttons()
