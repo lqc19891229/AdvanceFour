@@ -5,6 +5,8 @@ const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const FIRST_BATTLE_DEFINITION_PATH := "res://data/battles/stage_001/battle.tres"
 const PROTOTYPE_ROUTE_PATH := "res://data/routes/prototype_route.tres"
+const STATION_SCENE_PATH := "res://game/run/station/station_screen.tscn"
+const RETURN_SCENE_META := &"refit_return_scene"
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
 const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
@@ -177,7 +179,11 @@ func _start_battle() -> void:
 		var node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 		if node != null and node.node_type == RunRouteNodeDefinition.NodeType.REFIT:
 			run_state.call("complete_current_route_node")
-	get_tree().change_scene_to_file(ROUTE_MAP_SCENE_PATH)
+	var return_path := String(get_tree().get_meta(RETURN_SCENE_META, ROUTE_MAP_SCENE_PATH))
+	get_tree().remove_meta(RETURN_SCENE_META)
+	if return_path != STATION_SCENE_PATH and return_path != ROUTE_MAP_SCENE_PATH:
+		return_path = ROUTE_MAP_SCENE_PATH
+	get_tree().change_scene_to_file(return_path)
 
 func _start_ai_test() -> void:
 	_start_scene_with_design("res://game/ship/dev/ship_ai_test.tscn")

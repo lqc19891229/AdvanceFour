@@ -109,6 +109,7 @@ func _open_refit() -> void:
 	if _run_state() == null:
 		return
 	get_tree().set_meta(RUN_REFIT_META, true)
+	get_tree().set_meta(&"refit_return_scene", "res://game/run/station/station_screen.tscn")
 	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
 
 func _leave_station() -> void:

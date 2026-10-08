@@ -704,6 +704,30 @@ func _run() -> void:
 	geometry_snapshot.queue_free()
 	await process_frame
 
+	# Bridge inventory remains a multiset and replacement returns the removed item.
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Bridge regression Run starts")
+	_check(bool(run_state.call("add_bridge_item", "chip", "chip_fire_01", 2)), "Known chip can enter inventory")
+	_check(bool(run_state.call("add_bridge_item", "chip", "chip_energy_01", 1)), "Second chip can enter inventory")
+	_check(bool(run_state.call("equip_bridge_item", "chip", "chip_fire_01", 0)), "First chip equips into Core capacity")
+	_check(int(run_state.call("get_bridge_item_count", "chip", "chip_fire_01")) == 1, "Equipping decrements chip inventory")
+	_check(bool(run_state.call("replace_bridge_item", "chip", "chip_energy_01", 0)), "Equipped chip can be replaced atomically")
+	_check(String(run_state.call("get_bridge_equipped", "chip", 0)) == "chip_energy_01" and int(run_state.call("get_bridge_item_count", "chip", "chip_fire_01")) == 2, "Replacement returns previous chip")
+	_check(not bool(run_state.call("equip_bridge_item", "chip", "chip_fire_01", 100)), "Out-of-bounds slot is rejected")
+	_check(bool(run_state.call("unequip_bridge_item", "chip", 0)), "Chip can be unequipped")
+	_check(String(run_state.call("get_bridge_equipped", "chip", 0)).is_empty(), "Unequipping clears slot")
+	_check(not bool(run_state.call("purchase_shop_item", null)), "Direct shop purchase is disabled")
+
+	# A route victory must correspond to the currently selected battle, not an arbitrary payload.
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run_with_test_route", design)), "Route validation Run starts")
+	var false_victory := BattleResult.new()
+	false_victory.outcome = BattleResult.Outcome.VICTORY
+	false_victory.battle_path = STAGE_001_PATH
+	false_victory.ship_after_battle = design
+	false_victory.reward_energy_crystals = 999
+	_check(not bool(run_state.call("commit_victory", false_victory)), "Non-battle route node cannot accept victory")
+	_check(int(run_state.get("energy_crystals")) == 0, "Rejected route victory must not grant currency")
+
 	run_state.call("reset_run")
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
