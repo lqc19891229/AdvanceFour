@@ -14,10 +14,14 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var hint: Label = $Margin/Layout/Hint
 @onready var warehouse_button: Button = $Margin/Layout/Actions/Warehouse
 
+var crystal_value: Label
+var parts_value: Label
+
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
 
 func _ready() -> void:
+	_build_pixel_hud()
 	warehouse_button.pressed.connect(_open_warehouse)
 	var edit_button := Button.new()
 	edit_button.text = "编辑飞船"
@@ -44,13 +48,9 @@ func _refresh() -> void:
 	var route := run_state.get("route_definition") as RunRouteDefinition
 	var current := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 	title.text = route.display_name
-	status.text = "能量结晶：%d｜零件：%d｜仓库：%d / %d｜当前节点：%s" % [
-		int(run_state.get("energy_crystals")),
-		int(run_state.get("parts")),
-		int(run_state.call("get_warehouse_used")),
-		int(run_state.call("get_warehouse_capacity")),
-		"无" if current == null else current.display_name
-	]
+	status.text = "仓库：%d / %d    ｜    当前节点：%s" % [int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity")), "无" if current == null else current.display_name]
+	crystal_value.text = str(int(run_state.get("energy_crystals")))
+	parts_value.text = str(int(run_state.get("parts")))
 	hint.text = "固定测试航线：商店 → 维修站 → 战斗。点击当前节点进入，飞船编辑与战斗入口分离。" if route.route_id == &"fixed_test_sector" else "选择高亮节点继续前进。路线一旦选择，本层另一分支将不可返回。"
 	_rebuild_map(route)
 
@@ -95,14 +95,14 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 			if next_node == null:
 				continue
 			var line := Line2D.new()
-			line.width = 3.0 if procedural else 3.0
+			line.width = 5.0 if procedural else 3.0
 			line.antialiased = true
 			var traveled := completed.has(node.node_id) and (completed.has(next_id) or current_id == next_id)
 			var reachable := available.has(next_id) and current_id == node.node_id
 			line.default_color = (Color(0.15, 0.95, 1.0, 0.95) if traveled else Color(0.18, 0.75, 0.92, 0.85) if reachable else Color(0.17, 0.38, 0.53, 0.55)) if procedural else Color(0.4, 0.45, 0.55, 0.7)
 			line.points = PackedVector2Array([
-				node.map_position + Vector2(65, 25),
-				next_node.map_position + Vector2(65, 25)
+				node.map_position + Vector2(80, 45),
+				next_node.map_position + Vector2(80, 45)
 			])
 			map_area.add_child(line)
 
@@ -112,8 +112,8 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 			continue
 		var button := Button.new()
 		button.position = node.map_position
-		button.custom_minimum_size = Vector2(130, 50)
-		button.size = Vector2(130, 50)
+		button.custom_minimum_size = Vector2(160, 90)
+		button.size = Vector2(160, 90)
 		var prefix := ""
 		if completed.has(node.node_id):
 			prefix = "✓ "
@@ -131,7 +131,12 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 
 
 func _draw_starfield() -> void:
-	# Lightweight, deterministic starfield; no external textures are needed.
+	var backdrop := Control.new()
+	backdrop.set_script(preload("res://game/run/route/pixel_starfield.gd"))
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backdrop.size = Vector2(2050, 540)
+	map_area.add_child(backdrop)
+	# Sparse foreground pixel stars to complement the backdrop.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 81421
 	for i in range(115):
@@ -145,7 +150,9 @@ func _draw_starfield() -> void:
 
 
 func _style_holographic_node(button: Button, node: RunRouteNodeDefinition, visited: bool, selectable: bool, current: bool) -> void:
-	var tint := Color("#36566c")
+	var tint := _node_color(node)
+	if not selectable and not current and not visited:
+		tint = tint.darkened(0.48)
 	if visited:
 		tint = Color("#29a7b9")
 	elif selectable:
@@ -155,10 +162,12 @@ func _style_holographic_node(button: Button, node: RunRouteNodeDefinition, visit
 	elif node.node_type == RunRouteNodeDefinition.NodeType.END:
 		tint = Color("#e78a74")
 	var panel := StyleBoxFlat.new()
-	panel.bg_color = Color(0.025, 0.085, 0.15, 0.94)
+	panel.bg_color = Color("#071629")
 	panel.border_color = tint
-	panel.set_border_width_all(2)
-	panel.set_corner_radius_all(12)
+	panel.set_border_width_all(4)
+	panel.set_corner_radius_all(2)
+	panel.content_margin_left = 6.0
+	panel.content_margin_right = 6.0
 	panel.shadow_color = Color(tint.r, tint.g, tint.b, 0.24 if selectable else 0.08)
 	panel.shadow_size = 8 if selectable else 3
 	button.add_theme_stylebox_override("normal", panel)
@@ -170,7 +179,7 @@ func _style_holographic_node(button: Button, node: RunRouteNodeDefinition, visit
 	button.add_theme_color_override("font_color", tint)
 	button.add_theme_color_override("font_disabled_color", tint)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_font_size_override("font_size", 17)
 
 
 func _get_node_tooltip(node: RunRouteNodeDefinition) -> String:
@@ -225,3 +234,85 @@ func _open_editor() -> void:
 	if run_state != null and bool(run_state.call("is_route_active")):
 		get_tree().set_meta(RUN_REFIT_META, true)
 	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
+
+
+func _node_color(node: RunRouteNodeDefinition) -> Color:
+	match node.node_type:
+		RunRouteNodeDefinition.NodeType.SHOP:
+			return Color("#ffab44")
+		RunRouteNodeDefinition.NodeType.REFIT:
+			return Color("#44e5ff")
+		RunRouteNodeDefinition.NodeType.END:
+			return Color("#fb5d71")
+		RunRouteNodeDefinition.NodeType.BATTLE:
+			if String(node.node_id).contains("elite") or node.target_path.contains("elite"):
+				return Color("#fa6174")
+			return Color("#67caff")
+	return Color("#6cc6f5")
+
+
+func _build_pixel_hud() -> void:
+	var header := $Margin/Layout/Header as VBoxContainer
+	var top := HBoxContainer.new()
+	top.custom_minimum_size = Vector2(0, 86)
+	top.add_theme_constant_override("separation", 14)
+	header.add_child(top)
+	header.move_child(top, 0)
+	title.reparent(top)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 25)
+	title.add_theme_color_override("font_color", Color("#bdf5ff"))
+	var title_box := _hud_panel(Color("#1ce2ff"))
+	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(title_box)
+	title.reparent(title_box)
+	var energy_box := _hud_panel(Color("#19cfff"))
+	energy_box.custom_minimum_size = Vector2(178, 74)
+	top.add_child(energy_box)
+	crystal_value = _hud_counter(energy_box, "res://data/assets/ui/energy_crystal.svg", Color("#b4f6ff"))
+	var scrap_box := _hud_panel(Color("#ffae44"))
+	scrap_box.custom_minimum_size = Vector2(154, 74)
+	top.add_child(scrap_box)
+	parts_value = _hud_counter(scrap_box, "res://data/assets/ui/parts.svg", Color("#ffca7f"))
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	status.add_theme_color_override("font_color", Color("#91aecd"))
+	$Margin/Layout.add_theme_constant_override("separation", 9)
+
+
+func _hud_panel(tint: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	var skin := StyleBoxFlat.new()
+	skin.bg_color = Color("#08172d")
+	skin.border_color = tint
+	skin.set_border_width_all(3)
+	skin.set_corner_radius_all(2)
+	skin.content_margin_left = 12
+	skin.content_margin_right = 12
+	skin.content_margin_top = 8
+	skin.content_margin_bottom = 8
+	skin.shadow_color = Color(tint.r, tint.g, tint.b, 0.25)
+	skin.shadow_size = 4
+	panel.add_theme_stylebox_override("panel", skin)
+	return panel
+
+
+func _hud_counter(panel: PanelContainer, icon_path: String, tint: Color) -> Label:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	panel.add_child(row)
+	var icon := TextureRect.new()
+	icon.texture = load(icon_path) as Texture2D
+	icon.custom_minimum_size = Vector2(56, 56)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	row.add_child(icon)
+	var label := Label.new()
+	label.text = "0"
+	label.add_theme_font_size_override("font_size", 26)
+	label.add_theme_color_override("font_color", tint)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	return label
