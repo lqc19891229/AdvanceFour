@@ -336,7 +336,7 @@ func _run() -> void:
 	await process_frame
 	shop_slots_ui = shop_screen.get_node("Center/Panel/Margin/Content/Body/Slots") as HBoxContainer
 	var sold_button := shop_slots_ui.get_child(0).get_node("Select") as Button
-	var sold_card_label := shop_slots_ui.get_child(0).get_node("Margin/Content/Label") as Label
+	var sold_card_label := shop_slots_ui.get_child(0).get_node("Margin/Content").get_child(0) as Label
 	_check(not sold_button.disabled and sold_card_label.text.contains("SOLD"), "Sold product must remain labeled SOLD while the entire card stays selectable")
 	shop_screen.call("_select_slot", 0)
 	var sold_detail_action := shop_screen.get_node("Center/Panel/Margin/Content/Body/Details/MarginContainer/Column/Action") as Button
