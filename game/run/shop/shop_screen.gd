@@ -96,7 +96,7 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	margin.add_child(content)
 
 	var slot_label := Label.new()
-	slot_label.text = "商品槽 %d" % (slot_index + 1)
+	slot_label.text = "商品槽 %d · SOLD" % (slot_index + 1) if purchased else "商品槽 %d" % (slot_index + 1)
 	slot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(slot_label)
 
@@ -114,28 +114,13 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(name_label)
 
-	var type_label := Label.new()
-	var storage_text := ""
-	if item.module_id != &"" and item.module_count > 0:
-		storage_text = "｜仓储 %d" % int(_run_state().call("get_module_storage_cost", item.module_id, item.module_count))
-	type_label.text = "%s｜%s%s" % [item.get_type_label(), item.get_contents_label(), storage_text]
-	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	type_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(type_label)
-
 	var price_label := Label.new()
-	price_label.text = "%d 能量结晶" % item.get_price()
+	price_label.text = "◆ 能量结晶 ×%d" % item.get_price()
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_label.add_theme_color_override("font_color", Color("#8be5f6"))
+	price_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(price_label)
-
-	var buy_button := Button.new()
-	buy_button.name = "Buy"
-	buy_button.custom_minimum_size = Vector2(0, 42)
-	buy_button.text = "SOLD" if purchased else "查看详情"
-	buy_button.disabled = false
-	buy_button.tooltip_text = "购买后直接进入当前 Run Inventory。"
-	buy_button.pressed.connect(_select_slot.bind(slot_index))
-	content.add_child(buy_button)
+	CARD_UI.make_card_clickable(panel, _select_slot.bind(slot_index))
 	return panel
 
 func _select_slot(index: int) -> void:
