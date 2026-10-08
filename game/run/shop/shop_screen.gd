@@ -131,7 +131,7 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	var buy_button := Button.new()
 	buy_button.name = "Buy"
 	buy_button.custom_minimum_size = Vector2(0, 42)
-	buy_button.text = "已售出" if purchased else "查看详情"
+	buy_button.text = "SOLD" if purchased else "查看详情"
 	buy_button.disabled = false
 	buy_button.tooltip_text = "购买后直接进入当前 Run Inventory。"
 	buy_button.pressed.connect(_select_slot.bind(slot_index))
