@@ -34,7 +34,7 @@ class AuthoringFieldsTest(unittest.TestCase):
             self.assertTrue(errors, text)
 
     def test_row_pipeline_and_errors(self):
-        source = Path(__file__).resolve().parents[1] / "data_source/game_data.xlsx"
+        source = Path(__file__).resolve().parents[1] / "data_source/module_data.xlsx"
         rows = read_sheet_rows(source, "Weapon")
         errors = []
         modules = parse_sheet(source, "Weapon", "WEAPON", "firepower", set(), errors, [])
