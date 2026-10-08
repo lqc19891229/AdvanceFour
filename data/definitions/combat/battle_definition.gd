@@ -3,6 +3,12 @@ extends Resource
 
 const DATABASE := preload("res://data/modules/module_database.tres")
 
+enum EncounterType { NORMAL, ELITE, BOSS }
+
+@export var encounter_type: EncounterType = EncounterType.NORMAL
+@export_range(1, 10) var difficulty_tier := 1
+@export var sector_id: StringName = &"sector_01"
+
 @export var battle_id: StringName = &"stage_001"
 @export var display_name := "第一战"
 @export var waves: Array[Resource] = []
@@ -21,7 +27,7 @@ const DATABASE := preload("res://data/modules/module_database.tres")
 @export var restore_saved_ship_on_return := true
 
 func is_valid() -> bool:
-	if battle_id == &"":
+	if battle_id == &"" or difficulty_tier < 1 or difficulty_tier > 10:
 		return false
 	if display_name.strip_edges().is_empty():
 		return false
@@ -51,6 +57,8 @@ func is_valid() -> bool:
 func get_invalid_reason() -> String:
 	if battle_id == &"":
 		return "战斗 ID 不能为空。"
+	if difficulty_tier < 1 or difficulty_tier > 10:
+		return "关卡难度必须在 1～10 之间。"
 	if display_name.strip_edges().is_empty():
 		return "战斗名称不能为空。"
 	if waves.is_empty():
