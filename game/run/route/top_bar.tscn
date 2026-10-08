@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://ct24f5c2x5gif"]
 
 [ext_resource type="Script" uid="uid://445rtl8nly5a" path="res://game/run/route/top_bar.gd" id="1"]
-[ext_resource type="Texture2D" uid="uid://bi4hdtx1404ll" path="res://data/assets/ui/energy_crystal.svg" id="2"]
-[ext_resource type="Texture2D" uid="uid://dxb1r8dungd1v" path="res://data/assets/ui/parts.svg" id="3"]
+[ext_resource type="Texture2D" uid="uid://eigpj0asfa4f" path="res://data/assets/ui/energy_crystal.png" id="2_vvp3p"]
+[ext_resource type="Texture2D" uid="uid://b6cieskem6fud" path="res://data/assets/ui/parts.png" id="3_6uc4c"]
 
 [sub_resource type="StyleBoxFlat" id="Hud"]
 content_margin_left = 6.0
@@ -47,7 +47,7 @@ layout_mode = 2
 texture_filter = 1
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
-texture = ExtResource("2")
+texture = ExtResource("2_vvp3p")
 expand_mode = 1
 stretch_mode = 5
 
@@ -71,7 +71,7 @@ layout_mode = 2
 texture_filter = 1
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
-texture = ExtResource("3")
+texture = ExtResource("3_6uc4c")
 expand_mode = 1
 stretch_mode = 5
 
