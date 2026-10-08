@@ -189,7 +189,7 @@ func _start_battle() -> void:
 	var run_state := _run_state()
 	if run_refit_mode and run_state != null and bool(run_state.call("is_route_active")):
 		var node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
-		if node != null and node.node_type == RunRouteNodeDefinition.NodeType.REFIT:
+		if node != null and node.node_type == RunRouteNodeDefinition.NodeType.REFIT and not bool(get_tree().get_meta(&"restore_station_holo", false)):
 			run_state.call("complete_current_route_node")
 	var return_path := String(get_tree().get_meta(RETURN_SCENE_META, ROUTE_MAP_SCENE_PATH))
 	get_tree().remove_meta(RETURN_SCENE_META)
