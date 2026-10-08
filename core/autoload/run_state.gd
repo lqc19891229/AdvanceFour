@@ -475,7 +475,10 @@ func purchase_shop_slot(shop: ShopDefinition, slot_index: int) -> bool:
 	return true
 
 func _can_purchase_shop_contents(item: ShopItemDefinition) -> bool:
-	if not run_active or item == null or not item.is_valid() or energy_crystals < item.price_energy_crystals:
+	if not run_active or item == null or not item.is_valid():
+		return false
+	var price := item.get_price()
+	if price <= 0 or not can_spend_energy_crystals(price):
 		return false
 	if item.module_id != &"" and item.module_count > 0:
 		return can_store_module(item.module_id, item.module_count)
@@ -484,10 +487,17 @@ func _can_purchase_shop_contents(item: ShopItemDefinition) -> bool:
 func _purchase_shop_contents(item: ShopItemDefinition) -> bool:
 	if not _can_purchase_shop_contents(item):
 		return false
+	var price := item.get_price()
 	if item.module_id != &"" and item.module_count > 0:
 		if not store_module(item.module_id, item.module_count):
 			return false
-	energy_crystals -= item.price_energy_crystals
+	elif item.chip_id != &"":
+		if not add_bridge_item("chip", String(item.chip_id)):
+			return false
+	elif item.hull_cells <= 0:
+		return false
+	# All item types use the same resolved price. Chip prices come from bridge_data.xlsx.
+	energy_crystals -= price
 	if item.hull_cells > 0:
 		add_hull_stock(item.hull_cells)
 	return true
