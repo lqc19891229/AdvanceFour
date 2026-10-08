@@ -1,4 +1,4 @@
-extends HBoxContainer
+extends VBoxContainer
 
 const BRIDGE_DB: BridgeDatabase = preload("res://data/bridge/bridge_database.tres")
 
