@@ -232,7 +232,7 @@ func _run() -> void:
 
 	# Shop nodes must generate four fixed slots, preserve them for the node lifetime, and sell each slot once.
 	run_state.call("reset_run")
-	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Shop test must start a Run")
+	_check(bool(run_state.call("start_run_with_test_route", design)), "Shop test must start at an active SHOP node")
 	run_state.set("energy_crystals", 500)
 	var shop_definition := load("res://data/shops/basic_shop.tres") as ShopDefinition
 	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 7 and shop_definition.slot_count == 4, "Basic shop data must expose a valid seven-item pool and four slots")
