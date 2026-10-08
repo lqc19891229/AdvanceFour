@@ -48,8 +48,13 @@ func refresh() -> void:
 		var count := int(run_state.call("get_bridge_item_count", "chip", String(item.chip_id))) if active else 0
 		if count > 0 and inventory_filter == "chip":
 			_add_inventory_item("chip", String(item.chip_id), item.display_name, count)
-	_make_slots(crew_row, "crew", crew_count, "机组")
-	_make_slots(chip_row, "chip", chip_count, "芯片")
+	crew_row.visible = inventory_filter == "crew"
+	chip_row.visible = inventory_filter == "chip"
+	if inventory_filter == "crew":
+		_make_slots(crew_row, "crew", crew_count, "机组")
+	elif inventory_filter == "chip":
+		_make_slots(chip_row, "chip", chip_count, "芯片")
+	$Slots/BridgeTitle.text = "机组插槽" if inventory_filter == "crew" else "芯片插槽"
 	hint.text = "无 Core 模块" if core == null else ("Run 内可装配；当前为预览" if not active else _build_modifier_preview())
 
 func _clear(target: Node) -> void:
