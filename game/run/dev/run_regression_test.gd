@@ -78,6 +78,21 @@ func _run() -> void:
 	_check(bool(run_state.call("is_current_route_node_complete")), "Closing tavern completes its route node")
 	holo_map.queue_free()
 	await process_frame
+	# Returning from the ship editor must reopen the station projection, not complete the node.
+	_check(bool(run_state.call("start_run_with_test_route", design)), "Station return regression starts")
+	_check(bool(run_state.call("complete_current_route_node")), "Shop is complete before station return regression")
+	_check(bool(run_state.call("select_route_node", &"station")), "Station can be selected for return regression")
+	get_tree().set_meta(&"restore_station_holo", true)
+	var returned_map := load("res://game/run/route/route_map_screen.tscn").instantiate() as Control
+	root.add_child(returned_map)
+	await process_frame
+	returned_map.call("_restore_station_holo")
+	_check(is_instance_valid(returned_map.get("active_holo")) and not bool(run_state.call("is_current_route_node_complete")), "Editor return restores station holo without completing station")
+	_check(not get_tree().has_meta(&"restore_station_holo"), "Station return marker must be consumed once")
+	returned_map.call("_close_holo")
+	_check(bool(run_state.call("is_current_route_node_complete")), "Closing restored station completes it once")
+	returned_map.queue_free()
+	await process_frame
 	run_state.call("reset_run")
 	var cannon_definition := ShopItemDefinition.DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
 	_check(cannon_definition != null and cannon_definition.icon_texture != null and cannon_definition.get_display_texture() == cannon_definition.icon_texture and cannon_definition.get_display_texture() != cannon_definition.texture, "Weapon cannon must use a dedicated combined UI icon instead of its base texture")
