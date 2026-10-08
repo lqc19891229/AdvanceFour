@@ -336,7 +336,10 @@ func _run() -> void:
 	await process_frame
 	shop_slots_ui = shop_screen.get_node("Center/Panel/Margin/Content/Body/Slots") as HBoxContainer
 	var sold_button := shop_slots_ui.get_child(0).get_node("Margin/Content/Buy") as Button
-	_check(sold_button.disabled and sold_button.text == "SOLD", "Purchased product card must remain SOLD after refresh")
+	_check(not sold_button.disabled and sold_button.text == "SOLD", "Purchased product must remain marked SOLD while allowing detail inspection")
+	shop_screen.call("_select_slot", 0)
+	var sold_detail_action := shop_screen.get_node("Center/Panel/Margin/Content/Body/Details/MarginContainer/Column/Action") as Button
+	_check(sold_detail_action.disabled and sold_detail_action.text == "已售出", "Sold product details must prohibit a second purchase")
 	shop_screen.queue_free()
 	await process_frame
 
