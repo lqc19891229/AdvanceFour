@@ -43,7 +43,7 @@ func refresh() -> void:
 			_add_inventory_item("chip", String(item.chip_id), item.display_name, count)
 	_make_slots(crew_row, "crew", crew_count, "机组")
 	_make_slots(chip_row, "chip", chip_count, "芯片")
-	hint.text = "无 Core 模块" if core == null else ("Run 内可装配；当前为预览" if not active else "选择库存后点击空槽安装；点击已占用槽卸下")
+	hint.text = "无 Core 模块" if core == null else ("Run 内可装配；当前为预览" if not active else _build_modifier_preview())
 
 func _clear(target: Node) -> void:
 	for child in target.get_children():
@@ -113,3 +113,21 @@ func _on_slot_pressed(kind: String, index: int, equipped: String) -> void:
 		refresh()
 	else:
 		hint.text = "无法安装：库存不足或插槽不可用"
+
+func _build_modifier_preview() -> String:
+	var modifiers: Array = run_state.call("get_bridge_modifiers")
+	if modifiers.is_empty():
+		return "尚未装备机组或芯片"
+	var names := {
+		"weapon_damage": "伤害", "weapon_range": "射程",
+		"weapon_fire_interval": "射击间隔", "thrust": "推力",
+		"energy_output": "供能", "turn_speed": "转速",
+		"protection": "防护", "repair_cost": "维修成本"
+	}
+	var sections: Array[String] = []
+	for stat in names:
+		var base := 100.0
+		var modified := ShipModifierSystem.apply(base, StringName(stat), modifiers)
+		if not is_equal_approx(base, modified):
+			sections.append("%s %.0f→%.1f*" % [names[stat], base, modified])
+	return "效果预览（基准100，*非最终战斗值）：%s" % ("，".join(sections) if not sections.is_empty() else "无通用属性变化")

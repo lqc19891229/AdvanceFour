@@ -773,6 +773,25 @@ func _run() -> void:
 	enhanced_ship.queue_free()
 	await process_frame
 
+	# Remaining bridge stats: defense, turn speed and repair cost.
+	var defense_modifier := BridgeModifierDefinition.new()
+	defense_modifier.stat = &"protection"
+	defense_modifier.operation = "FLAT"
+	defense_modifier.value = 12.0
+	defense_modifier.target_filter = &"DEFENSE"
+	var turn_modifier := BridgeModifierDefinition.new()
+	turn_modifier.stat = &"turn_speed"
+	turn_modifier.operation = "PERCENT_ADD"
+	turn_modifier.value = 0.20
+	turn_modifier.target_filter = &"WEAPON"
+	var repair_modifier := BridgeModifierDefinition.new()
+	repair_modifier.stat = &"repair_cost"
+	repair_modifier.operation = "PERCENT_ADD"
+	repair_modifier.value = -0.25
+	_check(is_equal_approx(ShipModifierSystem.apply(10.0, &"protection", [defense_modifier], &"DEFENSE"), 22.0), "Defense bridge bonus applies to protection")
+	_check(is_equal_approx(ShipModifierSystem.apply(100.0, &"turn_speed", [turn_modifier], &"WEAPON"), 120.0), "Weapon turn speed bonus applies to turret")
+	_check(is_equal_approx(ShipModifierSystem.apply(100.0, &"turn_speed", [turn_modifier], &"PROPULSION"), 100.0), "Turret filter must not affect ship turning")
+	_check(is_equal_approx(ShipModifierSystem.apply(20.0, &"repair_cost", [repair_modifier]), 15.0), "Repair cost bonus reduces repair parts cost")
 	run_state.call("reset_run")
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)
