@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://csvenvjutsqii"]
+[gd_scene format=3 uid="uid://csvenvjutsqii"]
 
 [ext_resource type="Script" uid="uid://3vvkfap25fd0" path="res://game/run/route/route_map_screen.gd" id="1"]
 [ext_resource type="PackedScene" path="res://game/run/route/top_bar.tscn" id="2"]
@@ -40,13 +40,12 @@ theme_override_constants/separation = 14
 [node name="Header" type="VBoxContainer" parent="Margin/Layout" unique_id=429840096]
 layout_mode = 2
 
-[node name="TopBar" parent="Margin/Layout/Header" instance=ExtResource("2")]
+[node name="TopBar" parent="Margin/Layout/Header" unique_id=1991004038 instance=ExtResource("2")]
 layout_mode = 2
 
-[node name="Status" type="Label" parent="Margin/Layout/Header"]
+[node name="Status" type="Label" parent="Margin/Layout/Header" unique_id=769602827]
 layout_mode = 2
 text = "仓库：0 / 0"
-horizontal_alignment = 0
 
 [node name="MapFrame" type="PanelContainer" parent="Margin/Layout" unique_id=1522079586]
 custom_minimum_size = Vector2(720, 560)
