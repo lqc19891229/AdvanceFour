@@ -41,7 +41,7 @@ def main() -> int:
     environment = os.environ.copy()
     with tempfile.TemporaryDirectory(prefix="advancefour-check-") as scratch:
         environment["XDG_DATA_HOME"] = str(Path(scratch) / "user_data")
-        source = ROOT / "tools/data_source/game_data.xlsx"
+        source = ROOT / "tools/data_source/module_data.xlsx"
         with zipfile.ZipFile(source) as workbook:
             corrupt = workbook.testzip()
             if corrupt:
