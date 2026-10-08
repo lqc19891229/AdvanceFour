@@ -36,6 +36,18 @@ func _ready() -> void:
 	$Margin/Layout/Actions.add_child(edit_button)
 	map_scroll.resized.connect(_update_map_size)
 	_refresh()
+	_restore_station_holo.call_deferred()
+
+func _restore_station_holo() -> void:
+	if not bool(get_tree().get_meta(&"restore_station_holo", false)):
+		return
+	get_tree().remove_meta(&"restore_station_holo")
+	var state := _run_state()
+	if state == null or not bool(state.call("is_route_active")) or bool(state.call("is_current_route_node_complete")):
+		return
+	var node := state.call("get_current_route_node") as RunRouteNodeDefinition
+	if node != null and node.node_type == RunRouteNodeDefinition.NodeType.REFIT:
+		_open_holo(STATION_SCENE_PATH, "REFIT CONSOLE / 舰船维护")
 
 func _refresh() -> void:
 	var run_state := _run_state()
