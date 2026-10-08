@@ -207,7 +207,7 @@ func get_effective_protection() -> float:
 		total += (
 			module.definition as DefenseModuleDefinition
 		).protection * get_module_efficiency(module)
-	return clampf(total, 0.0, 100.0)
+	return clampf(MODIFIERS.apply(total, &"protection", bridge_modifiers, &"DEFENSE"), 0.0, 100.0)
 
 func is_energy_sufficient() -> bool:
 	return energy_sufficient
@@ -319,7 +319,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if not is_zero_approx(turn_input):
-		rotation += deg_to_rad(turn_speed_degrees) * turn_input * delta
+		rotation += deg_to_rad(MODIFIERS.apply(turn_speed_degrees, &"turn_speed", bridge_modifiers, &"PROPULSION")) * turn_input * delta
 
 	var acceleration := get_acceleration()
 	var max_speed := get_max_speed()

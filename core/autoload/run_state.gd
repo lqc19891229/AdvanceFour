@@ -536,13 +536,18 @@ func craft_station_item(item: StationCraftItemDefinition) -> bool:
 	parts -= item.parts_cost
 	return true
 
+func _apply_bridge_repair_cost(base_cost: float) -> float:
+	var modifiers := get_bridge_modifiers()
+	return ShipModifierSystem.apply(base_cost, &"repair_cost", modifiers, &"ALL", 0.0)
+
 func get_repair_cost_for_cell(position: Vector2i) -> int:
 	if current_ship == null:
 		return 0
 	var cell := current_ship.get_hull_cell_at(position)
 	if cell == null:
 		return 0
-	return ceili(maxf(cell.max_hp - cell.current_hp, 0.0) * REPAIR_COST_PER_HP)
+	var base_cost := maxf(cell.max_hp - cell.current_hp, 0.0) * REPAIR_COST_PER_HP
+	return ceili(_apply_bridge_repair_cost(base_cost))
 
 func repair_cell(position: Vector2i) -> bool:
 	if current_ship == null:

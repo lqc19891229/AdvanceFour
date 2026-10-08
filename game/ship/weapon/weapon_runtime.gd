@@ -123,6 +123,7 @@ func apply_bridge_modifiers(modifiers: Array) -> void:
 		return
 	attack_range = MODIFIERS.apply(weapon_definition.attack_range, &"weapon_range", modifiers, &"WEAPON", 0.0)
 	fire_interval = MODIFIERS.apply(weapon_definition.fire_interval, &"weapon_fire_interval", modifiers, &"WEAPON", 0.05)
+	turn_speed_degrees = MODIFIERS.apply(weapon_definition.turn_speed_degrees, &"turn_speed", modifiers, &"WEAPON", 0.0)
 	# Store the modified damage separately: never edit shared module definitions.
 	bridge_damage_multiplier = MODIFIERS.apply(weapon_definition.firepower, &"weapon_damage", modifiers, &"WEAPON", 0.0) / maxf(weapon_definition.firepower, 0.00001)
 
