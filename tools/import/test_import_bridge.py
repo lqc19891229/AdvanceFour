@@ -13,6 +13,9 @@ class BridgeImportTests(unittest.TestCase):
         self.assertEqual(len(data["chips"]), 2)
         self.assertEqual(len(data["crew"]), 2)
         self.assertEqual(data["chips"][0]["effects"][0]["operation"], "PERCENT_ADD")
+        for item in data["chips"] + data["crew"]:
+            for effect in item["effects"]:
+                self.assertEqual(set(effect), {"stat", "operation", "value", "target_filter"})
 
     def test_core_capacity_from_module_excel(self):
         errors = []

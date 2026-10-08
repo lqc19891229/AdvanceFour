@@ -42,15 +42,12 @@ static func validate_and_import(write_resources: bool) -> bool:
 		return true
 	return _save_definitions(payload)
 
-static func _make_modifier(owner_id: String, row: Dictionary) -> BridgeModifierDefinition:
+static func _make_modifier(row: Dictionary) -> BridgeModifierDefinition:
 	var result = EFFECT_DEF.new()
-	result.effect_id = StringName(row["effect_id"])
-	result.owner_id = StringName(owner_id)
 	result.stat = StringName(row["stat"])
 	result.operation = String(row["operation"])
 	result.value = float(row["value"])
 	result.target_filter = StringName(row["target_filter"])
-	result.condition_id = StringName(row["condition_id"])
 	return result
 
 static func _save_definitions(payload: Dictionary) -> bool:
@@ -70,7 +67,7 @@ static func _save_definitions(payload: Dictionary) -> bool:
 				push_error("Missing chip texture: " + icon)
 				return false
 		for effect_row in row["effects"]:
-			chip.modifiers.append(_make_modifier(String(chip.chip_id), effect_row))
+			chip.modifiers.append(_make_modifier(effect_row))
 		db.chips.append(chip)
 		resources["%s/chips/%s.tres" % [ROOT, row["chip_id"]]] = chip
 	for row in payload["crew"]:
@@ -87,7 +84,7 @@ static func _save_definitions(payload: Dictionary) -> bool:
 				push_error("Missing crew portrait: " + portrait)
 				return false
 		for effect_row in row["effects"]:
-			crew.modifiers.append(_make_modifier(String(crew.crew_id), effect_row))
+			crew.modifiers.append(_make_modifier(effect_row))
 		db.crew.append(crew)
 		resources["%s/crew/%s.tres" % [ROOT, row["crew_id"]]] = crew
 	resources["%s/bridge_database.tres" % ROOT] = db
