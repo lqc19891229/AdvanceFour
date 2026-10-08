@@ -17,7 +17,7 @@ static func generate(seed_value: int = -1) -> RunRouteDefinition:
 	var route := RunRouteDefinition.new()
 	route.route_id = &"generated_sector"
 	route.display_name = "星区 01 · 全息航线"
-	var layers: Array[Array] = []
+	var layers: Array = []
 	for depth in range(10):
 		var layer: Array = []
 		var count := 1 if depth == 0 or depth == 9 else rng.randi_range(2, 3)
