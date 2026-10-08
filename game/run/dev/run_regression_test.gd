@@ -519,7 +519,7 @@ func _run() -> void:
 	var map_screen := map_scene.instantiate() as Control
 	root.add_child(map_screen)
 	await process_frame
-	var map_area := map_screen.get_node("Margin/Layout/MapFrame/MapArea") as Control
+	var map_area := map_screen.get_node("Margin/Layout/MapFrame/MapScroll/MapArea") as Control
 	var warehouse_route_button := map_screen.get_node("Margin/Layout/Actions/Warehouse") as Button
 	_check(warehouse_route_button != null and not warehouse_route_button.disabled, "Active route map must expose warehouse access without changing route choices")
 	var route_buttons := 0
