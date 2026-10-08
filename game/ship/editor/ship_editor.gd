@@ -184,7 +184,7 @@ func _start_battle() -> void:
 		return
 
 	var run_state := _run_state()
-	if run_state == null or not bool(run_state.call("start_run_with_route", grid.ship, PROTOTYPE_ROUTE_PATH)):
+	if run_state == null or not bool(run_state.call("start_run_with_generated_route", grid.ship)):
 		_show_status("无法创建星系航线 Run。")
 		return
 	var start_node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
