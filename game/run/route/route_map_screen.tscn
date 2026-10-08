@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://csvenvjutsqii"]
 
 [ext_resource type="Script" uid="uid://3vvkfap25fd0" path="res://game/run/route/route_map_screen.gd" id="1"]
-[ext_resource type="PackedScene" path="res://game/run/route/top_bar.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://ct24f5c2x5gif" path="res://game/run/route/top_bar.tscn" id="2"]
+[ext_resource type="Texture2D" uid="uid://b1pg4a4nbdssm" path="res://data/assets/ui/star_map_background.png" id="2_haljt"]
 
 [node name="RouteMapScreen" type="Control" unique_id=1217318824]
 layout_mode = 3
@@ -12,14 +13,15 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="Background" type="ColorRect" parent="." unique_id=279013591]
+[node name="Background" type="TextureRect" parent="." unique_id=1054042054]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.02, 0.028, 0.045, 1)
+texture = ExtResource("2_haljt")
+expand_mode = 1
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=403491990]
 layout_mode = 1
