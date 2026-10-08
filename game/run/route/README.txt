@@ -10,6 +10,8 @@ RunState 维护能量结晶（交易）、零件（维修/制造）、模块仓�
 
 当前：
 - route_map_screen.tscn / route_map_screen.gd
+- 大地图背景由 route_map_screen.tscn 的固定 TextureRect 加载 data/assets/ui/star_map_background.png，不再以脚本绘制星星、行星或陨石。
+- TopBar 使用 energy_crystal.png 与 parts.png；仅资源数值动态变化。
 - 根据 RunState.route_definition 动态绘制节点按钮与连接线。
 - 已完成节点显示 ✓，当前节点显示 ●，可选下一节点显示 ▶。
 - 只能选择 RunState.get_available_route_node_ids() 返回的合法下一节点。
