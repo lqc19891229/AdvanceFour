@@ -4,7 +4,7 @@
 保存策划可直接编辑的数据源。
 
 当前：
-- game_data.xlsx：模块策划数值唯一真源。
+- module_data.xlsx：模块策划数值唯一真源。
 
 工作流：
 修改 Excel

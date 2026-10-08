@@ -4,7 +4,7 @@
 tools 只保存内容生产工具、策划源数据和验证工具，不保存游戏美术素材副本。
 
 当前：
-- data_source/：策划源数据，例如 game_data.xlsx。
+- data_source/：策划源数据，例如 module_data.xlsx。
 - cache/：导入流程中间缓存。
 - import/：数据导入与校验脚本。
 - verify_project.py：项目统一验证入口。
