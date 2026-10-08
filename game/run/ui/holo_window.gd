@@ -57,7 +57,7 @@ func _ready() -> void:
 	heading.add_child(title_label)
 
 	var close_button := Button.new()
-	close_button.text = "关闭终端 ×"
+	close_button.text = "离开"
 	close_button.custom_minimum_size.x = 125
 	close_button.pressed.connect(func(): close_requested.emit())
 	heading.add_child(close_button)
