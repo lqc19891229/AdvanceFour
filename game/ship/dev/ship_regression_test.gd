@@ -608,14 +608,14 @@ func _test_saved_design_and_editor() -> void:
 	root.add_child(editor)
 	current_scene = editor
 	await process_frame
-	var launch_button: Button = editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/AITestButton")
+	var launch_button: Button = editor.get_node("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/AITestButton")
 	_check(launch_button.get_global_rect().end.y <= root.get_visible_rect().end.y, "Editor battle entry must fit inside the viewport")
-	editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/AITestButton").pressed.emit()
+	editor.get_node("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/AITestButton").pressed.emit()
 	_check(current_scene == editor, "Editor must reject an empty design without leaving")
 	_check(editor.speed_label.text.contains("预计最高速度：0.0 px/s"), "Empty design must show zero predicted speed")
 	_check(root.get_visible_rect().encloses(editor.speed_label.get_global_rect()), "Predicted speed must be visible without scrolling")
 	var editable_design := _design()
-	editor.get_node("MainLayout/Center/Grid").set_ship(editable_design)
+	editor.get_node("WorkSections/TopSection/MainLayout/Center/Grid").set_ship(editable_design)
 	var editor_grid := editor.grid as ShipGridView
 	var weapon_preview := editor_grid.get_preview_textures(DATABASE.get_by_id(&"weapon_cannon"))
 	_check(
@@ -664,7 +664,7 @@ func _test_saved_design_and_editor() -> void:
 		and editor.stats_label.text.contains("旋转：90°"),
 		"Rotating an installed module must update its stored rotation and detail view"
 	)
-	var move_button: Button = editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/MoveButton")
+	var move_button: Button = editor.get_node("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/MoveButton")
 	_check(
 		root.get_visible_rect().encloses(move_button.get_global_rect())
 		and root.get_visible_rect().encloses(launch_button.get_global_rect()),
@@ -714,7 +714,7 @@ func _test_saved_design_and_editor() -> void:
 	editor.grid.clear_ship()
 	_check(editor.speed_label.text.contains("预计最高速度：0.0 px/s"), "Clearing the design must reset predicted speed")
 	editor.grid.set_ship(_design())
-	editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/AITestButton").pressed.emit()
+	editor.get_node("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/AITestButton").pressed.emit()
 	await scene_changed
 	_check(current_scene.scene_file_path.ends_with("ship_ai_test.tscn"), "Valid editor design must enter AI test")
 	var event := InputEventKey.new()
@@ -723,7 +723,7 @@ func _test_saved_design_and_editor() -> void:
 	current_scene._unhandled_key_input(event)
 	await scene_changed
 	_check(current_scene.scene_file_path.ends_with("ship_editor.tscn"), "Escape must return to the editor")
-	_check(current_scene.get_node("MainLayout/Center/Grid").ship.modules.size() == _design().modules.size(), "Return to editor must restore the saved layout")
+	_check(current_scene.get_node("WorkSections/TopSection/MainLayout/Center/Grid").ship.modules.size() == _design().modules.size(), "Return to editor must restore the saved layout")
 	current_scene.queue_free()
 	current_scene = null
 	await process_frame
