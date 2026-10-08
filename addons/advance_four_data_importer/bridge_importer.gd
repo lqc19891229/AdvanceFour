@@ -4,7 +4,6 @@ extends RefCounted
 const CHIP_DEF = preload("res://data/definitions/bridge/bridge_chip_definition.gd")
 const CREW_DEF = preload("res://data/definitions/bridge/bridge_crew_definition.gd")
 const EFFECT_DEF = preload("res://data/definitions/bridge/bridge_modifier_definition.gd")
-const CONFIG_DEF = preload("res://data/definitions/bridge/bridge_config_definition.gd")
 const DATABASE_DEF = preload("res://data/definitions/bridge/bridge_database.gd")
 const EXCEL := "res://tools/data_source/bridge_data.xlsx"
 const CACHE := "res://tools/cache/bridge.json"
@@ -43,21 +42,19 @@ static func validate_and_import(write_resources: bool) -> bool:
 		return true
 	return _save_definitions(payload)
 
+static func _make_modifier(owner_id: String, row: Dictionary) -> BridgeModifierDefinition:
+	var result = EFFECT_DEF.new()
+	result.effect_id = StringName(row["effect_id"])
+	result.owner_id = StringName(owner_id)
+	result.stat = StringName(row["stat"])
+	result.operation = String(row["operation"])
+	result.value = float(row["value"])
+	result.target_filter = StringName(row["target_filter"])
+	result.condition_id = StringName(row["condition_id"])
+	return result
+
 static func _save_definitions(payload: Dictionary) -> bool:
 	# Construct all in memory first; do not clear existing assets on parse/build errors.
-	var by_owner: Dictionary = {}
-	for row in payload["effects"]:
-		var d = EFFECT_DEF.new()
-		d.effect_id = StringName(row["effect_id"])
-		d.owner_id = StringName(row["owner_id"])
-		d.stat = StringName(row["stat"])
-		d.operation = String(row["operation"])
-		d.value = float(row["value"])
-		d.target_filter = StringName(row["target_filter"])
-		d.condition_id = StringName(row["condition_id"])
-		if not by_owner.has(String(d.owner_id)):
-			by_owner[String(d.owner_id)] = []
-		by_owner[String(d.owner_id)].append(d)
 	var db = DATABASE_DEF.new()
 	var resources: Dictionary = {}
 	for row in payload["chips"]:
@@ -72,8 +69,8 @@ static func _save_definitions(payload: Dictionary) -> bool:
 			if chip.icon == null:
 				push_error("Missing chip texture: " + icon)
 				return false
-		for effect in by_owner.get(String(chip.chip_id), []):
-			chip.modifiers.append(effect)
+		for effect_row in row["effects"]:
+			chip.modifiers.append(_make_modifier(String(chip.chip_id), effect_row))
 		db.chips.append(chip)
 		resources["%s/chips/%s.tres" % [ROOT, row["chip_id"]]] = chip
 	for row in payload["crew"]:
@@ -89,17 +86,10 @@ static func _save_definitions(payload: Dictionary) -> bool:
 			if crew.portrait == null:
 				push_error("Missing crew portrait: " + portrait)
 				return false
-		for effect in by_owner.get(String(crew.crew_id), []):
-			crew.modifiers.append(effect)
+		for effect_row in row["effects"]:
+			crew.modifiers.append(_make_modifier(String(crew.crew_id), effect_row))
 		db.crew.append(crew)
 		resources["%s/crew/%s.tres" % [ROOT, row["crew_id"]]] = crew
-	for row in payload["bridge_configs"]:
-		var config = CONFIG_DEF.new()
-		config.bridge_id = StringName(row["bridge_id"])
-		config.crew_slots = int(row["crew_slots"])
-		config.chip_slots = int(row["chip_slots"])
-		db.configs.append(config)
-		resources["%s/configs/%s.tres" % [ROOT, row["bridge_id"]]] = config
 	resources["%s/bridge_database.tres" % ROOT] = db
 	# Save using a rollback snapshot so partially written imports do not corrupt previous resources.
 	var previous: Dictionary = {}

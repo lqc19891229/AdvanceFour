@@ -53,6 +53,18 @@ def main() -> int:
         if parsed != cached:
             raise RuntimeError("Excel source differs from modules.json; run the data importer")
         print("Workbook archive and source/cache parity: OK")
+        bridge_source = ROOT / "tools/data_source/bridge_data.xlsx"
+        with zipfile.ZipFile(bridge_source) as workbook:
+            invalid = workbook.testzip()
+            if invalid:
+                raise RuntimeError(f"Corrupt bridge workbook entry: {invalid}")
+        bridge_parsed_path = Path(scratch) / "bridge.json"
+        print(run([sys.executable, "tools/import/import_bridge.py", str(bridge_source), str(bridge_parsed_path)], environment).strip())
+        bridge_parsed = json.loads(bridge_parsed_path.read_text(encoding="utf-8"))
+        bridge_cached = json.loads((ROOT / "tools/cache/bridge.json").read_text(encoding="utf-8"))
+        if bridge_parsed != bridge_cached:
+            raise RuntimeError("Bridge Excel source differs from bridge.json; run the bridge importer")
+        print("Bridge workbook source/cache parity: OK")
         print(run([sys.executable, "-m", "unittest", "discover", "-s", "tools/import", "-p", "test_*.py"], environment).strip())
 
         database_text = (ROOT / "data/modules/module_database.tres").read_text(encoding="utf-8")

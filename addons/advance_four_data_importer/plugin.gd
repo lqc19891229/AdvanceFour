@@ -144,6 +144,8 @@ func _build_definition(row: Dictionary) -> ShipModuleDefinition:
 			(d as FunctionModuleDefinition).storage_capacity = int(row.get("storage_capacity", 0))
 		"CORE":
 			d = CoreDef.new()
+			(d as CoreModuleDefinition).crew_slots = int(row["crew_slots"])
+			(d as CoreModuleDefinition).chip_slots = int(row["chip_slots"])
 		_:
 			return null
 
