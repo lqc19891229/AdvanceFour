@@ -9,7 +9,7 @@ const CELL_SIZE := 48.0
 const MIN_ZOOM := 0.5
 const MAX_ZOOM := 2.5
 const ZOOM_STEP := 1.15
-const GRID_HALF_EXTENT := 30
+const GRID_HALF_EXTENT := 44 # 88 × 88 cells: coordinates -44 through 43
 
 @export var module_database: ModuleDatabase
 
@@ -235,6 +235,7 @@ func clear_ship() -> void:
 func center_view() -> void:
 	pan_offset = Vector2.ZERO
 	zoom = 1.0
+	_clamp_pan_to_grid()
 	queue_redraw()
 
 func _set_selected_module(module: ShipModuleInstance) -> void:
@@ -246,6 +247,16 @@ func _set_selected_module(module: ShipModuleInstance) -> void:
 func get_cell_size() -> float:
 	return CELL_SIZE * zoom
 
+func _clamp_pan_to_grid() -> void:
+	var half_grid := float(GRID_HALF_EXTENT) * get_cell_size()
+	var allowed := Vector2(maxf(half_grid - size.x * 0.5, 0.0), maxf(half_grid - size.y * 0.5, 0.0))
+	pan_offset = pan_offset.clamp(-allowed, allowed)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_clamp_pan_to_grid()
+		queue_redraw()
+
 func zoom_at(mouse_position: Vector2, direction: int) -> void:
 	var next_zoom := clampf(zoom * (ZOOM_STEP if direction > 0 else 1.0 / ZOOM_STEP), MIN_ZOOM, MAX_ZOOM)
 	if is_equal_approx(next_zoom, zoom):
@@ -253,6 +264,7 @@ func zoom_at(mouse_position: Vector2, direction: int) -> void:
 	var origin := size * 0.5 + pan_offset
 	pan_offset = mouse_position - size * 0.5 - (mouse_position - origin) * (next_zoom / zoom)
 	zoom = next_zoom
+	_clamp_pan_to_grid()
 	preview_cell = screen_to_grid(mouse_position)
 	queue_redraw()
 
@@ -260,6 +272,7 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if is_panning:
 			pan_offset += event.relative
+			_clamp_pan_to_grid()
 		preview_cell = screen_to_grid(event.position)
 		queue_redraw()
 	elif event is InputEventMouseButton:
@@ -371,11 +384,22 @@ func _draw() -> void:
 	var origin := size * 0.5 + pan_offset
 	var grid_color := Color(0.24, 0.29, 0.36, 0.7)
 	var axis_color := Color(0.42, 0.49, 0.58, 0.9)
-	for i in range(-GRID_HALF_EXTENT, GRID_HALF_EXTENT + 1):
-		var x := origin.x + float(i) * get_cell_size()
-		var y := origin.y + float(i) * get_cell_size()
-		draw_line(Vector2(x, 0), Vector2(x, size.y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
-		draw_line(Vector2(0, y), Vector2(size.x, y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
+	var cell_size := get_cell_size()
+	var grid_rect := Rect2(origin - Vector2.ONE * float(GRID_HALF_EXTENT) * cell_size, Vector2.ONE * float(GRID_HALF_EXTENT * 2) * cell_size)
+	var visible := grid_rect.intersection(Rect2(Vector2.ZERO, size))
+	if visible.has_area():
+		var first_x := maxi(-GRID_HALF_EXTENT, ceili((visible.position.x - origin.x) / cell_size))
+		var last_x := mini(GRID_HALF_EXTENT, floori((visible.end.x - origin.x) / cell_size))
+		var first_y := maxi(-GRID_HALF_EXTENT, ceili((visible.position.y - origin.y) / cell_size))
+		var last_y := mini(GRID_HALF_EXTENT, floori((visible.end.y - origin.y) / cell_size))
+		for i in range(first_x, last_x + 1):
+			var x := origin.x + float(i) * cell_size
+			draw_line(Vector2(x, visible.position.y), Vector2(x, visible.end.y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
+		for i in range(first_y, last_y + 1):
+			var y := origin.y + float(i) * cell_size
+			draw_line(Vector2(visible.position.x, y), Vector2(visible.end.x, y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
+		# Explicit outer edge makes the 88×88 grid boundary visible.
+		draw_rect(grid_rect, axis_color, false, 2.0)
 	for hull_cell in ship.get_hull_cells():
 		_draw_hull_cell(hull_cell)
 	for module in ship.modules:
