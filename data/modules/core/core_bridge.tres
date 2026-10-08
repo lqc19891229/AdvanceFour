@@ -11,4 +11,6 @@ module_type = 5
 description = "飞船核心区域。核心模块被击毁时，飞船判定为沉没。"
 size = Vector2i(2, 2)
 energy_cost = 20.0
+crew_slots = 4
+chip_slots = 4
 texture = ExtResource("2_uwatk")

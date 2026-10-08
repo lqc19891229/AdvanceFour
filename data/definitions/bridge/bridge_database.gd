@@ -3,7 +3,6 @@ extends Resource
 
 @export var chips: Array[BridgeChipDefinition] = []
 @export var crew: Array[BridgeCrewDefinition] = []
-@export var configs: Array[BridgeConfigDefinition] = []
 
 func find_chip(id: StringName) -> BridgeChipDefinition:
     for item in chips:

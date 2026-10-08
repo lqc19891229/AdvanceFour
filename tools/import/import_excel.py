@@ -101,6 +101,8 @@ HEADER_ALIASES = {
     "生命值": "hp",
     "防护": "protection",
     "仓储容量": "storage_capacity",
+    "机组槽位": "crew_slots",
+    "芯片槽位": "chip_slots",
 }
 
 
@@ -271,6 +273,8 @@ def parse_sheet(
         required_columns.append("hp")
     if module_type == "FUNCTION":
         required_columns.append(FUNCTION_FIELD)
+    if module_type == "CORE":
+        required_columns.extend(["crew_slots", "chip_slots"])
     if type_field:
         required_columns.append(type_field)
     if module_type == "WEAPON":
@@ -318,11 +322,16 @@ def parse_sheet(
             else 0.0
         )
         texture_path = str(get("texture_path") or "").strip()
+        crew_slots = as_int(get("crew_slots"), "crew_slots", sheet_name, row_idx, errors) if module_type == "CORE" else 0
+        chip_slots = as_int(get("chip_slots"), "chip_slots", sheet_name, row_idx, errors) if module_type == "CORE" else 0
         storage_capacity = (
             as_int(get(FUNCTION_FIELD), FUNCTION_FIELD, sheet_name, row_idx, errors)
             if module_type == "FUNCTION"
             else 0
         )
+
+        if module_type == "CORE" and (not 0 <= crew_slots <= 32 or not 0 <= chip_slots <= 32):
+            errors.append(f"{sheet_name}!第 {row_idx} 行：舰桥槽位必须在 0～32 范围内")
 
         if not ID_PATTERN.match(raw_id):
             errors.append(f"{sheet_name}!第 {row_idx} 行：id '{raw_id}' 只能使用小写英文、数字和下划线，并以字母开头")
@@ -401,6 +410,9 @@ def parse_sheet(
             module["hp"] = hp
         if module_type == "FUNCTION":
             module[FUNCTION_FIELD] = storage_capacity
+        if module_type == "CORE":
+            module["crew_slots"] = crew_slots
+            module["chip_slots"] = chip_slots
         if type_field:
             module[type_field] = type_value
         if module_type == "WEAPON":
