@@ -62,6 +62,23 @@ func start_run_with_route(ship: ShipData, route_path: String) -> bool:
 	current_battle_path = start_node.target_path if start_node.node_type == RunRouteNodeDefinition.NodeType.BATTLE else ""
 	return true
 
+func start_run_with_test_route(ship: ShipData) -> bool:
+	if ship == null or not ship.is_design_valid():
+		return false
+	var route := RouteTestMap.build()
+	if not route.is_valid():
+		return false
+	var copy := _clone_ship(ship)
+	if copy == null:
+		return false
+	reset_run()
+	run_active = true
+	current_ship = copy
+	route_definition = route
+	current_route_node_id = route.start_node_id
+	return true
+
+
 func start_run_with_generated_route(ship: ShipData, seed_value: int = -1) -> bool:
 	if not start_run_with_route(ship, "res://data/routes/prototype_route.tres"):
 		return false
