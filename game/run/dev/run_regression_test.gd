@@ -48,6 +48,9 @@ func _run() -> void:
 	var fixed_route := RouteTestMap.build()
 	_check(fixed_route.is_valid() and fixed_route.nodes.size() == 6, "Fixed test route must have six valid nodes")
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Test route must start without ship editor")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	_check((run_state.call("get_current_route_node") as RunRouteNodeDefinition).node_type == RunRouteNodeDefinition.NodeType.SHOP, "Test route must enter shop first")
 	_check(bool(run_state.call("complete_current_route_node")), "Shop test node must complete")
 	_check(bool(run_state.call("select_route_node", &"station")), "Next test node must be station")
@@ -218,6 +221,9 @@ func _run() -> void:
 	# Local repair must repair exactly one Hull Cell and charge only that cell.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Local repair test must start a Run")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	current_ship = run_state.get("current_ship") as ShipData
 	var local_cells := current_ship.get_hull_cells()
 	var local_a := local_cells[0]
@@ -236,6 +242,9 @@ func _run() -> void:
 	# Shop nodes must generate four fixed slots, preserve them for the node lifetime, and sell each slot once.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Shop test must start at an active SHOP node")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	run_state.set("energy_crystals", 500)
 	var shop_definition := load("res://data/shops/basic_shop.tres") as ShopDefinition
 	_check(shop_definition != null and shop_definition.is_valid() and shop_definition.items.size() == 9 and shop_definition.slot_count == 4, "Basic shop data must expose a valid nine-item pool and four slots")
@@ -297,6 +306,9 @@ func _run() -> void:
 	# Pin a chip to the current unsold slot so the price/inventory transaction is deterministic.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Chip shop test must start on shop node")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	run_state.set("energy_crystals", 79)
 	run_state.call("get_shop_slots", shop_definition)
 	var chip_shop_key := StringName("route:shop")
@@ -318,6 +330,9 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Warehouse test must start a clean Run")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	_check(int(run_state.call("get_warehouse_capacity")) == 12 and int(run_state.call("get_warehouse_used")) == 0, "A Run must start with 12 base warehouse capacity")
 	_check(int(run_state.call("get_module_storage_cost", &"weapon_cannon", 1)) == 1, "A 1x1 module must occupy one warehouse unit")
 	var cargo_definition := RunState.DATABASE.get_by_id(&"function_cargo_hold") as FunctionModuleDefinition
@@ -340,6 +355,9 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Warehouse screen test must start a clean Run")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	_check(bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse screen setup must store cannon")
 	_check(bool(run_state.call("store_module", &"function_cargo_hold", 1)), "Warehouse screen setup must store cargo hold")
 	var warehouse_scene := load("res://game/run/warehouse/warehouse_screen.tscn") as PackedScene
@@ -375,6 +393,9 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Inventory primitive test must start a clean Run")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 
 	# Resource primitives must be atomic and keep currencies independent.
 	run_state.call("add_energy_crystals", 50)
@@ -408,6 +429,9 @@ func _run() -> void:
 	# Run refit editor must expose inventory mode without allowing free clear.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Run refit integration test must start a Run")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	run_state.call("add_module_to_inventory", &"defense_lightarmor", 1)
 	run_state.call("add_hull_stock", 1)
 	set_meta(&"run_refit_mode", true)
@@ -433,6 +457,9 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "A second Run must start after reset")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	var defeat_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
 	_first_cell(defeat_ship).current_hp = 1.0
 	var defeat := BattleResult.new()
@@ -451,6 +478,9 @@ func _run() -> void:
 	# Current final-stage result must expose a way to leave the Run.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_002_PATH)), "Final-stage flow must be able to start")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	var final_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_002_PATH) as ShipData
 	var stage_two_definition := load(STAGE_002_PATH) as BattleDefinition
 	_check(stage_two_definition.loot_table != null and stage_two_definition.loot_table.is_valid() and stage_two_definition.loot_table.drop_count == 3, "stage_002 must use a valid three-drop loot table")
@@ -495,6 +525,9 @@ func _run() -> void:
 	var route_definition := load(route_path) as RunRouteDefinition
 	_check(route_definition != null and route_definition.is_valid() and route_definition.nodes.size() == 6, "Prototype route must contain six valid nodes")
 	_check(bool(run_state.call("start_run_with_route", design, route_path)), "A valid design must start the prototype route")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	_check(bool(run_state.call("is_route_active")), "Route Run must report active route state")
 	var route_node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 	_check(route_node != null and route_node.node_id == &"battle_001" and route_node.target_path == STAGE_001_PATH, "Route must start at stage_001 battle node")
@@ -561,6 +594,9 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run_with_route", design, route_path)), "Route must restart cleanly for Station branch")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	route_ship = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
 	_first_cell(route_ship).current_hp = 6.0
 	route_victory = BattleResult.new()
@@ -628,6 +664,9 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run_with_route", design, route_path)), "Route must restart cleanly for Elite branch")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	route_ship = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
 	route_victory = BattleResult.new()
 	route_victory.outcome = BattleResult.Outcome.VICTORY
@@ -656,6 +695,9 @@ func _run() -> void:
 	# A full warehouse must still allow discarding every drop and leaving settlement.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Full-warehouse settlement must start a Run")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	for i in range(12):
 		run_state.call("store_module", &"weapon_cannon", 1)
 	var full_result := BattleResult.new()
@@ -690,6 +732,9 @@ func _run() -> void:
 	# No loot and missing Run state must both render without blocking valid flow or granting rewards.
 	run_state.call("reset_run")
 	run_state.call("start_run", design, STAGE_001_PATH)
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	var empty_result := BattleResult.new()
 	empty_result.outcome = BattleResult.Outcome.VICTORY
 	empty_result.battle_id = &"stage_001"
@@ -733,6 +778,9 @@ func _run() -> void:
 
 	# Bridge inventory remains a multiset and replacement returns the removed item.
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Bridge regression Run starts")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	_check(bool(run_state.call("add_bridge_item", "chip", "chip_fire_01", 2)), "Known chip can enter inventory")
 	_check(bool(run_state.call("add_bridge_item", "chip", "chip_energy_01", 1)), "Second chip can enter inventory")
 	_check(bool(run_state.call("equip_bridge_item", "chip", "chip_fire_01", 0)), "First chip equips into Core capacity")
@@ -747,6 +795,9 @@ func _run() -> void:
 	# A route victory must correspond to the currently selected battle, not an arbitrary payload.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Route validation Run starts")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	var false_victory := BattleResult.new()
 	false_victory.outcome = BattleResult.Outcome.VICTORY
 	false_victory.battle_path = STAGE_001_PATH
@@ -781,6 +832,9 @@ func _run() -> void:
 	_check(is_equal_approx(float(modifier_script.apply(0.5, &"weapon_fire_interval", [interval_mod], &"WEAPON", 0.05)), 0.05), "Fire interval is clamped to a safe minimum")
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Bridge modifiers test Run starts")
+	# Isolate existing resource economy regressions from the Run startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 	_check(bool(run_state.call("add_bridge_item", "chip", "chip_fire_01")), "Chip acquired for modifier test")
 	_check(bool(run_state.call("equip_bridge_item", "chip", "chip_fire_01", 0)), "Chip equipped for modifier test")
 	var active_modifiers: Array = run_state.call("get_bridge_modifiers")
