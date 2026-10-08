@@ -9,31 +9,34 @@ border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
 border_color = Color(0.11, 0.64, 0.91, 1)
-content_margin_left = 10.0
-content_margin_right = 10.0
-content_margin_top = 6.0
-content_margin_bottom = 6.0
+content_margin_left = 6.0
+content_margin_right = 6.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
 [node name="TopBar" type="HBoxContainer"]
-custom_minimum_size = Vector2(0, 82)
+custom_minimum_size = Vector2(0, 64)
 size_flags_horizontal = 3
 script = ExtResource("1")
 [node name="TitlePanel" type="PanelContainer" parent="."]
 layout_mode = 2
+clip_contents = true
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("Hud")
 [node name="Title" type="Label" parent="TitlePanel"]
 layout_mode = 2
 text = "星区 01 · 全息航线"
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
+clip_text = true
+text_overrun_behavior = 3
 vertical_alignment = 1
 [node name="EnergyPanel" type="PanelContainer" parent="."]
 layout_mode = 2
-custom_minimum_size = Vector2(190, 0)
+custom_minimum_size = Vector2(118, 0)
 theme_override_styles/panel = SubResource("Hud")
 [node name="Content" type="HBoxContainer" parent="EnergyPanel"]
 layout_mode = 2
 [node name="Icon" type="TextureRect" parent="EnergyPanel/Content"]
-custom_minimum_size = Vector2(54, 54)
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 texture = ExtResource("2")
 stretch_mode = 5
@@ -41,18 +44,18 @@ texture_filter = 1
 [node name="Value" type="Label" parent="EnergyPanel/Content"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.55, 0.94, 1, 1)
 text = "0"
 vertical_alignment = 1
 [node name="PartsPanel" type="PanelContainer" parent="."]
 layout_mode = 2
-custom_minimum_size = Vector2(166, 0)
+custom_minimum_size = Vector2(112, 0)
 theme_override_styles/panel = SubResource("Hud")
 [node name="Content" type="HBoxContainer" parent="PartsPanel"]
 layout_mode = 2
 [node name="Icon" type="TextureRect" parent="PartsPanel/Content"]
-custom_minimum_size = Vector2(54, 54)
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 texture = ExtResource("3")
 stretch_mode = 5
@@ -60,7 +63,7 @@ texture_filter = 1
 [node name="Value" type="Label" parent="PartsPanel/Content"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(1, 0.74, 0.35, 1)
 text = "0"
 vertical_alignment = 1
