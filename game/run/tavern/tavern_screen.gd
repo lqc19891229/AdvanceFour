@@ -49,11 +49,6 @@ func _ready() -> void:
 	body.add_child(details)
 	feedback = Label.new()
 	layout.add_child(feedback)
-	var leave := Button.new()
-	leave.text = "离开酒馆"
-	leave.custom_minimum_size.y = 45
-	leave.pressed.connect(_leave)
-	layout.add_child(leave)
 	_refresh()
 
 func _refresh() -> void:
