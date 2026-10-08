@@ -1,3 +1,8 @@
+【当前代码说明｜2026-10】
+Godot 4.6.1；项目默认启动 fixed_test_sector 测试星图，动态星图由 RouteMapGenerator.generate() 实现。
+能量结晶用于商店，零件用于维修和空间站制造；战斗胜利直接统一结算，失败重置 Run。
+历史版本内容不等于当前规则。
+
 《前进四》game/combat 目录说明
 
 职责：
@@ -23,7 +28,7 @@
 原则：
 1. game/combat 不保存具体关卡内容。
 2. Battle 只执行 BattleDefinition，不在 battle.gd 中写第几关专用分支。
-3. 新关卡新增 data/battles/*.tres，不复制 battle.tscn。
+3. 新关卡新增 data/battles/<battle_id>/battle.tres，不复制 battle.tscn。
 4. 新敌舰蓝图新增 data/enemies/*.tres。
 5. Boss 行为若需要新 Gameplay 能力才进入 game；Boss 的具体配置继续放 data。
 
