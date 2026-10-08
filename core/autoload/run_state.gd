@@ -684,6 +684,7 @@ func _bridge_can_refit() -> bool:
 	var node := get_current_route_node()
 	return node != null and (
 		node.node_type == RunRouteNodeDefinition.NodeType.REFIT
+		or node.node_type == RunRouteNodeDefinition.NodeType.TAVERN
 		or node.node_type == RunRouteNodeDefinition.NodeType.SHOP
 		or node.node_type == RunRouteNodeDefinition.NodeType.BATTLE
 	) and not has_pending_loot()

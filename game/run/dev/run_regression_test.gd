@@ -792,6 +792,14 @@ func _run() -> void:
 	_check(String(run_state.call("get_bridge_equipped", "chip", 0)).is_empty(), "Unequipping clears slot")
 	_check(not bool(run_state.call("purchase_shop_item", null)), "Direct shop purchase is disabled")
 
+	# Crew recruited at the tavern must be equippable immediately from the Run editor.
+	_check(bool(run_state.call("start_run_with_test_route", design)), "Tavern bridge equip test starts")
+	run_state.set("current_route_node_id", &"tavern")
+	_check(bool(run_state.call("add_bridge_item", "crew", "crew_human_01")), "Recruited tavern crew enters inventory")
+	_check(bool(run_state.call("equip_bridge_item", "crew", "crew_human_01", 0)), "Tavern route permits crew equip in available bridge slot")
+	_check(String(run_state.call("get_bridge_equipped", "crew", 0)) == "crew_human_01" and int(run_state.call("get_bridge_item_count", "crew", "crew_human_01")) == 0, "Tavern equip transfers crew from inventory to slot exactly once")
+	_check(bool(run_state.call("unequip_bridge_item", "crew", 0)) and int(run_state.call("get_bridge_item_count", "crew", "crew_human_01")) == 1, "Tavern allows returning equipped crew to inventory")
+
 	# A route victory must correspond to the currently selected battle, not an arbitrary payload.
 	run_state.call("reset_run")
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Route validation Run starts")
