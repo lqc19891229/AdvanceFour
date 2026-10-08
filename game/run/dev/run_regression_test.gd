@@ -88,7 +88,7 @@ func _run() -> void:
 	await process_frame
 	returned_map.call("_restore_station_holo")
 	_check(is_instance_valid(returned_map.get("active_holo")) and not bool(run_state.call("is_current_route_node_complete")), "Editor return restores station holo without completing station")
-	_check(not get_tree().has_meta(&"restore_station_holo"), "Station return marker must be consumed once")
+	_check(not has_meta(&"restore_station_holo"), "Station return marker must be consumed once")
 	returned_map.call("_close_holo")
 	_check(bool(run_state.call("is_current_route_node_complete")), "Closing restored station completes it once")
 	returned_map.queue_free()
