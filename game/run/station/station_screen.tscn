@@ -57,12 +57,17 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "模块制造"
 
-[node name="CraftScroll" type="ScrollContainer" parent="Margin/Layout"]
-custom_minimum_size = Vector2(0, 360)
+[node name="Body" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="CraftScroll" type="ScrollContainer" parent="Margin/Layout/Body"]
+custom_minimum_size = Vector2(520, 360)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CraftList" type="VBoxContainer" parent="Margin/Layout/CraftScroll"]
+[node name="CraftList" type="VBoxContainer" parent="Margin/Layout/Body/CraftScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
