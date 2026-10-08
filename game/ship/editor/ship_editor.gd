@@ -84,12 +84,12 @@ func _refresh_inventory_button_labels() -> void:
 		var button := child as Button
 		var kind := StringName(button.get_meta(&"inventory_kind", &""))
 		if kind == &"hull":
-			button.text = "船体格 ×%d" % int(_run_state().get("hull_stock"))
+			button.text = "基础船体格｜库存 %d" % int(_run_state().get("hull_stock"))
 		elif kind == &"module":
 			var module_id := StringName(button.get_meta(&"module_id", &""))
 			var definition := grid.definitions.get(String(module_id), null) as ShipModuleDefinition
 			if definition != null:
-				button.text = "%s ×%d" % [
+				button.text = "%s %s｜库存 %d" % [
 					definition.get_type_name(),
 					definition.display_name,
 					int(_run_state().call("get_module_inventory_count", module_id))

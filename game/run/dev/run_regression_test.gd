@@ -411,12 +411,12 @@ func _run() -> void:
 	var refit_editor = load("res://game/ship/editor/ship_editor.tscn").instantiate()
 	root.add_child(refit_editor)
 	await process_frame
-	var refit_grid := refit_editor.get_node("MainLayout/Center/Grid") as ShipGridView
-	var clear_button := refit_editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/ClearButton") as Button
+	var refit_grid := refit_editor.get_node("WorkSections/TopSection/MainLayout/Center/Grid") as ShipGridView
+	var clear_button := refit_editor.get_node("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/ClearButton") as Button
 	_check(refit_grid.run_inventory_enabled and clear_button.disabled, "Run refit must enable inventory constraints and disable one-click clear")
 	var found_armor_inventory := false
 	var found_hull_inventory := false
-	var module_buttons := refit_editor.get_node("MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleButtons") as VBoxContainer
+	var module_buttons := refit_editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll/ModuleButtons") as VBoxContainer
 	for child in module_buttons.get_children():
 		if child is Button:
 			var text_value := (child as Button).text
@@ -519,7 +519,7 @@ func _run() -> void:
 	var map_screen := map_scene.instantiate() as Control
 	root.add_child(map_screen)
 	await process_frame
-	var map_area := map_screen.get_node("Margin/Layout/MapFrame/MapArea") as Control
+	var map_area := map_screen.get_node("Margin/Layout/MapFrame/MapScroll/MapArea") as Control
 	var warehouse_route_button := map_screen.get_node("Margin/Layout/Actions/Warehouse") as Button
 	_check(warehouse_route_button != null and not warehouse_route_button.disabled, "Active route map must expose warehouse access without changing route choices")
 	var route_buttons := 0
