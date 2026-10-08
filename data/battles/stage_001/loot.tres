@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="LootTableDefinition" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="LootTableDefinition" format=3 uid="uid://htuxxt516xqk"]
 
-[ext_resource type="Script" path="res://data/definitions/combat/loot_table_definition.gd" id="1"]
-[ext_resource type="Script" path="res://data/definitions/combat/loot_table_entry.gd" id="2"]
+[ext_resource type="Script" uid="uid://diy62cdg4u88v" path="res://data/definitions/combat/loot_table_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bg6n8od0y2jb5" path="res://data/definitions/combat/loot_table_entry.gd" id="2"]
 
 [sub_resource type="Resource" id="Armor"]
 script = ExtResource("2")
@@ -37,6 +37,4 @@ weight = 8.0
 script = ExtResource("1")
 loot_id = &"stage_001_loot"
 display_name = "第一战掉落表"
-drop_count = 3
-allow_duplicates = false
 entries = Array[Resource]([SubResource("Armor"), SubResource("Radar"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Cargo")])

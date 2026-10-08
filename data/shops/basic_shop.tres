@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ShopDefinition" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="ShopDefinition" format=3 uid="uid://hoh75bwt5vub"]
 
-[ext_resource type="Script" path="res://data/definitions/run/shop_definition.gd" id="1"]
-[ext_resource type="Script" path="res://data/definitions/run/shop_item_definition.gd" id="2"]
+[ext_resource type="Script" uid="uid://p4sthe7mqybq" path="res://data/definitions/run/shop_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://vdlg40aechvj" path="res://data/definitions/run/shop_item_definition.gd" id="2"]
 
 [sub_resource type="Resource" id="Armor"]
 script = ExtResource("2")
@@ -69,6 +69,4 @@ shop_groups = Array[StringName]([&"structure"])
 script = ExtResource("1")
 shop_id = &"basic_shop"
 display_name = "补给商店"
-slot_count = 4
-slot_groups = Array[StringName]([&"combat", &"systems", &"utility", &"any"])
 items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("CargoHold"), SubResource("Hull")])
