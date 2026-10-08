@@ -24,9 +24,12 @@ func _ready() -> void:
 func _refresh() -> void:
 	var run_state := _run_state()
 	if run_state == null or not bool(run_state.call("is_route_active")):
-		title.text = "没有进行中的航线"
-		status.text = ""
-		hint.text = "请从飞船编辑器开始新的 Run。"
+		title.text = "ADVANCE FOUR · 星际导航"
+		status.text = "SECTOR 01 | 战术星图预览"
+		hint.text = "点击「配置飞船」进入机库，完成设计后启动本次航行。"
+		warehouse_button.text = "配置飞船 / 开始游戏"
+		warehouse_button.disabled = false
+		_rebuild_map(RouteMapGenerator.generate(20261008))
 		return
 	var route := run_state.get("route_definition") as RunRouteDefinition
 	var current := run_state.call("get_current_route_node") as RunRouteNodeDefinition
@@ -60,9 +63,10 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 		child.queue_free()
 
 	var run_state := _run_state()
-	var available: Array[StringName] = run_state.call("get_available_route_node_ids")
-	var completed: Array = run_state.get("completed_route_nodes")
-	var current_id := StringName(run_state.get("current_route_node_id"))
+	var active := run_state != null and bool(run_state.call("is_route_active"))
+	var available: Array[StringName] = run_state.call("get_available_route_node_ids") if active else []
+	var completed: Array = run_state.get("completed_route_nodes") if active else []
+	var current_id := StringName(run_state.get("current_route_node_id")) if active else &""
 
 	if procedural:
 		_draw_starfield()
@@ -103,7 +107,7 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 			prefix = "▶ "
 		button.text = "%s%s\n[%s]" % [prefix, node.display_name, node.get_type_label()]
 		button.disabled = not available.has(node.node_id)
-		button.tooltip_text = _get_node_tooltip(node)
+		button.tooltip_text = _get_node_tooltip(node) if active else "地图预览：配置飞船后可开始航行"
 		button.pressed.connect(_select_node.bind(node.node_id))
 		if procedural:
 			_style_holographic_node(button, node, completed.has(node.node_id), available.has(node.node_id), node.node_id == current_id)
@@ -190,5 +194,6 @@ func _select_node(node_id: StringName) -> void:
 func _open_warehouse() -> void:
 	var run_state := _run_state()
 	if run_state == null or not bool(run_state.call("is_route_active")):
+		get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
 		return
 	get_tree().change_scene_to_file(WAREHOUSE_SCENE_PATH)
