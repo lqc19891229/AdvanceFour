@@ -83,8 +83,6 @@ texture = ExtResource("13_cargo")
 
 [sub_resource type="Resource" id="Resource_tgb6g"]
 script = ExtResource("7_uyp4t")
-crew_slots = 4
-chip_slots = 4
 id = &"core_bridge"
 display_name = "舰桥"
 module_type = 5

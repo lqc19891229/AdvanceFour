@@ -11,8 +11,8 @@ var current_battle_path := ""
 var route_definition: RunRouteDefinition
 var current_route_node_id: StringName = &""
 var completed_route_nodes: Array[StringName] = []
-var energy_crystals := 0
-var parts := 0
+var energy_crystals := 1000
+var parts := 1000
 var module_inventory: Dictionary = {}
 var hull_stock := 0
 var bridge_crew_inventory: Dictionary = {}
