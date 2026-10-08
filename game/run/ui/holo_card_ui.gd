@@ -24,6 +24,7 @@ static func make_details() -> PanelContainer:
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	style_card(panel, false)
 	var margin := MarginContainer.new()
+	margin.name = "MarginContainer"
 	margin.add_theme_constant_override("margin_left", 16)
 	margin.add_theme_constant_override("margin_right", 16)
 	margin.add_theme_constant_override("margin_top", 14)
