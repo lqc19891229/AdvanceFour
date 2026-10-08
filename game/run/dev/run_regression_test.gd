@@ -69,7 +69,10 @@ func _run() -> void:
 	var ordinary_module := ShopItemDefinition.DATABASE.get_by_id(&"energy_smallreactor")
 	_check(ordinary_module.get_display_texture() == ordinary_module.texture, "Ordinary modules without UI icons must keep their normal texture")
 	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "A valid design must start a Run")
-	_check(int(run_state.get("energy_crystals")) == 0 and String(run_state.get("current_battle_path")) == STAGE_001_PATH, "A new Run must start with zero 能量结晶 at stage_001")
+	_check(int(run_state.get("energy_crystals")) == 1000 and int(run_state.get("parts")) == 1000 and String(run_state.get("current_battle_path")) == STAGE_001_PATH, "New Run must start with 1000 crystals and 1000 parts")
+	# Existing resource economy regressions run from an empty balance after checking the startup grant.
+	run_state.set("energy_crystals", 0)
+	run_state.set("parts", 0)
 
 	var stage_one_ship: ShipData = run_state.call("get_ship_for_battle", STAGE_001_PATH) as ShipData
 	var stage_one_cell := _first_cell(stage_one_ship)
