@@ -483,6 +483,22 @@ func _run() -> void:
 			if text_value.contains("基础船体格") and text_value.contains("库存 1"):
 				found_hull_inventory = true
 	_check(found_armor_inventory and found_hull_inventory, "Run refit buttons must show module and Hull inventory counts")
+	_check(bool(run_state.call("add_bridge_item", "crew", "crew_human_01")), "Crew item added to Run inventory for UI regression")
+	_check(bool(run_state.call("add_bridge_item", "chip", "chip_fire_01")), "Chip item added to Run inventory for UI regression")
+	var inventory_panel: Control = refit_editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel") as Control
+	var item_list := inventory_panel.get_node("Inventory/InventoryScroll/InventoryItems") as VBoxContainer
+	refit_editor.call("_set_resource_tab", "crew")
+	var crew_visible := false
+	for row in item_list.get_children():
+		if row is Button and (row as Button).text.contains("莱恩"):
+			crew_visible = true
+	_check(crew_visible and inventory_panel.visible, "Crew purchased in Run must appear in left crew tab")
+	refit_editor.call("_set_resource_tab", "chip")
+	var chip_visible := false
+	for row in item_list.get_children():
+		if row is Button and (row as Button).text.contains("火控"):
+			chip_visible = true
+	_check(chip_visible and inventory_panel.visible, "Chip purchased in Run must appear in left chip tab")
 	refit_editor.queue_free()
 	await process_frame
 

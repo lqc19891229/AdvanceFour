@@ -92,11 +92,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "芯片"
 
-[node name="BridgeInventoryHost" type="VBoxContainer" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox"]
-layout_mode = 2
-size_flags_vertical = 3
-visible = false
-
 [node name="SelectedLabel" type="Label" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=775045980]
 layout_mode = 2
 text = "当前：未选择"

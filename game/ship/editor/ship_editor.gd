@@ -15,7 +15,6 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var selected_label: Label = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
 @onready var bridge_panel: Control = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel
 @onready var module_scroll: ScrollContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll
-@onready var bridge_inventory_host: VBoxContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgeInventoryHost
 @onready var modules_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/ModulesTab
 @onready var crew_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/CrewTab
 @onready var chips_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/ChipsTab
@@ -43,8 +42,6 @@ func _ready() -> void:
 	_bind_common_buttons()
 	grid.ship_changed.connect(_on_grid_ship_changed)
 	bridge_panel.bind_editor(grid, _run_state())
-	bridge_panel.get_node("Inventory").reparent(bridge_inventory_host)
-	bridge_panel.get_parent().move_child(bridge_panel, bridge_inventory_host.get_index() + 1)
 	modules_tab.pressed.connect(_set_resource_tab.bind("module"))
 	crew_tab.pressed.connect(_set_resource_tab.bind("crew"))
 	chips_tab.pressed.connect(_set_resource_tab.bind("chip"))
@@ -179,7 +176,6 @@ func _bind_common_buttons() -> void:
 func _set_resource_tab(kind: String) -> void:
 	active_resource_tab = kind
 	module_scroll.visible = kind == "module"
-	bridge_inventory_host.visible = kind != "module"
 	bridge_panel.visible = kind != "module"
 	bridge_panel.set_inventory_filter(kind if kind != "module" else "crew")
 	modules_tab.button_pressed = kind == "module"
