@@ -471,8 +471,7 @@ func _run() -> void:
 	root.add_child(refit_editor)
 	await process_frame
 	var refit_grid := refit_editor.get_node("WorkSections/TopSection/MainLayout/Center/Grid") as ShipGridView
-	var clear_button := refit_editor.get_node("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/ClearButton") as Button
-	_check(refit_grid.run_inventory_enabled and clear_button.disabled, "Run refit must enable inventory constraints and disable one-click clear")
+	_check(refit_grid.run_inventory_enabled and refit_editor.get_node_or_null("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/ClearButton") == null, "Run refit must enable inventory constraints without destructive clear UI")
 	var found_armor_inventory := false
 	var found_hull_inventory := false
 	var module_buttons := refit_editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll/ModuleButtons") as VBoxContainer
