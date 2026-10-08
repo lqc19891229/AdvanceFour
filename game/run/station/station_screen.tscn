@@ -77,17 +77,3 @@ layout_mode = 2
 text = ""
 horizontal_alignment = 1
 
-[node name="Actions" type="HBoxContainer" parent="Margin/Layout"]
-layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 12
-
-[node name="Refit" type="Button" parent="Margin/Layout/Actions"]
-custom_minimum_size = Vector2(220, 46)
-layout_mode = 2
-text = "进入飞船改装"
-
-[node name="Leave" type="Button" parent="Margin/Layout/Actions"]
-custom_minimum_size = Vector2(220, 46)
-layout_mode = 2
-text = "离开空间站"
