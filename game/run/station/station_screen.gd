@@ -1,5 +1,8 @@
 extends Control
 
+signal close_requested
+var embedded_holo := false
+
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
 const RUN_REFIT_META := &"run_refit_mode"
@@ -118,4 +121,7 @@ func _leave_station() -> void:
 		var node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 		if node != null and node.node_type == RunRouteNodeDefinition.NodeType.REFIT:
 			run_state.call("complete_current_route_node")
-	get_tree().change_scene_to_file(ROUTE_MAP_SCENE_PATH)
+	if embedded_holo:
+		close_requested.emit()
+	else:
+		get_tree().change_scene_to_file(ROUTE_MAP_SCENE_PATH)

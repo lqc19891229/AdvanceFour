@@ -57,6 +57,28 @@ func _run() -> void:
 	_check(bool(run_state.call("complete_current_route_node")), "Station test node must complete")
 	_check(bool(run_state.call("select_route_node", &"battle_1")), "Battle must be selected directly after shop and station")
 	run_state.call("reset_run")
+	# Shop, station and tavern open as overlays without destroying the route map.
+	_check(bool(run_state.call("start_run_with_test_route", design)), "Holographic window route starts")
+	var holo_map := load("res://game/run/route/route_map_screen.tscn").instantiate() as Control
+	root.add_child(holo_map)
+	await process_frame
+	holo_map.call("_select_node", &"shop")
+	var holo_shop := holo_map.get("active_holo") as HoloWindow
+	_check(is_instance_valid(holo_shop) and holo_shop.content_host.get_child_count() == 1, "Shop appears inside holographic overlay")
+	holo_map.call("_close_holo")
+	_check(bool(run_state.call("is_current_route_node_complete")), "Closing holographic shop completes its route node")
+	_check(bool(run_state.call("select_route_node", &"station")), "Station is available after shop")
+	holo_map.call("_select_node", &"station")
+	_check(is_instance_valid(holo_map.get("active_holo")), "Station appears inside holographic overlay")
+	holo_map.call("_close_holo")
+	_check(bool(run_state.call("select_route_node", &"tavern")), "Tavern is available after station")
+	holo_map.call("_select_node", &"tavern")
+	_check(is_instance_valid(holo_map.get("active_holo")), "Tavern appears inside holographic overlay")
+	holo_map.call("_close_holo")
+	_check(bool(run_state.call("is_current_route_node_complete")), "Closing tavern completes its route node")
+	holo_map.queue_free()
+	await process_frame
+	run_state.call("reset_run")
 	var cannon_definition := ShopItemDefinition.DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
 	_check(cannon_definition != null and cannon_definition.icon_texture != null and cannon_definition.get_display_texture() == cannon_definition.icon_texture and cannon_definition.get_display_texture() != cannon_definition.texture, "Weapon cannon must use a dedicated combined UI icon instead of its base texture")
 	var icon_image := Image.new()
