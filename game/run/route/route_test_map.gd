@@ -1,0 +1,28 @@
+class_name RouteTestMap
+extends RefCounted
+
+# First-playable fixed test route. No RNG or procedural topology.
+static func build() -> RunRouteDefinition:
+	var route := RunRouteDefinition.new()
+	route.route_id = &"fixed_test_sector"
+	route.display_name = "星区 01 · 功能测试航线"
+	var data := [
+		[&"shop", "贸易空间站", RunRouteNodeDefinition.NodeType.SHOP, "res://data/shops/basic_shop.tres"],
+		[&"station", "维修改装站", RunRouteNodeDefinition.NodeType.REFIT, "res://data/stations/basic_station.tres"],
+		[&"battle_1", "敌对舰队", RunRouteNodeDefinition.NodeType.BATTLE, "res://data/battles/stage_001/battle.tres"],
+		[&"battle_2", "第二战", RunRouteNodeDefinition.NodeType.BATTLE, "res://data/battles/stage_002/battle.tres"],
+		[&"end", "航线终点", RunRouteNodeDefinition.NodeType.END, ""]
+	]
+	for i in range(data.size()):
+		var item: Array = data[i]
+		var node := RunRouteNodeDefinition.new()
+		node.node_id = item[0]
+		node.display_name = item[1]
+		node.node_type = item[2]
+		node.target_path = item[3]
+		node.map_position = Vector2(85 + i * 245, 235)
+		if i < data.size() - 1:
+			node.next_node_ids.append(data[i + 1][0])
+		route.nodes.append(node)
+	route.start_node_id = &"shop"
+	return route
