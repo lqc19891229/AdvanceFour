@@ -1,0 +1,14 @@
+《前进四》战斗关卡 Excel 导入使用说明
+
+1. 下载 battle_data.xlsx 模板，放到 tools/data_source/battle_data.xlsx。
+2. 在 Battles Sheet 编辑关卡名称、类型（NORMAL/ELITE/BOSS）、难度（1–10）、星区、奖励、掉落表。
+3. 在 Waves Sheet 编辑每波的敌舰资源路径、数量和刷怪间隔；同一波多种敌舰可以分多行填写。
+4. 打开 Godot 编辑器，选择 项目 → 工具 → 前进四：验证战斗关卡 Excel。
+5. 验证通过后选择 前进四：导入战斗关卡 Excel。
+6. 输出 res://data/battles/<battle_id>/battle.tres，可在地图节点中引用这些资源。
+
+独立于模块 Excel 的 game_data.xlsx，不会删除或重写模块数据。
+关卡目录以 battle_id 命名；如果同名 battle.tres 已存在则会覆盖。
+请将生成的 .tres 提交 Git；battle_data.xlsx 建议一并加入版本控制。
+导入会验证所有数据、资源路径以及波次，再统一写入；写入失败尝试恢复原文件。
+当前关卡池 BattleEncounterPool 仍是显式路径列表；新增关卡如需参与未来随机抽取，需要把路径登记进去。固定测试星图不变。
