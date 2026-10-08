@@ -4,7 +4,7 @@
 把 tools 中的策划源数据转换为 data 中 Godot Runtime 可直接加载的 Resource。
 
 输入：
-- res://tools/data_source/game_data.xlsx
+- res://tools/data_source/module_data.xlsx
 - res://tools/cache/modules.json
 
 输出：
