@@ -36,6 +36,15 @@ func _run() -> void:
 	run_state.call("reset_run")
 	var design := Battle.build_starter_design()
 	# Fixed testing map starts at the shop, then station, then battles.
+	var normal_test := load("res://data/battles/test_normal/battle.tres") as BattleDefinition
+	var elite_test := load("res://data/battles/test_elite/battle.tres") as BattleDefinition
+	_check(normal_test != null and normal_test.is_valid() and normal_test.encounter_type == BattleDefinition.EncounterType.NORMAL and normal_test.get_wave_count() == 2, "Normal test encounter must be valid and contain two waves")
+	_check(elite_test != null and elite_test.is_valid() and elite_test.encounter_type == BattleDefinition.EncounterType.ELITE and elite_test.get_wave_count() == 2, "Elite test encounter must be valid and contain two waves")
+	var normal_pool := BattleEncounterPool.candidates(BattleDefinition.EncounterType.NORMAL, &"sector_01", 1)
+	var elite_pool := BattleEncounterPool.candidates(BattleDefinition.EncounterType.ELITE, &"sector_01", 2)
+	_check(normal_pool.has("res://data/battles/test_normal/battle.tres"), "Tier 1 normal pool must contain normal test encounter")
+	_check(elite_pool.has("res://data/battles/test_elite/battle.tres") and not elite_pool.has("res://data/battles/elite_001/battle.tres"), "Tier 2 elite pool must exclude tier 3")
+	_check(BattleEncounterPool.select(BattleDefinition.EncounterType.ELITE, 42, &"sector_01", 2) == BattleEncounterPool.select(BattleDefinition.EncounterType.ELITE, 42, &"sector_01", 2), "Encounter selection must reproduce with seed")
 	var fixed_route := RouteTestMap.build()
 	_check(fixed_route.is_valid() and fixed_route.nodes.size() == 5, "Fixed test route must have five valid nodes")
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Test route must start without ship editor")
