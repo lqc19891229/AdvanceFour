@@ -82,7 +82,7 @@ func _run() -> void:
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Station return regression starts")
 	_check(bool(run_state.call("complete_current_route_node")), "Shop is complete before station return regression")
 	_check(bool(run_state.call("select_route_node", &"station")), "Station can be selected for return regression")
-	get_tree().set_meta(&"restore_station_holo", true)
+	set_meta(&"restore_station_holo", true)
 	var returned_map := load("res://game/run/route/route_map_screen.tscn").instantiate() as Control
 	root.add_child(returned_map)
 	await process_frame
