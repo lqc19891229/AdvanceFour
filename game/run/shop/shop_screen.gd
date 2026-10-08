@@ -18,13 +18,11 @@ var shop_definition: ShopDefinition
 @onready var slots: HBoxContainer = $Center/Panel/Margin/Content/Body/Slots
 @onready var inventory_label: Label = $Center/Panel/Margin/Content/Inventory
 @onready var status_label: Label = $Center/Panel/Margin/Content/Status
-@onready var return_button: Button = $Center/Panel/Margin/Content/Return
 
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
 
 func _ready() -> void:
-	return_button.pressed.connect(_return_from_shop)
 	details = CARD_UI.make_details()
 	$Center/Panel/Margin/Content/Body.add_child(details)
 	shop_definition = _resolve_shop_definition()
@@ -45,12 +43,10 @@ func _refresh() -> void:
 	if run_state == null or not run_state.run_active:
 		title.text = "商店不可用"
 		credits_label.text = "当前没有进行中的 Run。"
-		return_button.disabled = false
 		return
 	if not shop_definition.is_valid():
 		title.text = "商店配置错误"
 		credits_label.text = shop_definition.get_invalid_reason()
-		return_button.disabled = false
 		return
 
 	title.text = shop_definition.display_name
