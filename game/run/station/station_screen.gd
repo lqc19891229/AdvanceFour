@@ -57,6 +57,11 @@ func _refresh() -> void:
 		int(run_state.call("get_warehouse_capacity"))
 	]
 	repair_status.text = "空间站维护服务：已免费将全部 Hull 恢复至满血。"
+	if selected_item == null:
+		for candidate in station_definition.craft_items:
+			if candidate is StationCraftItemDefinition:
+				selected_item = candidate as StationCraftItemDefinition
+				break
 	_rebuild_craft_list()
 	_update_details()
 

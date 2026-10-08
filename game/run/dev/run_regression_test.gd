@@ -65,15 +65,21 @@ func _run() -> void:
 	holo_map.call("_select_node", &"shop")
 	var holo_shop := holo_map.get("active_holo") as HoloWindow
 	_check(is_instance_valid(holo_shop) and holo_shop.content_host.get_child_count() == 1, "Shop appears inside holographic overlay")
+	var opened_shop := holo_shop.content_host.get_child(0) as Control
+	_check(int(opened_shop.get("selected_slot")) == 0 and (opened_shop.get("details") as PanelContainer).get_node("MarginContainer/Column/Action").text != "选择商品", "Opening shop selects the first product and shows details")
 	holo_map.call("_close_holo")
 	_check(bool(run_state.call("is_current_route_node_complete")), "Closing holographic shop completes its route node")
 	_check(bool(run_state.call("select_route_node", &"station")), "Station is available after shop")
 	holo_map.call("_select_node", &"station")
 	_check(is_instance_valid(holo_map.get("active_holo")), "Station appears inside holographic overlay")
+	var opened_station := (holo_map.get("active_holo") as HoloWindow).content_host.get_child(0) as Control
+	_check(opened_station.get("selected_item") != null and (opened_station.get("details") as PanelContainer).get_node("MarginContainer/Column/Action").text == "制造", "Opening station selects first recipe and shows manufacturing details")
 	holo_map.call("_close_holo")
 	_check(bool(run_state.call("select_route_node", &"tavern")), "Tavern is available after station")
 	holo_map.call("_select_node", &"tavern")
 	_check(is_instance_valid(holo_map.get("active_holo")), "Tavern appears inside holographic overlay")
+	var opened_tavern := (holo_map.get("active_holo") as HoloWindow).content_host.get_child(0) as Control
+	_check(int(opened_tavern.get("selected_index")) == 0 and (opened_tavern.get("details") as PanelContainer).get_node("MarginContainer/Column/Action").text != "选择机组", "Opening tavern selects first recruit and shows details")
 	holo_map.call("_close_holo")
 	_check(bool(run_state.call("is_current_route_node_complete")), "Closing tavern completes its route node")
 	holo_map.queue_free()
