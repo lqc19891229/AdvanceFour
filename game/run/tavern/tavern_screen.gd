@@ -64,6 +64,11 @@ func _refresh() -> void:
 	balance.text = "能量结晶：%d" % int(state.get("energy_crystals"))
 	var candidates: Array = state.call("get_tavern_candidates")
 	var db := preload("res://data/bridge/bridge_database.tres") as BridgeDatabase
+	if selected_index < 0:
+		for i in range(candidates.size()):
+			if db.find_crew(StringName(candidates[i])) != null:
+				selected_index = i
+				break
 	for i in range(candidates.size()):
 		var id := StringName(candidates[i])
 		var crew := db.find_crew(id)
