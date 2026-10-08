@@ -16,6 +16,17 @@ static func style_card(panel: PanelContainer, selected: bool) -> void:
 		style.shadow_size = 8
 	panel.add_theme_stylebox_override("panel", style)
 
+static func make_card_clickable(panel: PanelContainer, callback: Callable) -> void:
+	# An invisible button covers the full card: no separate 查看 control.
+	var overlay := Button.new()
+	overlay.name = "Select"
+	overlay.flat = true
+	overlay.focus_mode = Control.FOCUS_NONE
+	overlay.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	overlay.pressed.connect(callback)
+	panel.add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
 static func make_details() -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.name = "Details"

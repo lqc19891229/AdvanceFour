@@ -82,15 +82,14 @@ func _refresh() -> void:
 		panel.add_child(entry)
 		var description := Label.new()
 		description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		description.text = "%s  |  %s  |  %s  |  %d 能量结晶\n%s" % [crew.display_name, String(crew.race), String(crew.rarity), crew.price, crew.description]
+		description.text = crew.display_name
+		description.add_theme_font_size_override("font_size", 19)
 		entry.add_child(description)
-		var button := Button.new()
-		var hired := bool(state.call("is_tavern_candidate_hired", i))
-		button.text = "查看详情"
-		button.disabled = false
-		button.custom_minimum_size.x = 120
-		button.pressed.connect(_select_candidate.bind(i))
-		entry.add_child(button)
+		var price := Label.new()
+		price.text = "◆ 能量结晶 ×%d" % crew.price
+		price.add_theme_color_override("font_color", Color("#8be5f6"))
+		entry.add_child(price)
+		CARD_UI.make_card_clickable(panel, _select_candidate.bind(i))
 	_update_details()
 
 func _select_candidate(index: int) -> void:
