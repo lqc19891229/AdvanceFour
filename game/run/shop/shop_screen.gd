@@ -51,6 +51,12 @@ func _refresh() -> void:
 
 	title.text = shop_definition.display_name
 	credits_label.text = "能量结晶：%d｜零件：%d｜仓库：%d / %d" % [int(run_state.get("energy_crystals")), int(run_state.get("parts")), int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity"))]
+	if selected_slot < 0:
+		var initial_items: Array = run_state.call("get_shop_slots", shop_definition)
+		for i in range(initial_items.size()):
+			if initial_items[i] is ShopItemDefinition:
+				selected_slot = i
+				break
 	_refresh_slots()
 	_refresh_inventory()
 	_update_details()
