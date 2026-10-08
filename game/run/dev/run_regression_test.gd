@@ -78,21 +78,6 @@ func _run() -> void:
 	_check(bool(run_state.call("is_current_route_node_complete")), "Closing tavern completes its route node")
 	holo_map.queue_free()
 	await process_frame
-	# Returning from the ship editor must reopen the station projection, not complete the node.
-	_check(bool(run_state.call("start_run_with_test_route", design)), "Station return regression starts")
-	_check(bool(run_state.call("complete_current_route_node")), "Shop is complete before station return regression")
-	_check(bool(run_state.call("select_route_node", &"station")), "Station can be selected for return regression")
-	set_meta(&"restore_station_holo", true)
-	var returned_map := load("res://game/run/route/route_map_screen.tscn").instantiate() as Control
-	root.add_child(returned_map)
-	await process_frame
-	returned_map.call("_restore_station_holo")
-	_check(is_instance_valid(returned_map.get("active_holo")) and not bool(run_state.call("is_current_route_node_complete")), "Editor return restores station holo without completing station")
-	_check(not has_meta(&"restore_station_holo"), "Station return marker must be consumed once")
-	returned_map.call("_close_holo")
-	_check(bool(run_state.call("is_current_route_node_complete")), "Closing restored station completes it once")
-	returned_map.queue_free()
-	await process_frame
 	run_state.call("reset_run")
 	var cannon_definition := ShopItemDefinition.DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
 	_check(cannon_definition != null and cannon_definition.icon_texture != null and cannon_definition.get_display_texture() == cannon_definition.icon_texture and cannon_definition.get_display_texture() != cannon_definition.texture, "Weapon cannon must use a dedicated combined UI icon instead of its base texture")
@@ -681,8 +666,7 @@ func _run() -> void:
 	var parts_before_full_craft := int(run_state.get("parts"))
 	var cargo_recipe := station_definition.get_craft_item(&"cargo_hold")
 	_check(not bool(run_state.call("craft_station_item", cargo_recipe)) and int(run_state.get("parts")) == parts_before_full_craft, "Station crafting must not spend parts when warehouse capacity is insufficient")
-	var station_refit := station_screen.get_node("Margin/Layout/Actions/Refit") as Button
-	_check(not station_refit.disabled, "Station must keep access to ship refit")
+	_check(station_screen.get_node_or_null("Margin/Layout/Actions") == null and not station_screen.has_method("_open_refit"), "Station must have no bottom action buttons or direct refit entry")
 	station_screen.queue_free()
 	await process_frame
 	_check(bool(run_state.call("complete_current_route_node")), "Station route node must be completable")

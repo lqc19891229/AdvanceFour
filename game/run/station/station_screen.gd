@@ -4,8 +4,6 @@ signal close_requested
 var embedded_holo := false
 
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
-const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
-const RUN_REFIT_META := &"run_refit_mode"
 const CARD_UI := preload("res://game/run/ui/holo_card_ui.gd")
 var selected_item: StationCraftItemDefinition
 var details: PanelContainer
@@ -17,15 +15,11 @@ var station_definition: StationDefinition
 @onready var repair_status: Label = $Margin/Layout/RepairStatus
 @onready var craft_list: VBoxContainer = $Margin/Layout/Body/CraftScroll/CraftList
 @onready var status: Label = $Margin/Layout/Status
-@onready var refit_button: Button = $Margin/Layout/Actions/Refit
-@onready var leave_button: Button = $Margin/Layout/Actions/Leave
 
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
 
 func _ready() -> void:
-	refit_button.pressed.connect(_open_refit)
-	leave_button.pressed.connect(_leave_station)
 	details = CARD_UI.make_details()
 	$Margin/Layout/Body.add_child(details)
 	station_definition = _resolve_station_definition()
@@ -53,8 +47,6 @@ func _refresh() -> void:
 		resources.text = ""
 		repair_status.text = ""
 		_clear_craft_list()
-		refit_button.disabled = true
-		leave_button.disabled = false
 		return
 
 	title.text = station_definition.display_name
@@ -128,17 +120,6 @@ func _craft(item: StationCraftItemDefinition) -> void:
 	else:
 		status.text = "制造失败：零件不足、仓库空间不足或配置无效。"
 	_refresh()
-
-func _open_refit() -> void:
-	if _run_state() == null:
-		return
-	get_tree().set_meta(RUN_REFIT_META, true)
-	if embedded_holo:
-		get_tree().set_meta(&"restore_station_holo", true)
-		get_tree().set_meta(&"refit_return_scene", ROUTE_MAP_SCENE_PATH)
-	else:
-		get_tree().set_meta(&"refit_return_scene", "res://game/run/station/station_screen.tscn")
-	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
 
 func _leave_station() -> void:
 	var run_state := _run_state()
