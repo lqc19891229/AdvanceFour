@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="AdvanceFour"
-run/main_scene="res://game/ship/editor/ship_editor.tscn"
+run/main_scene="res://game/run/route/route_map_screen.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
