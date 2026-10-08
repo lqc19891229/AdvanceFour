@@ -4,10 +4,10 @@
 保存内容生产与转换脚本。
 
 当前：
-- import_excel.py：读取 tools/data_source/game_data.xlsx，校验六类模块 Sheet 并生成 tools/cache/modules.json。
+- import_excel.py：读取 tools/data_source/module_data.xlsx，校验六类模块 Sheet 并生成 tools/cache/modules.json。
 
 数据链：
-tools/data_source/game_data.xlsx
+tools/data_source/module_data.xlsx
 → tools/import/import_excel.py
 → tools/cache/modules.json
 → Godot Data Importer
