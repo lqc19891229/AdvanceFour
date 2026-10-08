@@ -11,4 +11,4 @@
 关卡目录以 battle_id 命名；如果同名 battle.tres 已存在则会覆盖。
 请将生成的 .tres 提交 Git；battle_data.xlsx 建议一并加入版本控制。
 导入会验证所有数据、资源路径以及波次，再统一写入；写入失败尝试恢复原文件。
-当前关卡池 BattleEncounterPool 仍是显式路径列表；新增关卡如需参与未来随机抽取，需要把路径登记进去。固定测试星图不变。
+关卡池 BattleEncounterPool 会自动发现 data/battles 下的新关卡，按类型、星区、难度筛选。固定测试星图不变。
