@@ -13,6 +13,9 @@ const SHIP_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const DATABASE := preload("res://data/modules/module_database.tres")
 const PLAYER_LAYER := 4
 const ENEMY_LAYER := 8
+const MIN_CAMERA_ZOOM := 0.5
+const MAX_CAMERA_ZOOM := 2.5
+const CAMERA_ZOOM_STEP := 1.15
 
 @export var battle_definition: BattleDefinition
 @export var allow_debug_fallback_design := true
@@ -394,6 +397,22 @@ func return_from_battle() -> void:
 	if battle_definition.restore_saved_ship_on_return:
 		get_tree().set_meta(&"restore_ship_design", true)
 	get_tree().change_scene_to_file(battle_definition.return_scene_path)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			adjust_camera_zoom(1)
+			get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			adjust_camera_zoom(-1)
+			get_viewport().set_input_as_handled()
+
+func adjust_camera_zoom(direction: int) -> void:
+	if direction == 0:
+		return
+	var factor := CAMERA_ZOOM_STEP if direction > 0 else 1.0 / CAMERA_ZOOM_STEP
+	var next_zoom := clampf(camera.zoom.x * factor, MIN_CAMERA_ZOOM, MAX_CAMERA_ZOOM)
+	camera.zoom = Vector2.ONE * next_zoom
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not (event is InputEventKey) or not event.pressed or event.echo:
