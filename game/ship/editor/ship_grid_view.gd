@@ -6,6 +6,9 @@ signal status_message(text: String)
 signal selected_module_changed(module: ShipModuleInstance)
 
 const CELL_SIZE := 48.0
+const MIN_ZOOM := 0.5
+const MAX_ZOOM := 2.5
+const ZOOM_STEP := 1.15
 const GRID_HALF_EXTENT := 30
 
 @export var module_database: ModuleDatabase
@@ -19,6 +22,7 @@ var placing_hull := false
 var preview_cell := Vector2i.ZERO
 var rotation_quarters := 0
 var pan_offset := Vector2.ZERO
+var zoom := 1.0
 var is_panning := false
 var run_inventory_enabled := false
 
@@ -230,6 +234,7 @@ func clear_ship() -> void:
 
 func center_view() -> void:
 	pan_offset = Vector2.ZERO
+	zoom = 1.0
 	queue_redraw()
 
 func _set_selected_module(module: ShipModuleInstance) -> void:
@@ -238,6 +243,19 @@ func _set_selected_module(module: ShipModuleInstance) -> void:
 	selected_module = module
 	selected_module_changed.emit(selected_module)
 
+func get_cell_size() -> float:
+	return CELL_SIZE * zoom
+
+func zoom_at(mouse_position: Vector2, direction: int) -> void:
+	var next_zoom := clampf(zoom * (ZOOM_STEP if direction > 0 else 1.0 / ZOOM_STEP), MIN_ZOOM, MAX_ZOOM)
+	if is_equal_approx(next_zoom, zoom):
+		return
+	var origin := size * 0.5 + pan_offset
+	pan_offset = mouse_position - size * 0.5 - (mouse_position - origin) * (next_zoom / zoom)
+	zoom = next_zoom
+	preview_cell = screen_to_grid(mouse_position)
+	queue_redraw()
+
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if is_panning:
@@ -245,6 +263,10 @@ func _gui_input(event: InputEvent) -> void:
 		preview_cell = screen_to_grid(event.position)
 		queue_redraw()
 	elif event is InputEventMouseButton:
+		if event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			zoom_at(event.position, 1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
+			accept_event()
+			return
 		if event.button_index == MOUSE_BUTTON_MIDDLE:
 			is_panning = event.pressed
 			accept_event()
@@ -339,10 +361,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func screen_to_grid(p: Vector2) -> Vector2i:
 	var origin := size * 0.5 + pan_offset
 	var local := p - origin
-	return Vector2i(floor(local.x / CELL_SIZE), floor(local.y / CELL_SIZE))
+	return Vector2i(floor(local.x / get_cell_size()), floor(local.y / get_cell_size()))
 
 func grid_to_screen(c: Vector2i) -> Vector2:
-	return size * 0.5 + pan_offset + Vector2(c) * CELL_SIZE
+	return size * 0.5 + pan_offset + Vector2(c) * get_cell_size()
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#11161e"))
@@ -350,8 +372,8 @@ func _draw() -> void:
 	var grid_color := Color(0.24, 0.29, 0.36, 0.7)
 	var axis_color := Color(0.42, 0.49, 0.58, 0.9)
 	for i in range(-GRID_HALF_EXTENT, GRID_HALF_EXTENT + 1):
-		var x := origin.x + float(i) * CELL_SIZE
-		var y := origin.y + float(i) * CELL_SIZE
+		var x := origin.x + float(i) * get_cell_size()
+		var y := origin.y + float(i) * get_cell_size()
 		draw_line(Vector2(x, 0), Vector2(x, size.y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
 		draw_line(Vector2(0, y), Vector2(size.x, y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
 	for hull_cell in ship.get_hull_cells():
@@ -361,14 +383,14 @@ func _draw() -> void:
 	for module in ship.modules:
 		_draw_module_turret(module)
 	if selected_module != null:
-		var selected_rect := Rect2(grid_to_screen(selected_module.grid_position), Vector2(selected_module.get_rotated_size()) * CELL_SIZE)
+		var selected_rect := Rect2(grid_to_screen(selected_module.grid_position), Vector2(selected_module.get_rotated_size()) * get_cell_size())
 		draw_rect(selected_rect.grow(-1), Color.WHITE, false, 3.0)
 	_draw_preview()
 
 func _draw_hull_cell(hull_cell: ShipHullCell) -> void:
 	if hull_cell == null:
 		return
-	var rect := Rect2(grid_to_screen(hull_cell.grid_position), Vector2.ONE * CELL_SIZE)
+	var rect := Rect2(grid_to_screen(hull_cell.grid_position), Vector2.ONE * get_cell_size())
 	var health := hull_cell.get_health_ratio()
 	var fill := Color(0.16, 0.20, 0.26, 1.0).lerp(
 		Color(0.08, 0.08, 0.08, 1.0),
@@ -385,7 +407,7 @@ func _draw_hull_cell(hull_cell: ShipHullCell) -> void:
 func _draw_module(module: ShipModuleInstance) -> void:
 	var rect := Rect2(
 		grid_to_screen(module.grid_position),
-		Vector2(module.get_rotated_size()) * CELL_SIZE
+		Vector2(module.get_rotated_size()) * get_cell_size()
 	)
 
 	var base_drawn := false
@@ -404,7 +426,7 @@ func _draw_module(module: ShipModuleInstance) -> void:
 
 func _draw_module_turret(module: ShipModuleInstance) -> void:
 	if module.definition is WeaponModuleDefinition:
-		var rect := Rect2(grid_to_screen(module.grid_position), Vector2(module.get_rotated_size()) * CELL_SIZE)
+		var rect := Rect2(grid_to_screen(module.grid_position), Vector2(module.get_rotated_size()) * get_cell_size())
 		var turret_rotation := float(module.rotation_quarters) * PI * 0.5
 		var turret_texture := ModuleArtLibrary.get_turret_texture(module.definition)
 		if turret_texture != null:
@@ -414,7 +436,7 @@ func _draw_module_turret(module: ShipModuleInstance) -> void:
 
 func _draw_turret(definition: WeaponModuleDefinition, center: Vector2, rotation_radians: float) -> void:
 	draw_set_transform(center, rotation_radians, Vector2.ONE)
-	draw_texture_rect(ModuleArtLibrary.get_turret_texture(definition), ModuleArtLibrary.get_turret_draw_rect(definition, CELL_SIZE - 6.0), false)
+	draw_texture_rect(ModuleArtLibrary.get_turret_texture(definition), ModuleArtLibrary.get_turret_draw_rect(definition, get_cell_size() - 6.0), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_module_texture(
@@ -509,7 +531,7 @@ func _draw_preview() -> void:
 			if hull_check["ok"]
 			else Color(0.95, 0.25, 0.25, 0.34)
 		)
-		var hull_rect := Rect2(grid_to_screen(preview_cell), Vector2.ONE * CELL_SIZE)
+		var hull_rect := Rect2(grid_to_screen(preview_cell), Vector2.ONE * get_cell_size())
 		draw_rect(hull_rect.grow(-3.0), hull_color)
 		draw_rect(
 			hull_rect.grow(-3.0),
@@ -533,7 +555,7 @@ func _draw_preview() -> void:
 		)
 		var move_rect := Rect2(
 			grid_to_screen(preview_cell),
-			Vector2(temp.get_rotated_size()) * CELL_SIZE
+			Vector2(temp.get_rotated_size()) * get_cell_size()
 		)
 		_draw_module_preview(
 			selected_module.definition,
@@ -549,7 +571,7 @@ func _draw_preview() -> void:
 	var check := ship.can_place(selected_definition, preview_cell, rotation_quarters)
 	var rect := Rect2(
 		grid_to_screen(preview_cell),
-		Vector2(temp.get_rotated_size()) * CELL_SIZE
+		Vector2(temp.get_rotated_size()) * get_cell_size()
 	)
 	_draw_module_preview(
 		selected_definition,
