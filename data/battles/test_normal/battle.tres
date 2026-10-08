@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="BattleDefinition" load_steps=5 format=3]
+[ext_resource type="Script" path="res://data/definitions/combat/battle_definition.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/combat/battle_wave_definition.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/scout.tres" id="3"]
+[ext_resource type="Resource" path="res://data/battles/stage_001/loot.tres" id="4"]
+
+[sub_resource type="Resource" id="Wave1"]
+script = ExtResource("2")
+enemies = Array[Resource]([ExtResource("3")])
+counts = Array[int]([2])
+
+[sub_resource type="Resource" id="Wave2"]
+script = ExtResource("2")
+enemies = Array[Resource]([ExtResource("3")])
+counts = Array[int]([3])
+
+[resource]
+script = ExtResource("1")
+battle_id = &"test_normal"
+display_name = "测试普通战 · 侦察编队"
+encounter_type = 0
+difficulty_tier = 1
+sector_id = &"sector_01"
+waves = Array[Resource]([SubResource("Wave1"), SubResource("Wave2")])
+preparation_seconds = 2.0
+intermission_seconds = 2.5
+spawn_interval_seconds = 1.2
+spawn_radius = 480.0
+reward_energy_crystals = 80
+reward_parts = 10
+loot_table = ExtResource("4")
+return_scene_path = "res://game/run/route/route_map_screen.tscn"
