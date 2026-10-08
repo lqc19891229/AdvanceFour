@@ -3,6 +3,8 @@ extends Node
 const DATABASE := preload("res://data/modules/module_database.tres")
 const REPAIR_COST_PER_HP := 1.0
 const BASE_WAREHOUSE_CAPACITY := 12
+const INITIAL_ENERGY_CRYSTALS := 1000
+const INITIAL_PARTS := 1000
 
 var run_active := false
 var current_ship: ShipData
@@ -62,6 +64,8 @@ func start_run_with_route(ship: ShipData, route_path: String) -> bool:
 		return false
 	reset_run()
 	run_active = true
+	energy_crystals = INITIAL_ENERGY_CRYSTALS
+	parts = INITIAL_PARTS
 	current_ship = copy
 	route_definition = route
 	current_route_node_id = route.start_node_id
@@ -83,6 +87,8 @@ func start_run_with_test_route(ship: ShipData) -> bool:
 		return false
 	reset_run()
 	run_active = true
+	energy_crystals = INITIAL_ENERGY_CRYSTALS
+	parts = INITIAL_PARTS
 	current_ship = copy
 	route_definition = route
 	current_route_node_id = route.start_node_id
@@ -157,6 +163,8 @@ func start_run(ship: ShipData, first_battle_path: String) -> bool:
 		return false
 	reset_run()
 	run_active = true
+	energy_crystals = INITIAL_ENERGY_CRYSTALS
+	parts = INITIAL_PARTS
 	current_ship = copy
 	current_battle_path = first_battle_path
 	return true

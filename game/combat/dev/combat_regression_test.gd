@@ -363,7 +363,7 @@ func _test_direct_victory_settlement() -> void:
 	await scene_changed
 	_check(current_scene.scene_file_path.ends_with("battle_result_screen.tscn"), "Victory must automatically open the unified settlement without an extra click")
 	_check(outcomes == [true] and run_state.last_result == result and run_state.completed_route_nodes.size() == 1, "Automatic victory must complete the route node exactly once")
-	_check(run_state.energy_crystals == 100 and run_state.parts == 12 and run_state.has_pending_loot(), "Automatic settlement must grant currencies once and leave module loot pending")
+	_check(run_state.energy_crystals == 1100 and run_state.parts == 1012 and run_state.has_pending_loot(), "Automatic settlement must grant currencies once and leave module loot pending")
 	_check(is_equal_approx(_core_cell_from_data(run_state.current_ship).current_hp, 8.0), "Automatic settlement must retain battle damage")
 	var summary := current_scene.get_node("%Summary") as Label
 	_check(summary.text.contains("第一战") and summary.text.contains("击毁敌舰：6") and summary.text.contains("3 / 3") and summary.text.contains("28.3 秒"), "The unified settlement must display the statistics from the deleted popup")
