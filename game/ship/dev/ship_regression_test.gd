@@ -635,7 +635,6 @@ func _test_saved_design_and_editor() -> void:
 	_check(editor_grid.GRID_HALF_EXTENT == 44, "Editor grid must contain 88 cells along each axis")
 	editor_grid.pan_offset = Vector2(100000.0, -100000.0)
 	editor_grid._clamp_pan_to_grid()
-	var grid_half_size := float(editor_grid.GRID_HALF_EXTENT) * editor_grid.get_cell_size()
 	var left_edge := editor_grid.grid_to_screen(Vector2i(-editor_grid.GRID_HALF_EXTENT, 0)).x
 	var bottom_edge := editor_grid.grid_to_screen(Vector2i(0, editor_grid.GRID_HALF_EXTENT)).y
 	_check(left_edge <= 0.01 and bottom_edge >= editor_grid.size.y - 0.01, "Editor camera cannot pan beyond 88x88 grid boundaries")
