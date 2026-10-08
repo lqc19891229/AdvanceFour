@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://csvenvjutsqii"]
+[gd_scene load_steps=3 format=3 uid="uid://csvenvjutsqii"]
 
 [ext_resource type="Script" uid="uid://3vvkfap25fd0" path="res://game/run/route/route_map_screen.gd" id="1"]
+[ext_resource type="PackedScene" path="res://game/run/route/top_bar.tscn" id="2"]
 
 [node name="RouteMapScreen" type="Control" unique_id=1217318824]
 layout_mode = 3
@@ -39,16 +40,13 @@ theme_override_constants/separation = 14
 [node name="Header" type="VBoxContainer" parent="Margin/Layout" unique_id=429840096]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="Margin/Layout/Header" unique_id=1728387122]
+[node name="TopBar" parent="Margin/Layout/Header" instance=ExtResource("2")]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "Prototype 星系航线"
-horizontal_alignment = 1
 
-[node name="Status" type="Label" parent="Margin/Layout/Header" unique_id=1660493964]
+[node name="Status" type="Label" parent="Margin/Layout/Header"]
 layout_mode = 2
-text = "能量结晶：0｜零件：0"
-horizontal_alignment = 1
+text = "仓库：0 / 0"
+horizontal_alignment = 0
 
 [node name="MapFrame" type="PanelContainer" parent="Margin/Layout" unique_id=1522079586]
 custom_minimum_size = Vector2(720, 560)
