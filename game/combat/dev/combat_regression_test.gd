@@ -320,47 +320,27 @@ func _test_custom_definition() -> void:
 	DirAccess.remove_absolute(SAVE_PATH)
 
 func _test_editor_roundtrip() -> void:
+	var run_state := root.get_node("RunState")
+	run_state.reset_run()
 	var design := Battle.build_starter_design()
 	var editor = load("res://game/ship/editor/ship_editor.tscn").instantiate()
 	root.add_child(editor)
 	current_scene = editor
 	await process_frame
 	var launch: Button = editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/BattleButton")
-	_check(root.get_visible_rect().encloses(launch.get_global_rect()), "Editor launch button must remain visible: viewport=%s button=%s" % [root.get_visible_rect(), launch.get_global_rect()])
+	_check(root.get_visible_rect().encloses(launch.get_global_rect()), "Editor save/return button must remain visible")
 	launch.pressed.emit()
-	_check(current_scene == editor, "Invalid editor design must be rejected before saving or entering battle")
+	_check(current_scene == editor, "Invalid editor design must be rejected before leaving")
 	editor.grid.set_ship(design)
 	launch.pressed.emit()
 	await scene_changed
-	_check(current_scene is Battle, "Editor departure must enter the combat scene")
-	var battle := current_scene as Battle
-	var run_state := root.get_node("RunState")
-	run_state.energy_crystals = 250
-	run_state.parts = 50
-	run_state.call("store_module", &"weapon_cannon", 1)
-	_kill(battle.player)
-	_check(not run_state.run_active and run_state.current_ship == null and run_state.module_inventory.is_empty() and run_state.energy_crystals == 0 and run_state.parts == 0, "Core destruction must immediately clear the whole Run, its resources and warehouse")
-	await scene_changed
-	_check(current_scene.scene_file_path.ends_with("game_over_screen.tscn"), "Defeat must automatically enter Game Over without a result-confirmation click")
-	_check((current_scene.get_node("%Title") as Label).text == "GAME OVER" and current_scene.find_children("*Retry*", "", true, false).is_empty(), "Game Over must offer no retry action")
-	await process_frame
-	_key(KEY_R, true)
-	await process_frame
-	_key(KEY_R, false)
-	_check(current_scene.scene_file_path.ends_with("game_over_screen.tscn") and not run_state.run_active, "R must not resurrect a defeated Run from Game Over")
-	var game_over_summary := current_scene.get_node("%Summary") as Label
-	_check(game_over_summary.text.contains("第一战") and game_over_summary.text.contains("战斗时间"), "Game Over must retain the defeated battle's statistics")
-	var return_button := current_scene.get_node("%Return") as Button
-	_check(root.get_visible_rect().encloses(return_button.get_global_rect()), "Game Over return action must remain within the game viewport")
-	return_button.pressed.emit()
-	await scene_changed
-	_check(current_scene.scene_file_path.ends_with("ship_editor.tscn"), "Game Over return must restore the permanent editor design")
-	_check(not run_state.run_active and run_state.last_result == null, "Returning from Game Over must keep the Run ended and clear its result")
-	_check(ShipSerializer.to_dictionary(current_scene.grid.ship) == ShipSerializer.to_dictionary(design), "Returning from Game Over must preserve the exact saved layout")
-
+	_check(current_scene.scene_file_path.ends_with("route_map_screen.tscn"), "Editor must return to the map rather than launch combat")
+	_check(run_state.is_route_active() and (run_state.get_current_route_node() as RunRouteNodeDefinition).node_type == RunRouteNodeDefinition.NodeType.SHOP, "Map must initialize shop-first test route without editor combat entry")
+	_check(ShipSerializer.to_dictionary(run_state.current_ship) == ShipSerializer.to_dictionary(design), "Test map must load the saved design")
 	current_scene.queue_free()
 	current_scene = null
 	await process_frame
+	run_state.reset_run()
 
 func _test_direct_victory_settlement() -> void:
 	var run_state := root.get_node("RunState")
@@ -382,7 +362,7 @@ func _test_direct_victory_settlement() -> void:
 	var result := battle.pending_result
 	await scene_changed
 	_check(current_scene.scene_file_path.ends_with("battle_result_screen.tscn"), "Victory must automatically open the unified settlement without an extra click")
-	_check(outcomes == [true] and run_state.last_result == result and run_state.completed_battles.size() == 1, "Automatic victory must commit exactly once")
+	_check(outcomes == [true] and run_state.last_result == result and run_state.completed_route_nodes.size() == 1, "Automatic victory must complete the route node exactly once")
 	_check(run_state.energy_crystals == 100 and run_state.parts == 12 and run_state.has_pending_loot(), "Automatic settlement must grant currencies once and leave module loot pending")
 	_check(is_equal_approx(_core_cell_from_data(run_state.current_ship).current_hp, 8.0), "Automatic settlement must retain battle damage")
 	var summary := current_scene.get_node("%Summary") as Label

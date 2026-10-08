@@ -19,18 +19,28 @@ func _run_state() -> Node:
 
 func _ready() -> void:
 	warehouse_button.pressed.connect(_open_warehouse)
+	var edit_button := Button.new()
+	edit_button.text = "编辑飞船"
+	edit_button.custom_minimum_size = Vector2(180, 44)
+	edit_button.pressed.connect(_open_editor)
+	$Margin/Layout/Actions.add_child(edit_button)
 	_refresh()
 
 func _refresh() -> void:
 	var run_state := _run_state()
-	if run_state == null or not bool(run_state.call("is_route_active")):
-		title.text = "ADVANCE FOUR · 星际导航"
-		status.text = "SECTOR 01 | 战术星图预览"
-		hint.text = "点击「配置飞船」进入机库，完成设计后启动本次航行。"
-		warehouse_button.text = "配置飞船 / 开始游戏"
-		warehouse_button.disabled = false
-		_rebuild_map(RouteMapGenerator.generate(20261008))
+	if run_state == null:
+		hint.text = "RunState 不可用"
 		return
+	if not bool(run_state.call("is_route_active")):
+		var design := Battle.build_starter_design()
+		var save_path := "user://ships/test_ship.json"
+		if FileAccess.file_exists(save_path):
+			var loaded := ShipSerializer.load_from_file(save_path, preload("res://data/modules/module_database.tres"))
+			if bool(loaded.get("ok", false)) and (loaded.get("ship") as ShipData).is_design_valid():
+				design = loaded["ship"] as ShipData
+		if not bool(run_state.call("start_run_with_test_route", design)):
+			hint.text = "无法载入测试星图，请检查飞船数据。"
+			return
 	var route := run_state.get("route_definition") as RunRouteDefinition
 	var current := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 	title.text = route.display_name
@@ -41,11 +51,11 @@ func _refresh() -> void:
 		int(run_state.call("get_warehouse_capacity")),
 		"无" if current == null else current.display_name
 	]
-	hint.text = "拖动横向滚动条探索星图；选择青色节点跃迁。航线不可回退。" if route.route_id == &"generated_sector" else "选择高亮节点继续前进。路线一旦选择，本层另一分支将不可返回。"
+	hint.text = "固定测试航线：商店 → 维修站 → 战斗。点击当前节点进入，飞船编辑与战斗入口分离。" if route.route_id == &"fixed_test_sector" else "选择高亮节点继续前进。路线一旦选择，本层另一分支将不可返回。"
 	_rebuild_map(route)
 
 func _rebuild_map(route: RunRouteDefinition) -> void:
-	var procedural := route.route_id == &"generated_sector"
+	var procedural := route.route_id == &"generated_sector" or route.route_id == &"fixed_test_sector"
 	if procedural and map_area.get_parent() is not ScrollContainer:
 		var frame := map_area.get_parent()
 		var scroller := ScrollContainer.new()
@@ -69,6 +79,8 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 	var current_id: StringName = &""
 	if active:
 		available.assign(run_state.call("get_available_route_node_ids"))
+		if not bool(run_state.call("is_current_route_node_complete")):
+			available.append(StringName(run_state.get("current_route_node_id")))
 		completed = run_state.get("completed_route_nodes")
 		current_id = StringName(run_state.get("current_route_node_id"))
 
@@ -175,7 +187,12 @@ func _get_node_tooltip(node: RunRouteNodeDefinition) -> String:
 
 func _select_node(node_id: StringName) -> void:
 	var run_state := _run_state()
-	if run_state == null or not bool(run_state.call("select_route_node", node_id)):
+	if run_state == null:
+		return
+	var is_current := StringName(run_state.get("current_route_node_id")) == node_id
+	if not is_current and not bool(run_state.call("select_route_node", node_id)):
+		return
+	if is_current and bool(run_state.call("is_current_route_node_complete")):
 		return
 	var node := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 	if node == null:
@@ -201,3 +218,10 @@ func _open_warehouse() -> void:
 		get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
 		return
 	get_tree().change_scene_to_file(WAREHOUSE_SCENE_PATH)
+
+
+func _open_editor() -> void:
+	var run_state := _run_state()
+	if run_state != null and bool(run_state.call("is_route_active")):
+		get_tree().set_meta(RUN_REFIT_META, true)
+	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
