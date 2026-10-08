@@ -5,6 +5,8 @@ const EXCEL_PATH := "res://tools/data_source/game_data.xlsx"
 const JSON_PATH := "res://tools/cache/modules.json"
 const MODULES_ROOT := "res://data/modules"
 const DATABASE_PATH := "res://data/modules/module_database.tres"
+const BATTLES_EXCEL_PATH := "res://tools/data_source/battle_data.xlsx"
+const BATTLES_CACHE_PATH := "res://tools/cache/battles.json"
 
 const EnergyDef = preload("res://data/definitions/module/energy_module_definition.gd")
 const PropulsionDef = preload("res://data/definitions/module/propulsion_module_definition.gd")
@@ -17,10 +19,14 @@ const ModuleDatabaseScript = preload("res://data/definitions/module/module_datab
 func _enter_tree() -> void:
 	add_tool_menu_item("前进四：导入模块数据", _import_all)
 	add_tool_menu_item("前进四：验证模块数据", _validate_only)
+	add_tool_menu_item("前进四：验证战斗关卡 Excel", _validate_battles)
+	add_tool_menu_item("前进四：导入战斗关卡 Excel", _import_battles)
 
 func _exit_tree() -> void:
 	remove_tool_menu_item("前进四：导入模块数据")
 	remove_tool_menu_item("前进四：验证模块数据")
+	remove_tool_menu_item("前进四：验证战斗关卡 Excel")
+	remove_tool_menu_item("前进四：导入战斗关卡 Excel")
 
 func _validate_only() -> void:
 	var payload := _run_excel_parser()
@@ -321,3 +327,122 @@ func _report_errors(payload: Dictionary) -> void:
 
 func _notify(message: String) -> void:
 	print("[AdvanceFourDataImporter] %s" % message)
+
+
+func _parse_battle_excel() -> Dictionary:
+	if not FileAccess.file_exists(BATTLES_EXCEL_PATH):
+		push_error("未找到关卡 Excel：" + BATTLES_EXCEL_PATH)
+		return {}
+	var python := _find_python()
+	if python.is_empty():
+		push_error("找不到 Python 3")
+		return {}
+	var args: PackedStringArray = []
+	for arg in python.get("prefix_args", []):
+		args.append(arg)
+	args.append(ProjectSettings.globalize_path("res://tools/import/import_battles.py"))
+	args.append(ProjectSettings.globalize_path(BATTLES_EXCEL_PATH))
+	args.append(ProjectSettings.globalize_path(BATTLES_CACHE_PATH))
+	var output: Array = []
+	if FileAccess.file_exists(BATTLES_CACHE_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(BATTLES_CACHE_PATH))
+	var code := OS.execute(String(python["command"]), args, output, true)
+	if not FileAccess.file_exists(BATTLES_CACHE_PATH):
+		push_error("无法生成关卡缓存：" + "\n".join(output))
+		return {}
+	var payload = JSON.parse_string(FileAccess.get_file_as_string(BATTLES_CACHE_PATH))
+	if typeof(payload) != TYPE_DICTIONARY:
+		push_error("关卡缓存 JSON 无效")
+		return {}
+	if code != 0 or not payload.get("ok", false):
+		push_error("关卡 Excel 校验失败：" + str(payload.get("errors", [])))
+		return {}
+	return payload
+
+
+func _prepare_battles(rows: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for raw_row in rows:
+		var row: Dictionary = raw_row
+		var id := String(row["battle_id"])
+		var battle := BattleDefinition.new()
+		battle.battle_id = StringName(id)
+		battle.display_name = String(row["display_name"])
+		battle.encounter_type = int(row["encounter_type"])
+		battle.difficulty_tier = int(row["difficulty_tier"])
+		battle.sector_id = StringName(row["sector_id"])
+		battle.preparation_seconds = float(row["preparation_seconds"])
+		battle.intermission_seconds = float(row["intermission_seconds"])
+		battle.spawn_interval_seconds = float(row["spawn_interval_seconds"])
+		battle.spawn_radius = float(row["spawn_radius"])
+		battle.reward_energy_crystals = int(row["reward_energy_crystals"])
+		battle.reward_parts = int(row["reward_parts"])
+		battle.reward_hull_cells = int(row["reward_hull_cells"])
+		battle.return_scene_path = "res://game/run/route/route_map_screen.tscn"
+		var loot_path := String(row["loot_table_path"])
+		if not loot_path.is_empty():
+			battle.loot_table = load(loot_path) as LootTableDefinition
+			if battle.loot_table == null:
+				push_error("关卡 %s 掉落表加载失败：%s" % [id, loot_path])
+				return {}
+		for raw_wave in row["waves"]:
+			var wave_row: Dictionary = raw_wave
+			var wave := BattleWaveDefinition.new()
+			wave.spawn_interval_seconds = float(wave_row["spawn_interval_seconds"])
+			for raw_enemy in wave_row["enemies"]:
+				var enemy_row: Dictionary = raw_enemy
+				var enemy_path := String(enemy_row["enemy_path"])
+				var enemy := load(enemy_path) as EnemyShipDefinition
+				if enemy == null:
+					push_error("关卡 %s 敌舰资源加载失败：%s" % [id, enemy_path])
+					return {}
+				wave.enemies.append(enemy)
+				wave.counts.append(int(enemy_row["count"]))
+			battle.waves.append(wave)
+		if not battle.is_valid():
+			push_error("关卡 %s 数据无效：%s" % [id, battle.get_invalid_reason()])
+			return {}
+		result[id] = battle
+	return result
+
+
+func _validate_battles() -> void:
+	var parsed := _parse_battle_excel()
+	if parsed.is_empty():
+		return
+	var prepared := _prepare_battles(parsed["battles"])
+	if not prepared.is_empty():
+		_notify("战斗关卡验证成功：%d 个关卡" % prepared.size())
+
+
+func _import_battles() -> void:
+	var parsed := _parse_battle_excel()
+	if parsed.is_empty():
+		return
+	var prepared := _prepare_battles(parsed["battles"])
+	if prepared.is_empty():
+		return
+	# Snapshot every destination before writing, restoring all on any error.
+	var snapshots: Dictionary = {}
+	for id in prepared:
+		var path := "res://data/battles/%s/battle.tres" % id
+		snapshots[path] = FileAccess.get_file_as_bytes(path) if FileAccess.file_exists(path) else null
+	var written: Array[String] = []
+	for id in prepared:
+		var dir_path := "res://data/battles/%s" % id
+		_ensure_dir(dir_path)
+		var path := dir_path + "/battle.tres"
+		if ResourceSaver.save(prepared[id], path) != OK:
+			for restore_path in written:
+				if snapshots[restore_path] == null:
+					DirAccess.remove_absolute(ProjectSettings.globalize_path(restore_path))
+				else:
+					var file := FileAccess.open(restore_path, FileAccess.WRITE)
+					if file != null:
+						file.store_buffer(snapshots[restore_path])
+						file.close()
+			push_error("关卡导入失败，已尝试还原：" + path)
+			return
+		written.append(path)
+	get_editor_interface().get_resource_filesystem().scan()
+	_notify("战斗关卡 Excel 导入成功：%d 个关卡" % prepared.size())
