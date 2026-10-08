@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BridgeCrewDefinition" format=3 uid="uid://dd3afpobel25b"]
+
+[ext_resource type="Script" uid="uid://bndnrf6usdu2o" path="res://data/definitions/bridge/bridge_modifier_definition.gd" id="1_xr87q"]
+[ext_resource type="Script" uid="uid://ciu367eoknkyl" path="res://data/definitions/bridge/bridge_crew_definition.gd" id="2_k4pev"]
+
+[sub_resource type="Resource" id="Resource_14a0n"]
+script = ExtResource("1_xr87q")
+stat = &"weapon_damage"
+value = 0.12
+target_filter = &"ALL"
+
+[resource]
+script = ExtResource("2_k4pev")
+crew_id = &"crew_machine_01"
+display_name = "AX-07"
+description = "提高武器伤害"
+race = &"MACHINE"
+rarity = &"UNCOMMON"
+modifiers = Array[ExtResource("1_xr87q")]([SubResource("Resource_14a0n")])

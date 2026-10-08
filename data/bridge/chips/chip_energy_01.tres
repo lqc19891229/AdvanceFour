@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BridgeChipDefinition" format=3 uid="uid://vsocttcir5ra"]
+
+[ext_resource type="Script" uid="uid://bndnrf6usdu2o" path="res://data/definitions/bridge/bridge_modifier_definition.gd" id="1_wx6hv"]
+[ext_resource type="Script" uid="uid://cvdjy6uyynrt7" path="res://data/definitions/bridge/bridge_chip_definition.gd" id="2_twwtb"]
+
+[sub_resource type="Resource" id="Resource_3gkcs"]
+script = ExtResource("1_wx6hv")
+stat = &"energy_output"
+value = 0.2
+target_filter = &"ALL"
+
+[resource]
+script = ExtResource("2_twwtb")
+chip_id = &"chip_energy_01"
+display_name = "反应堆优化"
+description = "能源输出提高"
+modifiers = Array[ExtResource("1_wx6hv")]([SubResource("Resource_3gkcs")])

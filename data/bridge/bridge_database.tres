@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="BridgeDatabase" format=3 uid="uid://y7352vn22vpr"]
+
+[ext_resource type="Script" uid="uid://cvdjy6uyynrt7" path="res://data/definitions/bridge/bridge_chip_definition.gd" id="1_v5a56"]
+[ext_resource type="Script" uid="uid://bndnrf6usdu2o" path="res://data/definitions/bridge/bridge_modifier_definition.gd" id="2_anmyd"]
+[ext_resource type="Script" uid="uid://ciu367eoknkyl" path="res://data/definitions/bridge/bridge_crew_definition.gd" id="3_yim0j"]
+[ext_resource type="Script" uid="uid://cvf5lpp1d5ytl" path="res://data/definitions/bridge/bridge_database.gd" id="4_3me13"]
+
+[sub_resource type="Resource" id="Resource_8r3nf"]
+script = ExtResource("2_anmyd")
+stat = &"weapon_damage"
+value = 0.15
+target_filter = &"ALL"
+
+[sub_resource type="Resource" id="Resource_qky3m"]
+script = ExtResource("1_v5a56")
+chip_id = &"chip_fire_01"
+display_name = "火控强化 I"
+description = "全舰武器伤害提高"
+modifiers = Array[ExtResource("2_anmyd")]([SubResource("Resource_8r3nf")])
+
+[sub_resource type="Resource" id="Resource_3gkcs"]
+script = ExtResource("2_anmyd")
+stat = &"energy_output"
+value = 0.2
+target_filter = &"ALL"
+
+[sub_resource type="Resource" id="Resource_4j43c"]
+script = ExtResource("1_v5a56")
+chip_id = &"chip_energy_01"
+display_name = "反应堆优化"
+description = "能源输出提高"
+modifiers = Array[ExtResource("2_anmyd")]([SubResource("Resource_3gkcs")])
+
+[sub_resource type="Resource" id="Resource_ilnv8"]
+script = ExtResource("2_anmyd")
+stat = &"weapon_range"
+value = 0.08
+target_filter = &"ALL"
+
+[sub_resource type="Resource" id="Resource_26gbt"]
+script = ExtResource("3_yim0j")
+crew_id = &"crew_human_01"
+display_name = "莱恩"
+description = "改善武器射程"
+modifiers = Array[ExtResource("2_anmyd")]([SubResource("Resource_ilnv8")])
+
+[sub_resource type="Resource" id="Resource_14a0n"]
+script = ExtResource("2_anmyd")
+stat = &"weapon_damage"
+value = 0.12
+target_filter = &"ALL"
+
+[sub_resource type="Resource" id="Resource_qwhn8"]
+script = ExtResource("3_yim0j")
+crew_id = &"crew_machine_01"
+display_name = "AX-07"
+description = "提高武器伤害"
+race = &"MACHINE"
+rarity = &"UNCOMMON"
+modifiers = Array[ExtResource("2_anmyd")]([SubResource("Resource_14a0n")])
+
+[resource]
+script = ExtResource("4_3me13")
+chips = Array[ExtResource("1_v5a56")]([SubResource("Resource_qky3m"), SubResource("Resource_4j43c")])
+crew = Array[ExtResource("3_yim0j")]([SubResource("Resource_26gbt"), SubResource("Resource_qwhn8")])
