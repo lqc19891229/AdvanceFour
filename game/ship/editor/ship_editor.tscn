@@ -88,7 +88,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="Center" type="MarginContainer" parent="MainLayout" unique_id=1332654103]
+[node name="Center" type="MarginContainer" parent="TopSection/MainLayout" unique_id=1332654103]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/margin_left = 8
@@ -101,7 +101,7 @@ layout_mode = 2
 script = ExtResource("2")
 module_database = ExtResource("3_db")
 
-[node name="RightPanel" type="PanelContainer" parent="MainLayout" unique_id=1196423438]
+[node name="RightPanel" type="PanelContainer" parent="TopSection/MainLayout" unique_id=1196423438]
 custom_minimum_size = Vector2(154, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
