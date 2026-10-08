@@ -15,7 +15,6 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var selected_label: Label = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
 @onready var bridge_panel: Control = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel
 @onready var module_scroll: ScrollContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll
-@onready var bridge_inventory_host: VBoxContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgeInventoryHost
 @onready var modules_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/ModulesTab
 @onready var crew_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/CrewTab
 @onready var chips_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/ChipsTab
