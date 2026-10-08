@@ -632,6 +632,13 @@ func _test_saved_design_and_editor() -> void:
 	_check(is_equal_approx(editor_grid.zoom, editor_grid.MAX_ZOOM), "Wheel zoom must respect maximum scale")
 	editor_grid.center_view()
 	_check(is_equal_approx(editor_grid.zoom, 1.0) and editor_grid.pan_offset == Vector2.ZERO, "Center view restores default zoom and pan")
+	_check(editor_grid.GRID_HALF_EXTENT == 44, "Editor grid must contain 88 cells along each axis")
+	editor_grid.pan_offset = Vector2(100000.0, -100000.0)
+	editor_grid._clamp_pan_to_grid()
+	var left_edge := editor_grid.grid_to_screen(Vector2i(-editor_grid.GRID_HALF_EXTENT, 0)).x
+	var bottom_edge := editor_grid.grid_to_screen(Vector2i(0, editor_grid.GRID_HALF_EXTENT)).y
+	_check(left_edge <= 0.01 and bottom_edge >= editor_grid.size.y - 0.01, "Editor camera cannot pan beyond 88x88 grid boundaries")
+	editor_grid.center_view()
 	var weapon_preview := editor_grid.get_preview_textures(DATABASE.get_by_id(&"weapon_cannon"))
 	_check(
 		weapon_preview["base"] != null and weapon_preview["turret"] != null,
