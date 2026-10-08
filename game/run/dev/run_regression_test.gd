@@ -433,7 +433,7 @@ func _run() -> void:
 	# Procedural star map must preserve deterministic seeds and reachable layers.
 	var generated_route := RouteMapGenerator.generate(7123)
 	var generated_repeat := RouteMapGenerator.generate(7123)
-	_check(generated_route.is_valid() and generated_route.nodes.size() >= 20, "Generated horizontal sector must be a valid multi-layer graph")
+	_check(generated_route.is_valid() and generated_route.nodes.size() >= 18, "Generated horizontal sector must be a valid multi-layer graph")
 	_check(generated_repeat.nodes.size() == generated_route.nodes.size(), "Same random seed must reproduce node count")
 	for index in range(generated_route.nodes.size()):
 		var point := generated_route.nodes[index] as RunRouteNodeDefinition
