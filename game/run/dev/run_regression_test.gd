@@ -430,6 +430,19 @@ func _run() -> void:
 	result_screen.queue_free()
 	await process_frame
 
+	# Procedural star map must preserve deterministic seeds and reachable layers.
+	var generated_route := RouteMapGenerator.generate(7123)
+	var generated_repeat := RouteMapGenerator.generate(7123)
+	_check(generated_route.is_valid() and generated_route.nodes.size() >= 20, "Generated horizontal sector must be a valid multi-layer graph")
+	_check(generated_repeat.nodes.size() == generated_route.nodes.size(), "Same random seed must reproduce node count")
+	for index in range(generated_route.nodes.size()):
+		var point := generated_route.nodes[index] as RunRouteNodeDefinition
+		var repeat_point := generated_repeat.nodes[index] as RunRouteNodeDefinition
+		_check(point.node_id == repeat_point.node_id and point.map_position == repeat_point.map_position and point.next_node_ids == repeat_point.next_node_ids, "Same seed must reproduce node geometry and links")
+		for next_id in point.next_node_ids:
+			var destination := generated_route.get_node(next_id)
+			_check(destination != null and destination.map_position.x > point.map_position.x, "Procedural routes must only advance left to right")
+
 	# v0.37 route graph must branch through Shop / Refit and converge on stage_002.
 	run_state.call("reset_run")
 	var route_path := "res://data/routes/prototype_route.tres"
