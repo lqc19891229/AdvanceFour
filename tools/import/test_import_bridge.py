@@ -13,6 +13,8 @@ class BridgeImportTests(unittest.TestCase):
         self.assertEqual(len(data["chips"]), 2)
         self.assertEqual(len(data["crew"]), 2)
         self.assertEqual(data["chips"][0]["effects"][0]["operation"], "PERCENT_ADD")
+        self.assertEqual([x["price"] for x in data["chips"]], [80, 90])
+        self.assertEqual([x["price"] for x in data["crew"]], [80, 150])
         for item in data["chips"] + data["crew"]:
             for effect in item["effects"]:
                 self.assertEqual(set(effect), {"stat", "operation", "value", "target_filter"})

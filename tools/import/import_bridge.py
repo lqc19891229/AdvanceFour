@@ -14,8 +14,8 @@ OPERATIONS = {"FLAT", "PERCENT_ADD", "MULTIPLIER"}
 RARITIES = {"COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY"}
 EFFECT_FIELDS = ["stat", "operation", "value", "target_filter"]
 SHEETS = {
-    "Chips": ["chip_id", "display_name", "rarity", "description", "icon_path", "effects"],
-    "Crew": ["crew_id", "display_name", "race", "rarity", "description", "portrait_path", "effects"],
+    "Chips": ["chip_id", "display_name", "rarity", "description", "icon_path", "effects", "price"],
+    "Crew": ["crew_id", "display_name", "race", "rarity", "description", "portrait_path", "effects", "price"],
 }
 
 def records(path: Path, sheet: str, required: list[str]) -> list[dict]:
@@ -58,6 +58,17 @@ def parse(path: Path) -> dict:
                 errors.append(f"{ctx}: missing display_name")
             item = {k: str(row.get(k, "") or "").strip() for k in SHEETS[sheet] if k != "effects"}
             item["rarity"] = rarity
+            try:
+                price_text = str(row.get("price", "")).strip()
+                if not re.fullmatch(r"[0-9]+", price_text):
+                    raise ValueError
+                price = int(price_text)
+                if price <= 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                errors.append(f"{ctx}: price must be a positive integer")
+                price = 0
+            item["price"] = price
             if sheet == "Crew" and not IDENT.fullmatch(item["race"].lower()):
                 errors.append(f"{ctx}: invalid race")
             art_field = "icon_path" if sheet == "Chips" else "portrait_path"

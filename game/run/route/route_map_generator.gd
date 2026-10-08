@@ -5,6 +5,7 @@ const STAGE_ONE := "res://data/battles/stage_001/battle.tres"
 const STAGE_TWO := "res://data/battles/stage_002/battle.tres"
 const ELITE := "res://data/battles/elite_001/battle.tres"
 const SHOP := "res://data/shops/basic_shop.tres"
+const TAVERN := "res://data/taverns/basic_tavern.tres"
 const STATION := "res://data/stations/basic_station.tres"
 
 # A deterministic graph for a given seed; new runs use a fresh seed.
@@ -44,10 +45,14 @@ static func generate(seed_value: int = -1) -> RunRouteDefinition:
 					node.node_type = RunRouteNodeDefinition.NodeType.BATTLE
 					node.display_name = "精英舰队"
 					node.target_path = ELITE
-				elif roll < 0.85:
+				elif roll < 0.82:
 					node.node_type = RunRouteNodeDefinition.NodeType.SHOP
 					node.display_name = "贸易空间站"
 					node.target_path = SHOP
+				elif roll < 0.92:
+					node.node_type = RunRouteNodeDefinition.NodeType.TAVERN
+					node.display_name = "星际酒馆"
+					node.target_path = TAVERN
 				else:
 					node.node_type = RunRouteNodeDefinition.NodeType.REFIT
 					node.display_name = "维修改装站"

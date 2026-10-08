@@ -12,6 +12,7 @@ target_filter = &"ALL"
 [resource]
 script = ExtResource("2_twwtb")
 chip_id = &"chip_energy_01"
+price = 90
 display_name = "反应堆优化"
 description = "能源输出提高"
 modifiers = Array[ExtResource("1_wx6hv")]([SubResource("Resource_3gkcs")])

@@ -11,6 +11,9 @@ func configure(node: RunRouteNodeDefinition, visited: bool, selectable: bool, cu
 		RunRouteNodeDefinition.NodeType.SHOP:
 			tint = Color("#ffad4d")
 			symbol = "▣"
+		RunRouteNodeDefinition.NodeType.TAVERN:
+			tint = Color("#d994ff")
+			symbol = "♣"
 		RunRouteNodeDefinition.NodeType.REFIT:
 			tint = Color("#60eaff")
 			symbol = "+"

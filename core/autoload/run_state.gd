@@ -20,6 +20,7 @@ var bridge_chip_inventory: Dictionary = {}
 var bridge_crew_slots: Array[StringName] = []
 var bridge_chip_slots: Array[StringName] = []
 var shop_node_states: Dictionary = {}
+var tavern_node_states: Dictionary = {}
 var completed_battles: Array[StringName] = []
 var last_result: BattleResult
 
@@ -40,6 +41,7 @@ func reset_run() -> void:
 	bridge_crew_slots.clear()
 	bridge_chip_slots.clear()
 	shop_node_states.clear()
+	tavern_node_states.clear()
 	completed_battles.clear()
 	last_result = null
 
@@ -749,4 +751,70 @@ func replace_bridge_item(kind: String, id: String, index: int) -> bool:
 		bridge_crew_slots[index] = new_id
 	else:
 		bridge_chip_slots[index] = new_id
+	return true
+
+# Tavern candidates are rolled once per route node; reopening cannot refresh them.
+func get_current_tavern() -> TavernDefinition:
+	if not is_route_active():
+		return null
+	var node := get_current_route_node()
+	if node == null or node.node_type != RunRouteNodeDefinition.NodeType.TAVERN:
+		return null
+	if node.target_path.is_empty() or not ResourceLoader.exists(node.target_path):
+		return null
+	var tavern := ResourceLoader.load(node.target_path) as TavernDefinition
+	return tavern if tavern != null and tavern.is_valid() else null
+
+func is_current_tavern_active() -> bool:
+	return get_current_tavern() != null and not is_current_route_node_complete()
+
+func _ensure_tavern_state() -> Dictionary:
+	if not is_current_tavern_active():
+		return {}
+	var key := StringName("tavern:%s" % String(current_route_node_id))
+	if not tavern_node_states.has(key):
+		var tavern := get_current_tavern()
+		var available := tavern.recruit_pool.duplicate()
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		var candidates: Array[StringName] = []
+		for i in range(mini(tavern.candidate_count, available.size())):
+			var choice := rng.randi_range(0, available.size() - 1)
+			candidates.append(available[choice])
+			available.remove_at(choice)
+		tavern_node_states[key] = {"candidates": candidates, "hired": {}}
+	return tavern_node_states[key]
+
+func get_tavern_candidates() -> Array:
+	return _ensure_tavern_state().get("candidates", [])
+
+func is_tavern_candidate_hired(index: int) -> bool:
+	var state := _ensure_tavern_state()
+	var candidates: Array = state.get("candidates", [])
+	return index >= 0 and index < candidates.size() and (state.get("hired", {}) as Dictionary).has(index)
+
+func can_hire_tavern_crew(index: int) -> bool:
+	if not is_current_tavern_active():
+		return false
+	var candidates := get_tavern_candidates()
+	if index < 0 or index >= candidates.size() or is_tavern_candidate_hired(index):
+		return false
+	var db := preload("res://data/bridge/bridge_database.tres") as BridgeDatabase
+	var crew := db.find_crew(StringName(candidates[index]))
+	return crew != null and crew.price > 0 and energy_crystals >= crew.price
+
+func hire_tavern_crew(index: int) -> bool:
+	if not can_hire_tavern_crew(index):
+		return false
+	var state := _ensure_tavern_state()
+	var candidates: Array = state["candidates"]
+	var id := StringName(candidates[index])
+	var db := preload("res://data/bridge/bridge_database.tres") as BridgeDatabase
+	var crew := db.find_crew(id)
+	if crew == null or not add_bridge_item("crew", String(id)):
+		return false
+	energy_crystals -= crew.price
+	var hired: Dictionary = state["hired"]
+	hired[index] = true
+	state["hired"] = hired
 	return true

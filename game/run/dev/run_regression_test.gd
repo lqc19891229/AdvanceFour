@@ -46,7 +46,7 @@ func _run() -> void:
 	_check(elite_pool.has("res://data/battles/test_elite/battle.tres") and not elite_pool.has("res://data/battles/elite_001/battle.tres"), "Tier 2 elite pool must exclude tier 3")
 	_check(BattleEncounterPool.select(BattleDefinition.EncounterType.ELITE, 42, &"sector_01", 2) == BattleEncounterPool.select(BattleDefinition.EncounterType.ELITE, 42, &"sector_01", 2), "Encounter selection must reproduce with seed")
 	var fixed_route := RouteTestMap.build()
-	_check(fixed_route.is_valid() and fixed_route.nodes.size() == 5, "Fixed test route must have five valid nodes")
+	_check(fixed_route.is_valid() and fixed_route.nodes.size() == 6, "Fixed test route must have six valid nodes")
 	_check(bool(run_state.call("start_run_with_test_route", design)), "Test route must start without ship editor")
 	_check((run_state.call("get_current_route_node") as RunRouteNodeDefinition).node_type == RunRouteNodeDefinition.NodeType.SHOP, "Test route must enter shop first")
 	_check(bool(run_state.call("complete_current_route_node")), "Shop test node must complete")
@@ -267,7 +267,7 @@ func _run() -> void:
 	var first_item := generated_shop_slots[0] as ShopItemDefinition
 	var credits_before_first_purchase := int(run_state.get("energy_crystals"))
 	_check(bool(run_state.call("purchase_shop_slot", shop_definition, 0)), "An affordable unsold shop slot must be purchasable")
-	_check(int(run_state.get("energy_crystals")) == credits_before_first_purchase - first_item.price_energy_crystals, "Shop purchase must deduct the selected slot price")
+	_check(int(run_state.get("energy_crystals")) == credits_before_first_purchase - first_item.get_price(), "Shop purchase must deduct the selected slot price")
 	if first_item.module_id != &"":
 		_check(int(run_state.call("get_module_inventory_count", first_item.module_id)) == first_item.module_count, "Purchased module must enter Run inventory")
 	else:

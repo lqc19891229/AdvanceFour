@@ -15,7 +15,8 @@
           "value": 0.15,
           "target_filter": "ALL"
         }
-      ]
+      ],
+      "price": 80
     },
     {
       "chip_id": "chip_energy_01",
@@ -30,7 +31,8 @@
           "value": 0.2,
           "target_filter": "ALL"
         }
-      ]
+      ],
+      "price": 90
     }
   ],
   "crew": [
@@ -48,7 +50,8 @@
           "value": 0.08,
           "target_filter": "ALL"
         }
-      ]
+      ],
+      "price": 80
     },
     {
       "crew_id": "crew_machine_01",
@@ -64,7 +67,8 @@
           "value": 0.12,
           "target_filter": "ALL"
         }
-      ]
+      ],
+      "price": 150
     }
   ]
 }

@@ -12,6 +12,7 @@ target_filter = &"ALL"
 [resource]
 script = ExtResource("2_k4pev")
 crew_id = &"crew_machine_01"
+price = 150
 display_name = "AX-07"
 description = "提高武器伤害"
 race = &"MACHINE"
