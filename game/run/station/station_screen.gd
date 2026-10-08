@@ -94,20 +94,15 @@ func _rebuild_craft_list() -> void:
 		row.add_child(texture)
 		var label := Label.new()
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.text = "%s｜%s｜需要 %d 零件｜仓储 %d" % [
-			item.display_name,
-			item.get_contents_label(),
-			item.parts_cost,
-			int(run_state.call("get_module_storage_cost", item.module_id, item.module_count))
-		]
+		label.text = item.display_name
+		label.add_theme_font_size_override("font_size", 17)
 		row.add_child(label)
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(120, 44)
-		button.text = "查看"
-		button.disabled = false
-		button.tooltip_text = "零件不足或仓库空间不足时无法制造。"
-		button.pressed.connect(_select_item.bind(item))
-		row.add_child(button)
+		var cost := Label.new()
+		cost.text = "⬡ 零件 ×%d" % item.parts_cost
+		cost.add_theme_color_override("font_color", Color("#8be5f6"))
+		cost.add_theme_font_size_override("font_size", 16)
+		row.add_child(cost)
+		CARD_UI.make_card_clickable(panel, _select_item.bind(item))
 
 func _select_item(item: StationCraftItemDefinition) -> void:
 	selected_item = item
