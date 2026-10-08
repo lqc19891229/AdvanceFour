@@ -728,6 +728,51 @@ func _run() -> void:
 	_check(not bool(run_state.call("commit_victory", false_victory)), "Non-battle route node cannot accept victory")
 	_check(int(run_state.get("energy_crystals")) == 0, "Rejected route victory must not grant currency")
 
+	# V1.2 modifier stacking and battle isolation.
+	var modifier_script = load("res://game/progression/ship_modifier_system.gd")
+	var dmg1 := BridgeModifierDefinition.new()
+	dmg1.stat = &"weapon_damage"
+	dmg1.operation = "PERCENT_ADD"
+	dmg1.value = 0.15
+	var dmg2 := BridgeModifierDefinition.new()
+	dmg2.stat = &"weapon_damage"
+	dmg2.operation = "PERCENT_ADD"
+	dmg2.value = 0.12
+	var damage_modifiers: Array = [dmg1, dmg2]
+	_check(is_equal_approx(float(modifier_script.apply(100.0, &"weapon_damage", damage_modifiers, &"WEAPON")), 127.0), "Percent bonuses from crew and chips stack additively")
+	_check(is_equal_approx(float(modifier_script.apply(100.0, &"weapon_range", damage_modifiers, &"WEAPON")), 100.0), "Unrelated stats are unchanged")
+	var filter_mod := BridgeModifierDefinition.new()
+	filter_mod.stat = &"weapon_damage"
+	filter_mod.operation = "FLAT"
+	filter_mod.value = 20.0
+	filter_mod.target_filter = &"ENERGY"
+	_check(is_equal_approx(float(modifier_script.apply(100.0, &"weapon_damage", [filter_mod], &"WEAPON")), 100.0), "Target filter does not leak to unrelated systems")
+	var interval_mod := BridgeModifierDefinition.new()
+	interval_mod.stat = &"weapon_fire_interval"
+	interval_mod.operation = "PERCENT_ADD"
+	interval_mod.value = -2.0
+	_check(is_equal_approx(float(modifier_script.apply(0.5, &"weapon_fire_interval", [interval_mod], &"WEAPON", 0.05)), 0.05), "Fire interval is clamped to a safe minimum")
+	run_state.call("reset_run")
+	_check(bool(run_state.call("start_run", design, STAGE_001_PATH)), "Bridge modifiers test Run starts")
+	_check(bool(run_state.call("add_bridge_item", "chip", "chip_fire_01")), "Chip acquired for modifier test")
+	_check(bool(run_state.call("equip_bridge_item", "chip", "chip_fire_01", 0)), "Chip equipped for modifier test")
+	var active_modifiers: Array = run_state.call("get_bridge_modifiers")
+	_check(active_modifiers.size() == 1 and String(active_modifiers[0].stat) == "weapon_damage", "RunState aggregates equipped bridge effects")
+	var clean_ship := load("res://game/ship/runtime/ship_runtime.tscn").instantiate() as ShipRuntime
+	var enhanced_ship := load("res://game/ship/runtime/ship_runtime.tscn").instantiate() as ShipRuntime
+	root.add_child(clean_ship)
+	root.add_child(enhanced_ship)
+	clean_ship.setup(design)
+	enhanced_ship.setup(design, active_modifiers)
+	_check(clean_ship.weapon_runtimes.size() > 0 and enhanced_ship.weapon_runtimes.size() > 0, "Ship runtime builds weapon instances for modifier test")
+	if clean_ship.weapon_runtimes.size() > 0 and enhanced_ship.weapon_runtimes.size() > 0:
+		var before := clean_ship.weapon_runtimes[0].bridge_damage_multiplier
+		var after := enhanced_ship.weapon_runtimes[0].bridge_damage_multiplier
+		_check(is_equal_approx(before, 1.0) and is_equal_approx(after, 1.15), "Only the modified ship receives bridge damage bonuses")
+	clean_ship.queue_free()
+	enhanced_ship.queue_free()
+	await process_frame
+
 	run_state.call("reset_run")
 	print("Run regression: %d checks, %d failures" % [checks, failures.size()])
 	quit(0 if failures.is_empty() else 1)

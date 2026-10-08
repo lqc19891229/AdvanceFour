@@ -137,7 +137,10 @@ func _spawn_ship(design: ShipData, location: Vector2, is_player: bool) -> ShipRu
 	ship.position = location
 	ship.weapon_target_group = &"enemy_targets" if is_player else &"player_targets"
 	ship.add_to_group(&"player_targets" if is_player else &"enemy_targets")
-	ship.setup(design)
+	var modifiers: Array = []
+	if is_player and _run_state() != null and _run_state().run_active:
+		modifiers = _run_state().get_bridge_modifiers()
+	ship.setup(design, modifiers)
 	for hull_runtime in ship.hull_runtimes:
 		hull_runtime.collision_layer = PLAYER_LAYER if is_player else ENEMY_LAYER
 	ship.projectile_spawned.connect(_configure_projectile.bind(is_player))

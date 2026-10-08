@@ -26,6 +26,7 @@ signal energy_state_changed(
 )
 signal destroyed
 
+const MODIFIERS := preload("res://game/progression/ship_modifier_system.gd")
 const WEAPON_RUNTIME_SCENE := preload("res://game/ship/weapon/weapon_runtime.tscn")
 const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile_runtime.tscn")
 
@@ -37,6 +38,7 @@ const PROJECTILE_RUNTIME_SCENE := preload("res://game/ship/projectile/projectile
 @export var reverse_thrust_ratio := 0.5
 @export var weapon_target_group: StringName = &"enemy_targets"
 
+var bridge_modifiers: Array = []
 var ship_data: ShipData
 var velocity := Vector2.ZERO
 var throttle_input := 0.0
@@ -55,7 +57,8 @@ var module_powered_by_uid: Dictionary = {}
 var energy_sufficient := true
 var removed_from_battle := false
 
-func setup(data: ShipData) -> void:
+func setup(data: ShipData, modifiers: Array = []) -> void:
+	bridge_modifiers = modifiers.duplicate()
 	_clear_weapon_runtimes()
 	_clear_module_runtimes()
 	_clear_appearance_renderer()
@@ -172,7 +175,7 @@ func get_effective_energy_output() -> float:
 			total += (
 				module.definition as EnergyModuleDefinition
 			).energy_output * get_module_efficiency(module)
-	return total
+	return MODIFIERS.apply(total, &"energy_output", bridge_modifiers, &"ENERGY")
 
 func get_effective_energy_cost() -> float:
 	if ship_data == null:
@@ -235,7 +238,7 @@ func get_effective_thrust() -> float:
 		total += (
 			module.definition as PropulsionModuleDefinition
 		).thrust * get_module_efficiency(module)
-	return total
+	return MODIFIERS.apply(total, &"thrust", bridge_modifiers, &"PROPULSION")
 
 func get_effective_acceleration_score() -> float:
 	# Movement is intentionally thrust-only; Hull size and Equipment do not add movement mass.
@@ -397,6 +400,7 @@ func _build_weapon_runtimes() -> void:
 		var runtime := WEAPON_RUNTIME_SCENE.instantiate() as WeaponRuntime
 		add_child(runtime)
 		runtime.setup(self, module, _get_module_local_center(module), weapon_target_group, cell_size)
+		runtime.apply_bridge_modifiers(bridge_modifiers)
 		runtime.fired.connect(_on_weapon_runtime_fired)
 		weapon_runtimes.append(runtime)
 		weapon_runtime_by_uid[module.uid] = runtime

@@ -603,6 +603,22 @@ func _clone_ship(ship: ShipData) -> ShipData:
 	return result["ship"] as ShipData
 
 # Bridge inventory counts represent unequipped copies; installed IDs are stored in ordered slots.
+func get_bridge_modifiers() -> Array[BridgeModifierDefinition]:
+	var result: Array[BridgeModifierDefinition] = []
+	if not run_active or current_ship == null:
+		return result
+	_sync_bridge_capacity()
+	var db := preload("res://data/bridge/bridge_database.tres") as BridgeDatabase
+	for id in bridge_crew_slots:
+		var crew := db.find_crew(id)
+		if crew != null:
+			result.append_array(crew.modifiers)
+	for id in bridge_chip_slots:
+		var chip := db.find_chip(id)
+		if chip != null:
+			result.append_array(chip.modifiers)
+	return result
+
 func _bridge_inventory(kind: String) -> Dictionary:
 	if kind == "crew":
 		return bridge_crew_inventory
