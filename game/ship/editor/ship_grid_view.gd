@@ -9,7 +9,6 @@ const CELL_SIZE := 48.0
 const MIN_ZOOM := 0.5
 const MAX_ZOOM := 2.5
 const ZOOM_STEP := 1.15
-const GRID_HALF_EXTENT := 30
 
 @export var module_database: ModuleDatabase
 
@@ -371,10 +370,18 @@ func _draw() -> void:
 	var origin := size * 0.5 + pan_offset
 	var grid_color := Color(0.24, 0.29, 0.36, 0.7)
 	var axis_color := Color(0.42, 0.49, 0.58, 0.9)
-	for i in range(-GRID_HALF_EXTENT, GRID_HALF_EXTENT + 1):
-		var x := origin.x + float(i) * get_cell_size()
-		var y := origin.y + float(i) * get_cell_size()
+	# Draw enough grid lines to fill the viewport at any zoom and pan offset.
+	# A fixed +/-30-cell extent leaves large blank areas when zoomed out.
+	var cell_size := get_cell_size()
+	var first_x := floori(-origin.x / cell_size)
+	var last_x := ceili((size.x - origin.x) / cell_size)
+	var first_y := floori(-origin.y / cell_size)
+	var last_y := ceili((size.y - origin.y) / cell_size)
+	for i in range(first_x, last_x + 1):
+		var x := origin.x + float(i) * cell_size
 		draw_line(Vector2(x, 0), Vector2(x, size.y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
+	for i in range(first_y, last_y + 1):
+		var y := origin.y + float(i) * cell_size
 		draw_line(Vector2(0, y), Vector2(size.x, y), axis_color if i == 0 else grid_color, 2.0 if i == 0 else 1.0)
 	for hull_cell in ship.get_hull_cells():
 		_draw_hull_cell(hull_cell)
