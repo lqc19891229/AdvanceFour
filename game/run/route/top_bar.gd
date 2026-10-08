@@ -19,8 +19,10 @@ func update_resources(energy: int, parts: int, heading: String) -> void:
 
 func _update_compact_mode() -> void:
 	# The resource counters are kept visible even when the title must be shortened.
-	if size.x < 550.0:
-		title_label.text = "星区航线"
+	if size.x < 350.0:
+		title_label.text = ""
+	elif size.x < 620.0:
+		title_label.text = "星区"
 	elif size.x < 820.0:
 		title_label.text = "星区 01 · 航线"
 	else:

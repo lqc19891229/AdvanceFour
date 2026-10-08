@@ -10,12 +10,16 @@ const RUN_REFIT_META := &"run_refit_mode"
 
 @onready var top_bar: HBoxContainer = $Margin/Layout/Header/TopBar
 @onready var status: Label = $Margin/Layout/Header/Status
-@onready var map_area: Control = $Margin/Layout/MapFrame/MapArea
+@onready var map_scroll: ScrollContainer = $Margin/Layout/MapFrame/MapScroll
+@onready var map_area: Control = $Margin/Layout/MapFrame/MapScroll/MapArea
 @onready var hint: Label = $Margin/Layout/Hint
 @onready var warehouse_button: Button = $Margin/Layout/Actions/Warehouse
 
 const NODE_SCENE := preload("res://game/run/route/route_node_view.tscn")
 const BACKGROUND_ART := preload("res://data/assets/ui/star_map_background.svg")
+const NODE_SIZE := Vector2(160, 90)
+const MAP_PADDING := Vector2(100, 90)
+var map_content_size := Vector2.ZERO
 
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
@@ -27,6 +31,7 @@ func _ready() -> void:
 	edit_button.custom_minimum_size = Vector2(180, 44)
 	edit_button.pressed.connect(_open_editor)
 	$Margin/Layout/Actions.add_child(edit_button)
+	map_scroll.resized.connect(_update_map_size)
 	_refresh()
 
 func _refresh() -> void:
@@ -53,18 +58,8 @@ func _refresh() -> void:
 
 func _rebuild_map(route: RunRouteDefinition) -> void:
 	var procedural := route.route_id == &"generated_sector" or route.route_id == &"fixed_test_sector"
-	if procedural and map_area.get_parent() is not ScrollContainer:
-		var frame := map_area.get_parent()
-		var scroller := ScrollContainer.new()
-		scroller.name = "StarMapScroll"
-		scroller.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		scroller.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		frame.add_child(scroller)
-		map_area.reparent(scroller)
-	if procedural:
-		map_area.custom_minimum_size = Vector2(2050, 540)
+	map_content_size = _calculate_map_content_size(route)
+	_update_map_size()
 	for child in map_area.get_children():
 		map_area.remove_child(child)
 		child.queue_free()
@@ -82,7 +77,7 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 		current_id = StringName(run_state.get("current_route_node_id"))
 
 	if procedural:
-		_draw_starfield()
+		_draw_starfield(map_area.custom_minimum_size)
 	for raw_node in route.nodes:
 		var node := raw_node as RunRouteNodeDefinition
 		if node == null:
@@ -98,8 +93,8 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 			var reachable := available.has(next_id) and current_id == node.node_id
 			line.default_color = (Color(0.15, 0.95, 1.0, 0.95) if traveled else Color(0.18, 0.75, 0.92, 0.85) if reachable else Color(0.17, 0.38, 0.53, 0.55)) if procedural else Color(0.4, 0.45, 0.55, 0.7)
 			line.points = PackedVector2Array([
-				node.map_position + Vector2(80, 45),
-				next_node.map_position + Vector2(80, 45)
+				node.map_position + NODE_SIZE * 0.5,
+				next_node.map_position + NODE_SIZE * 0.5
 			])
 			map_area.add_child(line)
 
@@ -114,14 +109,27 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 		map_area.add_child(button)
 
 
-func _draw_starfield() -> void:
+func _calculate_map_content_size(route: RunRouteDefinition) -> Vector2:
+	var extent := Vector2.ZERO
+	for raw_node in route.nodes:
+		var node := raw_node as RunRouteNodeDefinition
+		if node != null:
+			extent = extent.max(node.map_position + NODE_SIZE)
+	return extent + MAP_PADDING
+
+func _update_map_size() -> void:
+	if not is_node_ready():
+		return
+	map_area.custom_minimum_size = Vector2(maxf(map_content_size.x, map_scroll.size.x), maxf(map_content_size.y, map_scroll.size.y))
+
+func _draw_starfield(canvas_size: Vector2) -> void:
 	# Background artwork is a separate static texture, with optional dynamic debris on top.
 	var background := TextureRect.new()
 	background.texture = BACKGROUND_ART
 	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	background.stretch_mode = TextureRect.STRETCH_SCALE
 	background.position = Vector2.ZERO
-	background.size = Vector2(2050, 540)
+	background.size = canvas_size
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	map_area.add_child(background)
 	var rng := RandomNumberGenerator.new()
@@ -129,7 +137,7 @@ func _draw_starfield() -> void:
 	for i in range(85):
 		var dot := ColorRect.new()
 		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		dot.position = Vector2(rng.randf_range(0, 2045), rng.randf_range(0, 530))
+		dot.position = Vector2(rng.randf_range(0, canvas_size.x), rng.randf_range(0, canvas_size.y))
 		var radius := float(rng.randi_range(1, 3))
 		dot.size = Vector2(radius, radius)
 		dot.color = Color(0.35, 0.82, 1.0, rng.randf_range(0.15, 0.65))

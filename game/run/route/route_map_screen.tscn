@@ -28,10 +28,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
 [node name="Layout" type="VBoxContainer" parent="Margin" unique_id=35475635]
 layout_mode = 2
@@ -46,14 +46,22 @@ layout_mode = 2
 [node name="Status" type="Label" parent="Margin/Layout/Header" unique_id=769602827]
 layout_mode = 2
 text = "仓库：0 / 0"
+autowrap_mode = 2
 
 [node name="MapFrame" type="PanelContainer" parent="Margin/Layout" unique_id=1522079586]
-custom_minimum_size = Vector2(720, 560)
+custom_minimum_size = Vector2(0, 240)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MapArea" type="Control" parent="Margin/Layout/MapFrame" unique_id=1042485584]
-custom_minimum_size = Vector2(680, 540)
+[node name="MapScroll" type="ScrollContainer" parent="Margin/Layout/MapFrame"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 1
+vertical_scroll_mode = 1
+
+[node name="MapArea" type="Control" parent="Margin/Layout/MapFrame/MapScroll" unique_id=1042485584]
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 
 [node name="Actions" type="HBoxContainer" parent="Margin/Layout" unique_id=576999463]
