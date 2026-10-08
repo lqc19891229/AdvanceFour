@@ -64,9 +64,13 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 
 	var run_state := _run_state()
 	var active := run_state != null and bool(run_state.call("is_route_active"))
-	var available: Array[StringName] = run_state.call("get_available_route_node_ids") if active else []
-	var completed: Array = run_state.get("completed_route_nodes") if active else []
-	var current_id := StringName(run_state.get("current_route_node_id")) if active else &""
+	var available: Array[StringName] = []
+	var completed: Array = []
+	var current_id: StringName = &""
+	if active:
+		available.assign(run_state.call("get_available_route_node_ids"))
+		completed = run_state.get("completed_route_nodes")
+		current_id = StringName(run_state.get("current_route_node_id"))
 
 	if procedural:
 		_draw_starfield()
