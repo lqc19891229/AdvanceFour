@@ -58,28 +58,34 @@ custom_minimum_size = Vector2(154, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
 
-[node name="LeftMargin" type="MarginContainer" parent="MainLayout/LeftPanel" unique_id=1054143477]
+[node name="LeftMargin" type="MarginContainer" parent="TopSection/MainLayout/LeftPanel" unique_id=1054143477]
 layout_mode = 2
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="LeftVBox" type="VBoxContainer" parent="MainLayout/LeftPanel/LeftMargin" unique_id=1824414096]
+[node name="LeftVBox" type="VBoxContainer" parent="TopSection/MainLayout/LeftPanel/LeftMargin" unique_id=1824414096]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="Title" type="Label" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=1924441308]
+[node name="Title" type="Label" parent="TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=1924441308]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
 text = "模块"
 
-[node name="SelectedLabel" type="Label" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=775045980]
+[node name="SelectedLabel" type="Label" parent="TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=775045980]
 layout_mode = 2
 text = "当前：未选择"
 
-[node name="ModuleButtons" type="VBoxContainer" parent="MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=917964274]
+[node name="ModuleScroll" type="ScrollContainer" parent="TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox"]
 layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ModuleButtons" type="VBoxContainer" parent="TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll" unique_id=917964274]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
 [node name="Center" type="MarginContainer" parent="MainLayout" unique_id=1332654103]
@@ -90,87 +96,87 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="Grid" type="Control" parent="MainLayout/Center" unique_id=1748464696]
+[node name="Grid" type="Control" parent="TopSection/MainLayout/Center" unique_id=1748464696]
 layout_mode = 2
 script = ExtResource("2")
 module_database = ExtResource("3_db")
 
 [node name="RightPanel" type="PanelContainer" parent="MainLayout" unique_id=1196423438]
-custom_minimum_size = Vector2(175, 0)
+custom_minimum_size = Vector2(154, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
 
-[node name="RightMargin" type="MarginContainer" parent="MainLayout/RightPanel" unique_id=2021684616]
+[node name="RightMargin" type="MarginContainer" parent="TopSection/MainLayout/RightPanel" unique_id=2021684616]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_left = 7
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 7
+theme_override_constants/margin_bottom = 7
 
-[node name="RightVBox" type="VBoxContainer" parent="MainLayout/RightPanel/RightMargin" unique_id=1911163225]
+[node name="RightVBox" type="VBoxContainer" parent="TopSection/MainLayout/RightPanel/RightMargin" unique_id=1911163225]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="Title" type="Label" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=468566078]
+[node name="Title" type="Label" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=468566078]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 14
 text = "飞船属性"
 
-[node name="SpeedLabel" type="Label" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=856014973]
+[node name="SpeedLabel" type="Label" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=856014973]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.85, 1, 1)
 text = "预计最高速度：0.0 px/s"
 autowrap_mode = 2
 
-[node name="StatsScroll" type="ScrollContainer" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1785353583]
+[node name="StatsScroll" type="ScrollContainer" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1785353583]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="StatsLabel" type="Label" parent="MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll" unique_id=514284844]
+[node name="StatsLabel" type="Label" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll" unique_id=514284844]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "..."
 autowrap_mode = 2
 
-[node name="BattleButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=444833850]
+[node name="BattleButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=444833850]
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "出航战斗"
 
-[node name="AITestButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=243117368]
-custom_minimum_size = Vector2(0, 42)
+[node name="AITestButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=243117368]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "敌舰 AI 测试"
 
-[node name="SaveButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1056825881]
-custom_minimum_size = Vector2(0, 42)
+[node name="SaveButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1056825881]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "保存设计"
 
-[node name="LoadButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=664123326]
-custom_minimum_size = Vector2(0, 42)
+[node name="LoadButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=664123326]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "加载设计"
 
-[node name="MoveButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1740805426]
-custom_minimum_size = Vector2(0, 42)
+[node name="MoveButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1740805426]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "移动已选模块"
 
-[node name="RotateButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=690633682]
-custom_minimum_size = Vector2(0, 42)
+[node name="RotateButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=690633682]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "旋转模块（R）"
 
-[node name="CenterButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1744047480]
-custom_minimum_size = Vector2(0, 42)
+[node name="CenterButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1744047480]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "视图居中"
 
-[node name="ClearButton" type="Button" parent="MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1684689245]
-custom_minimum_size = Vector2(0, 42)
+[node name="ClearButton" type="Button" parent="TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1684689245]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 text = "清空飞船"
 
