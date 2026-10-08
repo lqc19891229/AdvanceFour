@@ -1,90 +1,86 @@
-《前进四》舰桥 Excel 数据表使用说明（V1.0）
+《前进四》bridge_data.xlsx 使用说明（V1.0）
+更新：2026-10
 
-一、文件与职责
-- 本文档说明同目录的 bridge_data.xlsx，供策划编辑芯片（Chips）与机组人员（Crew）。
-- bridge_data.xlsx 仅包含 Chips、Crew 两张工作表；没有单独的 Effects 或 BridgeConfig 表。
-- 芯片与机组使用开放插槽，不与舰长、驾驶员、工程官等岗位绑定，可重复堆叠同类属性（具体装备实例限制在后续玩法阶段实现）。
-- 舰桥容量来自 module_data.xlsx 的 Core 表（crew_slots、chip_slots），不是 bridge_data.xlsx。
+一、定位和工作表
+bridge_data.xlsx 用来配置芯片与机组人员，包含：
+- Chips：芯片定义。
+- Crew：机组定义。
+两者都是开放式插槽构筑资源，不绑定舰长/工程官/驾驶员等固定岗位，允许多个同类加成同时进入构筑（实际装备、叠加和实例规则由后续游戏逻辑实现）。
+没有独立 Effects、BridgeConfig Sheet。舰桥槽位在 module_data.xlsx 的 Core 表填写 crew_slots、chip_slots。
 
-二、Chips 工作表字段
-chip_id       芯片唯一 ID，英文小写字母开头，只允许 a-z、0-9、下划线；不可与 crew_id 重复。
-display_name  玩家看到的名称；必填。
-rarity        品质：COMMON / UNCOMMON / RARE / EPIC / LEGENDARY。
-description   芯片文字描述；可以留空。
-icon_path     图标资源路径；可以留空。填写时使用 res://data/assets/ 下的 .png 文件。
-effects       JSON 数组；每条效果直接属于当前芯片，格式见第五节。
+二、Chips 列
+chip_id       唯一 ID；以小写英文字母开头，只能使用小写字母、数字、下划线；不可与 crew_id 重复。
+display_name  显示名称，必填。
+rarity        COMMON、UNCOMMON、RARE、EPIC、LEGENDARY。
+description   描述，可留空。
+icon_path     图片路径，可留空；非空时必须是 res://data/assets/ 下的 .png。
+effects       JSON 数组，可包含多条效果；留空等价于 []。
 
-三、Crew 工作表字段
-crew_id       人员唯一 ID；命名规范与 chip_id 相同且不可重复。
-display_name  人员名字；必填。
-race          种族标识，例如 HUMAN、MACHINE、CRYSTAL（导入器目前只检查命名格式，不限制种族名单）。
-rarity        品质取值与 Chips 一致。
-description   人物特性说明；可以留空。
-portrait_path 人物立绘路径；可留空。填写时使用 res://data/assets/ 下的 .png 文件。
-effects       JSON 数组；效果直接属于当前人员。
+三、Crew 列
+crew_id       唯一 ID，与 chip_id 相同的命名规则。
+display_name  显示姓名，必填。
+race          种族，例如 HUMAN、MACHINE、CRYSTAL；当前只检查标识格式，不设固定种族名单。
+rarity        品质，同 Chips。
+description   描述，可留空。
+portrait_path 人物图片路径，可留空；非空时必须是 res://data/assets/ 下的 .png。
+effects       JSON 数组，可包含多条效果；留空等价于 []。
 
-四、effects 的四个字段
-stat          被修正的属性标识。
-operation     运算方式。
-value         有限数字。
-target_filter 目标筛选，可填 ALL 或留空，也支持下述类型。
-
-当前可填 stat：
-  weapon_damage          武器伤害
-  weapon_range           武器射程
-  weapon_fire_interval   武器射击间隔（数值增加意味着间隔变长、射速下降）
-  thrust                 推力
-  turn_speed             转向速度
-  energy_output          能量输出
-  protection             防护
-  repair_cost            维修消耗
-
-operation：
-  FLAT          固定增减数值
-  PERCENT_ADD   百分比加成，例如 0.15 表示 +15%，-0.10 表示 -10%
-  MULTIPLIER    乘算系数，例如 1.20 表示乘以 1.20；必须大于 0
-
-target_filter：
-  ALL、WEAPON、CANNON、PROPULSION、ENERGY、DEFENSE 或留空。
-  留空及 ALL 具体应用范围会由后续属性结算系统确定；当前阶段只负责解析验证。
-
-五、Excel 单元格填写示例
-1. 一条效果（武器伤害 +15%）：
+四、effects 单元格格式
+一个单元格填写一整个 JSON 数组，例如武器伤害 +15%：
 [{"stat":"weapon_damage","operation":"PERCENT_ADD","value":0.15,"target_filter":"ALL"}]
 
-2. 两条效果（武器伤害 +15%、射程 +10%），同一个 effects 单元格：
+同时提高武器伤害 +15% 和射程 +10%：
 [{"stat":"weapon_damage","operation":"PERCENT_ADD","value":0.15,"target_filter":"ALL"},{"stat":"weapon_range","operation":"PERCENT_ADD","value":0.10,"target_filter":"ALL"}]
 
-3. 没有效果时填写 []，也可留空。
+每条效果只有四个字段：
+- stat：属性类型。
+- operation：运算方式。
+- value：有限数值。
+- target_filter：作用对象过滤，可填 ALL 或留空。
 
-注意：
-- 使用英文双引号 "、冒号 :、逗号 ,；整个单元格必须是合法 JSON 数组。
-- 不需要填写 effect_id、owner_id；V1.0 也不支持 condition_id。
-- 一个 Excel 行表示一枚芯片定义或一个机组定义；每行的 effects 数组可以有多条效果。
-- 每条效果只写 stat、operation、value、target_filter；不要在单元格内嵌套额外的人员或芯片信息。
-- 这些效果目前只是数据配置，尚未接入实际战斗属性计算。
+不可再写 effect_id、owner_id、condition_id；导入器会将这些旧字段判为错误。
+使用英文双引号、英文冒号与逗号；整个单元格必须为合法 JSON 数组，不能使用 Python 风格的单引号。
+不含效果的行可填 [] 或留空。
 
-六、从 Excel 到 Godot 的导入流程
-1. 备份并修改 tools/data_source/bridge_data.xlsx。
-2. 在项目根目录运行验证/生成缓存：
+五、stat 可选值
+weapon_damage        武器伤害
+weapon_range         武器射程
+weapon_fire_interval 武器射击间隔（间隔越大，射速越慢）
+thrust               推力
+turn_speed           转向速度
+energy_output        能源输出
+protection           防护
+repair_cost          维修消耗
+
+六、operation 可选值
+FLAT          固定增减。
+PERCENT_ADD   百分比增减：0.15 表示 +15%，-0.10 表示 -10%。
+MULTIPLIER    乘算系数：1.20 表示乘以 1.20；该值必须大于 0。
+value 必须是有限数值，且绝对值不能超过 100000。
+
+七、target_filter 可选值
+空字符串、ALL、WEAPON、CANNON、PROPULSION、ENERGY、DEFENSE。
+目前只是被导入和校验；精确作用范围与优先级需由未来的战斗属性结算系统落实。
+
+八、编辑与导入步骤
+1. 编辑 tools/data_source/bridge_data.xlsx 的 Chips 或 Crew 表，保持原有列名。
+2. 在项目根目录执行：
    python tools/import/import_bridge.py tools/data_source/bridge_data.xlsx tools/cache/bridge.json
-   Windows 也可以使用 py -3 代替 python。
-3. 确认输出无 ERROR，再打开 Godot 编辑器，在 Project -> Tools 菜单中选择：
-   “前进四：验证舰桥数据” 或 “前进四：导入舰桥数据”。
-4. 导入成功后由插件生成 data/bridge/chips/*.tres、data/bridge/crew/*.tres 和 data/bridge/bridge_database.tres。
-5. 提交 Excel 时同时提交 tools/cache/bridge.json 及生成的正式 Resource，并运行自动检查：
-   python tools/verify_project.py --godot <Godot 可执行文件路径>
+   Windows 可使用 py -3 替代 python。
+3. 确认无 ERROR；Godot 编辑器的「项目 → 工具」菜单可运行：
+   - 前进四：验证舰桥数据
+   - 前进四：导入舰桥数据
+4. 导入后检查 data/bridge/chips/*.tres、data/bridge/crew/*.tres、data/bridge/bridge_database.tres。
+5. 提交时同步提交 Excel、tools/cache/bridge.json 和生成资源；完整验收可用：
+   python tools/verify_project.py --godot <Godot可执行文件路径>
 
-七、常见错误
-- Excel 报文件损坏：优先用 Microsoft Excel 或 LibreOffice 重新另存为标准 .xlsx，再检查两张工作表及字段。
-- JSON 无法解析：检查单元格英文引号、逗号、括号，以及是否错用了单引号。
-- ID 重复：chip_id 与 crew_id 在整个文件中必须唯一。
-- 不支持的 stat / operation：按第四节选择，不要直接写中文字段名。
-- 数值无效：value 必须为有限数字，MULTIPLIER 必须大于 0。
-- 贴图无法加载：检查 res://data/assets/ 路径下的 PNG 是否真实存在。
+九、常见问题
+- effects 解析失败：检查 JSON 引号、方括号、花括号、逗号和数字写法。
+- ID 重复：chip_id 与 crew_id 之间也不可重复。
+- stat / operation 不支持：使用本说明第五、六节中的英文值。
+- 贴图导入失败：检查 res://data/assets/ PNG 路径是否真实存在。
+- Excel 报文件损坏：用标准电子表格工具重新另存为 .xlsx 后验证。
+- Excel 修改未生效：需要重新生成缓存并通过 Godot 导入资源；仅修改 Excel 不会改变已生成的 .tres。
 
-相关源文件：
-- tools/import/import_bridge.py：Excel 解析与校验
-- addons/advance_four_data_importer/bridge_importer.gd：Godot Resource 导入
-- data/definitions/bridge/：芯片、机组与效果的数据类型
-- tools/data_source/module_data.xlsx：Core 模块及舰桥容量
+当前功能边界：V1.0 提供策划数据、解析校验、Resource 导入。尚未实现舰桥管理界面、Run 中的装配操作和战斗效果结算。
+详细的其它数据源流程见同目录 README.txt。
