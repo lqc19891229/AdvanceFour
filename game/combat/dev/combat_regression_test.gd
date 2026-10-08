@@ -140,6 +140,18 @@ func _test_movement_feedback() -> void:
 	_check(landmark.global_position == world_before, "Backdrop landmarks must remain anchored in the world")
 	_check(landmark.get_global_transform_with_canvas().origin.distance_to(screen_before) > 5.0, "Following camera must make world landmarks visibly scroll when the ship moves")
 	_check(battle.camera.global_position.distance_to(battle.player.global_position) < 1.0, "Movement feedback must preserve the following camera")
+	# Battle wheel zoom retains the player-follow camera and stays within safe limits.
+	battle.adjust_camera_zoom(1)
+	_check(battle.camera.zoom.x > 1.0 and is_equal_approx(battle.camera.zoom.x, battle.camera.zoom.y), "Battle wheel up zooms in uniformly")
+	battle.adjust_camera_zoom(-1)
+	_check(is_equal_approx(battle.camera.zoom.x, 1.0), "Battle wheel down returns to default scale")
+	for i in range(30):
+		battle.adjust_camera_zoom(-1)
+	_check(is_equal_approx(battle.camera.zoom.x, battle.MIN_CAMERA_ZOOM), "Battle camera zoom has a minimum limit")
+	for i in range(60):
+		battle.adjust_camera_zoom(1)
+	_check(is_equal_approx(battle.camera.zoom.x, battle.MAX_CAMERA_ZOOM), "Battle camera zoom has a maximum limit")
+
 	_check(battle.hud.text.contains("速度：%.1f px/s" % battle.player.get_speed()) and battle.hud.text.contains("坐标："), "HUD must report live movement telemetry")
 	# Isolate reverse-input semantics from the new acceleration/braking model.
 	battle.player.velocity = Vector2.ZERO
