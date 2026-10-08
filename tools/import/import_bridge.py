@@ -12,7 +12,7 @@ IDENT = re.compile(r"^[a-z][a-z0-9_]*$")
 STATS = {"weapon_damage", "weapon_range", "weapon_fire_interval", "thrust", "turn_speed", "energy_output", "protection", "repair_cost"}
 OPERATIONS = {"FLAT", "PERCENT_ADD", "MULTIPLIER"}
 RARITIES = {"COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY"}
-EFFECT_FIELDS = ["effect_id", "stat", "operation", "value", "target_filter", "condition_id"]
+EFFECT_FIELDS = ["stat", "operation", "value", "target_filter"]
 SHEETS = {
     "Chips": ["chip_id", "display_name", "rarity", "description", "icon_path", "effects"],
     "Crew": ["crew_id", "display_name", "race", "rarity", "description", "portrait_path", "effects"],
@@ -39,7 +39,6 @@ def parse(path: Path) -> dict:
     errors: list[str] = []
     payload = {"ok": False, "errors": errors, "chips": [], "crew": []}
     seen_ids: set[str] = set()
-    seen_effects: set[str] = set()
     try:
         source = {sheet: records(path, sheet, fields) for sheet, fields in SHEETS.items()}
     except Exception as exc:
@@ -78,13 +77,12 @@ def parse(path: Path) -> dict:
                 if not isinstance(effect, dict):
                     errors.append(f"{effect_ctx}: effect must be object")
                     continue
+                forbidden = {"effect_id", "owner_id", "condition_id"} & set(effect)
+                if forbidden:
+                    errors.append(f"{effect_ctx}: obsolete fields {sorted(forbidden)}")
                 values = {key: effect.get(key, "") for key in EFFECT_FIELDS}
-                eid = str(values["effect_id"]).strip()
                 stat = str(values["stat"]).strip().lower()
                 op = str(values["operation"]).strip().upper()
-                if not IDENT.fullmatch(eid) or eid in seen_effects:
-                    errors.append(f"{effect_ctx}: invalid or duplicate effect_id")
-                seen_effects.add(eid)
                 if stat not in STATS or op not in OPERATIONS:
                     errors.append(f"{effect_ctx}: invalid stat or operation")
                 try:
@@ -97,10 +95,7 @@ def parse(path: Path) -> dict:
                 target_filter = str(values["target_filter"] or "").upper().strip()
                 if target_filter not in ("", "ALL", "WEAPON", "CANNON", "PROPULSION", "ENERGY", "DEFENSE"):
                     errors.append(f"{effect_ctx}: unsupported target_filter")
-                condition = str(values["condition_id"] or "").strip()
-                if condition:
-                    errors.append(f"{effect_ctx}: condition_id reserved for future versions")
-                item["effects"].append({"effect_id": eid, "stat": stat, "operation": op, "value": value, "target_filter": target_filter, "condition_id": condition})
+                item["effects"].append({"stat": stat, "operation": op, "value": value, "target_filter": target_filter})
             payload[target].append(item)
     payload["ok"] = not errors
     return payload
