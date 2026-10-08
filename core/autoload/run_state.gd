@@ -15,6 +15,10 @@ var energy_crystals := 0
 var parts := 0
 var module_inventory: Dictionary = {}
 var hull_stock := 0
+var bridge_crew_inventory: Dictionary = {}
+var bridge_chip_inventory: Dictionary = {}
+var bridge_crew_slots: Array[StringName] = []
+var bridge_chip_slots: Array[StringName] = []
 var shop_node_states: Dictionary = {}
 var completed_battles: Array[StringName] = []
 var last_result: BattleResult
@@ -31,6 +35,10 @@ func reset_run() -> void:
 	parts = 0
 	module_inventory.clear()
 	hull_stock = 0
+	bridge_crew_inventory.clear()
+	bridge_chip_inventory.clear()
+	bridge_crew_slots.clear()
+	bridge_chip_slots.clear()
 	shop_node_states.clear()
 	completed_battles.clear()
 	last_result = null
@@ -569,3 +577,89 @@ func _clone_ship(ship: ShipData) -> ShipData:
 		push_error("RunState 无法复制 ShipData：%s" % result["error"])
 		return null
 	return result["ship"] as ShipData
+
+# Bridge inventory counts represent unequipped copies; installed IDs are stored in ordered slots.
+func _bridge_inventory(kind: String) -> Dictionary:
+	if kind == "crew":
+		return bridge_crew_inventory
+	if kind == "chip":
+		return bridge_chip_inventory
+	return {}
+
+func _bridge_slots(kind: String) -> Array[StringName]:
+	if kind == "crew":
+		return bridge_crew_slots
+	if kind == "chip":
+		return bridge_chip_slots
+	return []
+
+func _bridge_definition_exists(kind: String, id: StringName) -> bool:
+	var db := preload("res://data/bridge/bridge_database.tres") as BridgeDatabase
+	if kind == "crew":
+		return db.find_crew(id) != null
+	if kind == "chip":
+		return db.find_chip(id) != null
+	return false
+
+func _bridge_capacity(kind: String) -> int:
+	if current_ship == null:
+		return 0
+	for module in current_ship.modules:
+		if module.definition is CoreModuleDefinition:
+			var core := module.definition as CoreModuleDefinition
+			return core.crew_slots if kind == "crew" else core.chip_slots if kind == "chip" else 0
+	return 0
+
+func get_bridge_item_count(kind: String, id: String) -> int:
+	return maxi(int(_bridge_inventory(kind).get(StringName(id), 0)), 0)
+
+func add_bridge_item(kind: String, id: String, count: int = 1) -> bool:
+	if not run_active or count <= 0 or not _bridge_definition_exists(kind, StringName(id)):
+		return false
+	var inventory := _bridge_inventory(kind)
+	var key := StringName(id)
+	inventory[key] = int(inventory.get(key, 0)) + count
+	return true
+
+func get_bridge_equipped(kind: String, index: int) -> StringName:
+	var slots := _bridge_slots(kind)
+	if index < 0 or index >= slots.size():
+		return &""
+	return slots[index]
+
+func equip_bridge_item(kind: String, id: String, index: int) -> bool:
+	if not run_active or not _bridge_definition_exists(kind, StringName(id)):
+		return false
+	var capacity := _bridge_capacity(kind)
+	if index < 0 or index >= capacity:
+		return false
+	var slots := _bridge_slots(kind)
+	while slots.size() < capacity:
+		slots.append(&"")
+	if slots[index] != &"" or get_bridge_item_count(kind, id) <= 0:
+		return false
+	var inventory := _bridge_inventory(kind)
+	var key := StringName(id)
+	inventory[key] = int(inventory[key]) - 1
+	if kind == "crew":
+		bridge_crew_slots[index] = key
+	else:
+		bridge_chip_slots[index] = key
+	return true
+
+func unequip_bridge_item(kind: String, index: int) -> bool:
+	if not run_active:
+		return false
+	var slots := _bridge_slots(kind)
+	if index < 0 or index >= slots.size() or slots[index] == &"":
+		return false
+	var id := slots[index]
+	if kind == "crew":
+		bridge_crew_slots[index] = &""
+	elif kind == "chip":
+		bridge_chip_slots[index] = &""
+	else:
+		return false
+	var inventory := _bridge_inventory(kind)
+	inventory[id] = int(inventory.get(id, 0)) + 1
+	return true
