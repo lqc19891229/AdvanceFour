@@ -1,3 +1,8 @@
+【当前代码说明｜2026-10】
+Godot 4.6.1；项目默认启动 fixed_test_sector 测试星图，动态星图由 RouteMapGenerator.generate() 实现。
+能量结晶用于商店，零件用于维修和空间站制造；战斗胜利直接统一结算，失败重置 Run。
+历史版本内容不等于当前规则。
+
 data/stations
 
 职责：

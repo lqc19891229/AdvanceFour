@@ -1,3 +1,8 @@
+【当前实现｜2026-10｜Godot 4.6.1】
+项目主入口 res://game/run/route/route_map_screen.tscn；默认固定测试航线：商店→空间站→普通战→精英战→终点。RouteMapGenerator.generate() 可生成随机图，但不是当前默认入口。
+RunState 维护能量结晶（交易）、零件（维修/制造）、模块仓储、战损和路线节点状态；胜利自动进入统一战果页，失败清空 Run。
+含版本号的旧行为仅用于版本追溯。
+
 《前进四》game/combat/dev 目录说明
 
 用途：存放战斗流程的独立开发检查。

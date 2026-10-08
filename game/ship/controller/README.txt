@@ -1,3 +1,8 @@
+【当前实现说明｜2026-10】
+Godot 4.6.1；主场景为 game/run/route/route_map_screen.tscn，目前默认进入 fixed_test_sector 测试航线。
+正式运行资源为能量结晶（商店）与零件（维修及空间站制造）。战斗胜利进入统一结算，失败清空本轮 Run。
+以下早期版本说明仅作历史留档。
+
 《前进四》game/ship/controller 目录说明
 
 用途：
