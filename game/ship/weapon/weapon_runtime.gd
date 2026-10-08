@@ -1,6 +1,9 @@
 class_name WeaponRuntime
 extends Node2D
 
+const MODIFIERS := preload("res://game/progression/ship_modifier_system.gd")
+var bridge_damage_multiplier := 1.0
+
 signal fired(
 	module_instance: ShipModuleInstance,
 	firepower: float,
@@ -47,6 +50,7 @@ func setup(
 		firing_arc_degrees = weapon_definition.firing_arc_degrees
 		fire_angle_tolerance_degrees = weapon_definition.fire_angle_tolerance_degrees
 	position = local_position
+	bridge_damage_multiplier = 1.0
 	z_index = 30
 	target_group = p_target_group
 	mount_local_rotation = deg_to_rad(float(module.rotation_quarters) * 90.0)
@@ -113,6 +117,14 @@ func is_powered() -> bool:
 
 func is_active() -> bool:
 	return operational and powered and efficiency > 0.0
+
+func apply_bridge_modifiers(modifiers: Array) -> void:
+	if weapon_definition == null:
+		return
+	attack_range = MODIFIERS.apply(weapon_definition.attack_range, &"weapon_range", modifiers, &"WEAPON", 0.0)
+	fire_interval = MODIFIERS.apply(weapon_definition.fire_interval, &"weapon_fire_interval", modifiers, &"WEAPON", 0.05)
+	# Store the modified damage separately: never edit shared module definitions.
+	bridge_damage_multiplier = MODIFIERS.apply(weapon_definition.firepower, &"weapon_damage", modifiers, &"WEAPON", 0.0) / maxf(weapon_definition.firepower, 0.00001)
 
 func fire_once() -> void:
 	if not _can_fire():
@@ -285,7 +297,7 @@ func _emit_fire() -> void:
 	var direction := get_muzzle_world_direction()
 	fired.emit(
 		module_instance,
-		weapon_definition.firepower * efficiency,
+		weapon_definition.firepower * bridge_damage_multiplier * efficiency,
 		get_muzzle_world_position(),
 		direction
 	)
