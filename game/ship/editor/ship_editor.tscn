@@ -30,13 +30,14 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 2
 
-[node name="TopSection" type="Control" parent="WorkSections"]
+[node name="TopSection" type="PanelContainer" parent="WorkSections"]
+custom_minimum_size = Vector2(0, 390)
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 4.55
 
 [node name="BridgeSection" type="PanelContainer" parent="WorkSections"]
-custom_minimum_size = Vector2(0, 116)
+custom_minimum_size = Vector2(0, 138)
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 1.0
@@ -46,12 +47,7 @@ theme_override_styles/panel = SubResource("Panel")
 layout_mode = 2
 
 [node name="MainLayout" type="HBoxContainer" parent="TopSection" unique_id=1503357542]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 
 [node name="LeftPanel" type="PanelContainer" parent="TopSection/MainLayout" unique_id=1339107356]
 custom_minimum_size = Vector2(154, 0)
