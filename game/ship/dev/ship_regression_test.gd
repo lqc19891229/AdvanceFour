@@ -608,6 +608,14 @@ func _test_saved_design_and_editor() -> void:
 	root.add_child(editor)
 	current_scene = editor
 	await process_frame
+	var relocated_bridge := editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel")
+	_check(not relocated_bridge.visible and editor.get("active_resource_tab") == "module", "Module tab hides left-side bridge slots")
+	editor.call("_set_resource_tab", "crew")
+	_check(relocated_bridge.visible and relocated_bridge.get_node("Slots/CrewRow").visible and not relocated_bridge.get_node("Slots/ChipRow").visible, "Crew tab displays crew slots below left inventory")
+	editor.call("_set_resource_tab", "chip")
+	_check(relocated_bridge.visible and not relocated_bridge.get_node("Slots/CrewRow").visible and relocated_bridge.get_node("Slots/ChipRow").visible, "Chip tab displays chip slots below left inventory")
+	editor.call("_set_resource_tab", "module")
+	_check(not relocated_bridge.visible, "Returning to module tab hides bridge slots")
 	var launch_button: Button = editor.get_node("WorkSections/Header/ReturnButton")
 	_check(launch_button.get_global_rect().end.y <= root.get_visible_rect().end.y, "Editor battle entry must fit inside the viewport")
 	editor.call("_start_battle")
