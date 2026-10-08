@@ -608,7 +608,7 @@ func _test_saved_design_and_editor() -> void:
 	root.add_child(editor)
 	current_scene = editor
 	await process_frame
-	var relocated_bridge := editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel")
+	var relocated_bridge: Control = editor.get_node("WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgePanel") as Control
 	_check(not relocated_bridge.visible and editor.get("active_resource_tab") == "module", "Module tab hides left-side bridge slots")
 	editor.call("_set_resource_tab", "crew")
 	_check(relocated_bridge.visible and relocated_bridge.get_node("Slots/CrewRow").visible and not relocated_bridge.get_node("Slots/ChipRow").visible, "Crew tab displays crew slots below left inventory")
