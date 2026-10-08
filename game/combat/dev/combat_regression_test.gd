@@ -327,7 +327,7 @@ func _test_editor_roundtrip() -> void:
 	root.add_child(editor)
 	current_scene = editor
 	await process_frame
-	var launch: Button = editor.get_node("MainLayout/RightPanel/RightMargin/RightVBox/BattleButton")
+	var launch: Button = editor.get_node("WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton")
 	_check(root.get_visible_rect().encloses(launch.get_global_rect()), "Editor save/return button must remain visible")
 	launch.pressed.emit()
 	_check(current_scene == editor, "Invalid editor design must be rejected before leaving")
