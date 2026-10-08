@@ -9,8 +9,8 @@ static func build() -> RunRouteDefinition:
 	var data := [
 		[&"shop", "贸易空间站", RunRouteNodeDefinition.NodeType.SHOP, "res://data/shops/basic_shop.tres"],
 		[&"station", "维修改装站", RunRouteNodeDefinition.NodeType.REFIT, "res://data/stations/basic_station.tres"],
-		[&"battle_1", "敌对舰队", RunRouteNodeDefinition.NodeType.BATTLE, "res://data/battles/stage_001/battle.tres"],
-		[&"battle_2", "第二战", RunRouteNodeDefinition.NodeType.BATTLE, "res://data/battles/stage_002/battle.tres"],
+		[&"battle_1", "测试普通战", RunRouteNodeDefinition.NodeType.BATTLE, "res://data/battles/test_normal/battle.tres"],
+		[&"battle_2", "测试精英战", RunRouteNodeDefinition.NodeType.BATTLE, "res://data/battles/test_elite/battle.tres"],
 		[&"end", "航线终点", RunRouteNodeDefinition.NodeType.END, ""]
 	]
 	for i in range(data.size()):
