@@ -35,6 +35,16 @@ func _run() -> void:
 
 	run_state.call("reset_run")
 	var design := Battle.build_starter_design()
+	# Fixed testing map starts at the shop, then station, then battles.
+	var fixed_route := RouteTestMap.build()
+	_check(fixed_route.is_valid() and fixed_route.nodes.size() == 5, "Fixed test route must have five valid nodes")
+	_check(bool(run_state.call("start_run_with_test_route", design)), "Test route must start without ship editor")
+	_check((run_state.call("get_current_route_node") as RunRouteNodeDefinition).node_type == RunRouteNodeDefinition.NodeType.SHOP, "Test route must enter shop first")
+	_check(bool(run_state.call("complete_current_route_node")), "Shop test node must complete")
+	_check(bool(run_state.call("select_route_node", &"station")), "Next test node must be station")
+	_check(bool(run_state.call("complete_current_route_node")), "Station test node must complete")
+	_check(bool(run_state.call("select_route_node", &"battle_1")), "Battle must be selected directly after shop and station")
+	run_state.call("reset_run")
 	var cannon_definition := ShopItemDefinition.DATABASE.get_by_id(&"weapon_cannon") as WeaponModuleDefinition
 	_check(cannon_definition != null and cannon_definition.icon_texture != null and cannon_definition.get_display_texture() == cannon_definition.icon_texture and cannon_definition.get_display_texture() != cannon_definition.texture, "Weapon cannon must use a dedicated combined UI icon instead of its base texture")
 	var icon_image := Image.new()
