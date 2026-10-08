@@ -617,6 +617,21 @@ func _test_saved_design_and_editor() -> void:
 	var editable_design := _design()
 	editor.get_node("WorkSections/TopSection/MainLayout/Center/Grid").set_ship(editable_design)
 	var editor_grid := editor.grid as ShipGridView
+	# Mouse wheel zoom must preserve the grid cell beneath the cursor.
+	var zoom_anchor := editor_grid.grid_to_screen(Vector2i(2, 3)) + Vector2.ONE * editor_grid.get_cell_size() * 0.5
+	var anchor_cell := editor_grid.screen_to_grid(zoom_anchor)
+	editor_grid.zoom_at(zoom_anchor, 1)
+	_check(editor_grid.zoom > 1.0 and editor_grid.screen_to_grid(zoom_anchor) == anchor_cell, "Wheel up zooms in while preserving the hovered grid cell")
+	editor_grid.zoom_at(zoom_anchor, -1)
+	_check(is_equal_approx(editor_grid.zoom, 1.0) and editor_grid.screen_to_grid(zoom_anchor) == anchor_cell, "Wheel down restores zoom and hovered grid cell")
+	for step in range(30):
+		editor_grid.zoom_at(zoom_anchor, -1)
+	_check(is_equal_approx(editor_grid.zoom, editor_grid.MIN_ZOOM), "Wheel zoom must respect minimum scale")
+	for step in range(60):
+		editor_grid.zoom_at(zoom_anchor, 1)
+	_check(is_equal_approx(editor_grid.zoom, editor_grid.MAX_ZOOM), "Wheel zoom must respect maximum scale")
+	editor_grid.center_view()
+	_check(is_equal_approx(editor_grid.zoom, 1.0) and editor_grid.pan_offset == Vector2.ZERO, "Center view restores default zoom and pan")
 	var weapon_preview := editor_grid.get_preview_textures(DATABASE.get_by_id(&"weapon_cannon"))
 	_check(
 		weapon_preview["base"] != null and weapon_preview["turret"] != null,
