@@ -196,4 +196,3 @@ func _open_editor() -> void:
 	if run_state != null and bool(run_state.call("is_route_active")):
 		get_tree().set_meta(RUN_REFIT_META, true)
 	get_tree().change_scene_to_file(EDITOR_SCENE_PATH)
-
