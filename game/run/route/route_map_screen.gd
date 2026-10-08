@@ -16,7 +16,6 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var warehouse_button: Button = $Margin/Layout/Actions/Warehouse
 
 const NODE_SCENE := preload("res://game/run/route/route_node_view.tscn")
-const BACKGROUND_ART := preload("res://data/assets/ui/star_map_background.svg")
 const NODE_SIZE := Vector2(160, 90)
 const MAP_PADDING := Vector2(100, 90)
 var map_content_size := Vector2.ZERO
@@ -57,7 +56,7 @@ func _refresh() -> void:
 	_rebuild_map(route)
 
 func _rebuild_map(route: RunRouteDefinition) -> void:
-	var procedural := route.route_id == &"generated_sector" or route.route_id == &"fixed_test_sector"
+	var highlighted_route := route.route_id == &"generated_sector" or route.route_id == &"fixed_test_sector"
 	map_content_size = _calculate_map_content_size(route)
 	_update_map_size()
 	for child in map_area.get_children():
@@ -76,8 +75,6 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 		completed = run_state.get("completed_route_nodes")
 		current_id = StringName(run_state.get("current_route_node_id"))
 
-	if procedural:
-		_draw_starfield(map_area.custom_minimum_size)
 	for raw_node in route.nodes:
 		var node := raw_node as RunRouteNodeDefinition
 		if node == null:
@@ -87,11 +84,11 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 			if next_node == null:
 				continue
 			var line := Line2D.new()
-			line.width = 5.0 if procedural else 3.0
+			line.width = 5.0 if highlighted_route else 3.0
 			line.antialiased = true
 			var traveled := completed.has(node.node_id) and (completed.has(next_id) or current_id == next_id)
 			var reachable := available.has(next_id) and current_id == node.node_id
-			line.default_color = (Color(0.15, 0.95, 1.0, 0.95) if traveled else Color(0.18, 0.75, 0.92, 0.85) if reachable else Color(0.17, 0.38, 0.53, 0.55)) if procedural else Color(0.4, 0.45, 0.55, 0.7)
+			line.default_color = (Color(0.15, 0.95, 1.0, 0.95) if traveled else Color(0.18, 0.75, 0.92, 0.85) if reachable else Color(0.17, 0.38, 0.53, 0.55)) if highlighted_route else Color(0.4, 0.45, 0.55, 0.7)
 			line.points = PackedVector2Array([
 				node.map_position + NODE_SIZE * 0.5,
 				next_node.map_position + NODE_SIZE * 0.5
@@ -121,36 +118,6 @@ func _update_map_size() -> void:
 	if not is_node_ready():
 		return
 	map_area.custom_minimum_size = Vector2(maxf(map_content_size.x, map_scroll.size.x), maxf(map_content_size.y, map_scroll.size.y))
-
-func _draw_starfield(canvas_size: Vector2) -> void:
-	# Background artwork is a separate static texture, with optional dynamic debris on top.
-	var background := TextureRect.new()
-	background.texture = BACKGROUND_ART
-	background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	background.stretch_mode = TextureRect.STRETCH_SCALE
-	background.position = Vector2.ZERO
-	background.size = canvas_size
-	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	map_area.add_child(background)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 81421
-	for i in range(85):
-		var dot := ColorRect.new()
-		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		dot.position = Vector2(rng.randf_range(0, canvas_size.x), rng.randf_range(0, canvas_size.y))
-		var radius := float(rng.randi_range(1, 3))
-		dot.size = Vector2(radius, radius)
-		dot.color = Color(0.35, 0.82, 1.0, rng.randf_range(0.15, 0.65))
-		map_area.add_child(dot)
-	for i in range(24):
-		var asteroid := ColorRect.new()
-		asteroid.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		asteroid.position = Vector2(rng.randf_range(0, 2045), rng.randf_range(0, 530))
-		var size := float(rng.randi_range(4, 12))
-		asteroid.size = Vector2(size, size)
-		asteroid.color = Color("#30445e")
-		map_area.add_child(asteroid)
-
 
 func _get_node_tooltip(node: RunRouteNodeDefinition) -> String:
 	match node.node_type:
