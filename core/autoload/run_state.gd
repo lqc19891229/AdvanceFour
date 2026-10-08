@@ -62,6 +62,19 @@ func start_run_with_route(ship: ShipData, route_path: String) -> bool:
 	current_battle_path = start_node.target_path if start_node.node_type == RunRouteNodeDefinition.NodeType.BATTLE else ""
 	return true
 
+func start_run_with_generated_route(ship: ShipData, seed_value: int = -1) -> bool:
+	if not start_run_with_route(ship, "res://data/routes/prototype_route.tres"):
+		return false
+	var generated := RouteMapGenerator.generate(seed_value)
+	if generated == null or not generated.is_valid():
+		reset_run()
+		return false
+	route_definition = generated
+	current_route_node_id = generated.start_node_id
+	completed_route_nodes.clear()
+	return true
+
+
 func is_route_active() -> bool:
 	return run_active and route_definition != null and current_route_node_id != &""
 
@@ -141,7 +154,10 @@ func update_current_ship(ship: ShipData) -> bool:
 func commit_victory(result: BattleResult) -> bool:
 	if not run_active or result == null or not result.is_victory() or result.ship_after_battle == null:
 		return false
-	if result.battle_id != &"" and completed_battles.has(result.battle_id):
+	if is_route_active():
+		if is_current_route_node_complete():
+			return false
+	elif result.battle_id != &"" and completed_battles.has(result.battle_id):
 		return false
 	var copy := _clone_ship(result.ship_after_battle)
 	if copy == null:
@@ -151,7 +167,7 @@ func commit_victory(result: BattleResult) -> bool:
 	parts += maxi(result.reward_parts, 0)
 	hull_stock += maxi(result.reward_hull_cells, 0)
 	result.initialize_loot_state()
-	if result.battle_id != &"" and not completed_battles.has(result.battle_id):
+	if not is_route_active() and result.battle_id != &"" and not completed_battles.has(result.battle_id):
 		completed_battles.append(result.battle_id)
 	last_result = result
 	battle_entry_ship = null

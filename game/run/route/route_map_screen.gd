@@ -38,10 +38,23 @@ func _refresh() -> void:
 		int(run_state.call("get_warehouse_capacity")),
 		"无" if current == null else current.display_name
 	]
-	hint.text = "选择高亮节点继续前进。路线一旦选择，本层另一分支将不可返回。"
+	hint.text = "拖动横向滚动条探索星图；选择青色节点跃迁。航线不可回退。" if route.route_id == &"generated_sector" else "选择高亮节点继续前进。路线一旦选择，本层另一分支将不可返回。"
 	_rebuild_map(route)
 
 func _rebuild_map(route: RunRouteDefinition) -> void:
+	var procedural := route.route_id == &"generated_sector"
+	if procedural and map_area.get_parent() is not ScrollContainer:
+		var frame := map_area.get_parent()
+		var scroller := ScrollContainer.new()
+		scroller.name = "StarMapScroll"
+		scroller.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroller.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		scroller.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		frame.add_child(scroller)
+		map_area.reparent(scroller)
+	if procedural:
+		map_area.custom_minimum_size = Vector2(2050, 540)
 	for child in map_area.get_children():
 		map_area.remove_child(child)
 		child.queue_free()
@@ -51,6 +64,8 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 	var completed: Array = run_state.get("completed_route_nodes")
 	var current_id := StringName(run_state.get("current_route_node_id"))
 
+	if procedural:
+		_draw_starfield()
 	for raw_node in route.nodes:
 		var node := raw_node as RunRouteNodeDefinition
 		if node == null:
@@ -60,8 +75,11 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 			if next_node == null:
 				continue
 			var line := Line2D.new()
-			line.width = 3.0
-			line.default_color = Color(0.4, 0.45, 0.55, 0.7)
+			line.width = 3.0 if procedural else 3.0
+			line.antialiased = true
+			var traveled := completed.has(node.node_id) and (completed.has(next_id) or current_id == next_id)
+			var reachable := available.has(next_id) and current_id == node.node_id
+			line.default_color = (Color(0.15, 0.95, 1.0, 0.95) if traveled else Color(0.18, 0.75, 0.92, 0.85) if reachable else Color(0.17, 0.38, 0.53, 0.55)) if procedural else Color(0.4, 0.45, 0.55, 0.7)
 			line.points = PackedVector2Array([
 				node.map_position + Vector2(65, 25),
 				next_node.map_position + Vector2(65, 25)
@@ -87,7 +105,53 @@ func _rebuild_map(route: RunRouteDefinition) -> void:
 		button.disabled = not available.has(node.node_id)
 		button.tooltip_text = _get_node_tooltip(node)
 		button.pressed.connect(_select_node.bind(node.node_id))
+		if procedural:
+			_style_holographic_node(button, node, completed.has(node.node_id), available.has(node.node_id), node.node_id == current_id)
 		map_area.add_child(button)
+
+
+func _draw_starfield() -> void:
+	# Lightweight, deterministic starfield; no external textures are needed.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 81421
+	for i in range(115):
+		var dot := ColorRect.new()
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dot.position = Vector2(rng.randf_range(0, 2040), rng.randf_range(4, 525))
+		var radius := rng.randf_range(1.0, 2.5)
+		dot.size = Vector2(radius, radius)
+		dot.color = Color(0.35, 0.82, 1.0, rng.randf_range(0.15, 0.55))
+		map_area.add_child(dot)
+
+
+func _style_holographic_node(button: Button, node: RunRouteNodeDefinition, visited: bool, selectable: bool, current: bool) -> void:
+	var tint := Color("#36566c")
+	if visited:
+		tint = Color("#29a7b9")
+	elif selectable:
+		tint = Color("#37eaff")
+	elif current:
+		tint = Color("#86efff")
+	elif node.node_type == RunRouteNodeDefinition.NodeType.END:
+		tint = Color("#e78a74")
+	var panel := StyleBoxFlat.new()
+	panel.bg_color = Color(0.025, 0.085, 0.15, 0.94)
+	panel.border_color = tint
+	panel.set_border_width_all(2)
+	panel.set_corner_radius_all(12)
+	panel.shadow_color = Color(tint.r, tint.g, tint.b, 0.24 if selectable else 0.08)
+	panel.shadow_size = 8 if selectable else 3
+	button.add_theme_stylebox_override("normal", panel)
+	button.add_theme_stylebox_override("disabled", panel)
+	var hovered := panel.duplicate() as StyleBoxFlat
+	hovered.bg_color = Color(0.07, 0.24, 0.34, 0.98)
+	button.add_theme_stylebox_override("hover", hovered)
+	button.add_theme_stylebox_override("pressed", hovered)
+	button.add_theme_color_override("font_color", tint)
+	button.add_theme_color_override("font_disabled_color", tint)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_font_size_override("font_size", 13)
+
 
 func _get_node_tooltip(node: RunRouteNodeDefinition) -> String:
 	match node.node_type:
