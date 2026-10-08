@@ -5,7 +5,8 @@ enum NodeType {
 	BATTLE,
 	SHOP,
 	REFIT,
-	END
+	END,
+	TAVERN
 }
 
 @export var node_id: StringName = &""
@@ -18,7 +19,7 @@ enum NodeType {
 func is_valid() -> bool:
 	if node_id == &"" or display_name.strip_edges().is_empty():
 		return false
-	if node_type in [NodeType.BATTLE, NodeType.SHOP, NodeType.REFIT] and target_path.is_empty():
+	if node_type in [NodeType.BATTLE, NodeType.SHOP, NodeType.REFIT, NodeType.TAVERN] and target_path.is_empty():
 		return false
 	if node_type == NodeType.END and not target_path.is_empty():
 		return false
@@ -32,7 +33,7 @@ func get_invalid_reason() -> String:
 	if display_name.strip_edges().is_empty():
 		return "节点名称不能为空。"
 	if node_type in [NodeType.BATTLE, NodeType.SHOP, NodeType.REFIT] and target_path.is_empty():
-		return "战斗 / 商店 / 空间站节点必须配置 target_path。"
+		return "战斗 / 商店 / 空间站 / 酒馆节点必须配置 target_path。"
 	if node_type == NodeType.END and not target_path.is_empty():
 		return "终点节点不能配置 target_path。"
 	if not target_path.is_empty() and not ResourceLoader.exists(target_path):
@@ -47,6 +48,8 @@ func get_type_label() -> String:
 			return "商店"
 		NodeType.REFIT:
 			return "空间站"
+		NodeType.TAVERN:
+			return "酒馆"
 		NodeType.END:
 			return "终点"
 	return "未知"

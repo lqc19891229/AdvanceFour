@@ -12,6 +12,7 @@ target_filter = &"ALL"
 [resource]
 script = ExtResource("2_tadql")
 crew_id = &"crew_human_01"
+price = 80
 display_name = "莱恩"
 description = "改善武器射程"
 modifiers = Array[ExtResource("1_4ad82")]([SubResource("Resource_ilnv8")])

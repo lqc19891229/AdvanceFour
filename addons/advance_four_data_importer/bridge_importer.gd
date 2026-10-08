@@ -60,6 +60,7 @@ static func _save_definitions(payload: Dictionary) -> bool:
 		chip.display_name = row["display_name"]
 		chip.description = row["description"]
 		chip.rarity = StringName(row["rarity"])
+		chip.price = int(row["price"])
 		var icon := String(row["icon_path"])
 		if not icon.is_empty():
 			chip.icon = load(icon) as Texture2D
@@ -77,6 +78,7 @@ static func _save_definitions(payload: Dictionary) -> bool:
 		crew.description = row["description"]
 		crew.race = StringName(row["race"])
 		crew.rarity = StringName(row["rarity"])
+		crew.price = int(row["price"])
 		var portrait := String(row["portrait_path"])
 		if not portrait.is_empty():
 			crew.portrait = load(portrait) as Texture2D

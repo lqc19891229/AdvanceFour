@@ -14,6 +14,7 @@ target_filter = &"ALL"
 [sub_resource type="Resource" id="Resource_qky3m"]
 script = ExtResource("1_v5a56")
 chip_id = &"chip_fire_01"
+price = 80
 display_name = "火控强化 I"
 description = "全舰武器伤害提高"
 modifiers = Array[ExtResource("2_anmyd")]([SubResource("Resource_8r3nf")])
@@ -27,6 +28,7 @@ target_filter = &"ALL"
 [sub_resource type="Resource" id="Resource_4j43c"]
 script = ExtResource("1_v5a56")
 chip_id = &"chip_energy_01"
+price = 90
 display_name = "反应堆优化"
 description = "能源输出提高"
 modifiers = Array[ExtResource("2_anmyd")]([SubResource("Resource_3gkcs")])
@@ -40,6 +42,7 @@ target_filter = &"ALL"
 [sub_resource type="Resource" id="Resource_26gbt"]
 script = ExtResource("3_yim0j")
 crew_id = &"crew_human_01"
+price = 80
 display_name = "莱恩"
 description = "改善武器射程"
 modifiers = Array[ExtResource("2_anmyd")]([SubResource("Resource_ilnv8")])
@@ -53,6 +56,7 @@ target_filter = &"ALL"
 [sub_resource type="Resource" id="Resource_qwhn8"]
 script = ExtResource("3_yim0j")
 crew_id = &"crew_machine_01"
+price = 150
 display_name = "AX-07"
 description = "提高武器伤害"
 race = &"MACHINE"

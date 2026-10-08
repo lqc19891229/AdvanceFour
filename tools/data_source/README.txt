@@ -8,7 +8,7 @@
 目前的数据文件：
 - module_data.xlsx：飞船模块数值、尺寸、贴图、武器炮塔配置及 Core 舰桥容量。
 - battle_data.xlsx：战斗关卡与敌人波次配置。
-- bridge_data.xlsx：芯片（Chips）与机组人员（Crew）定义及各自内嵌的 effects 数组。
+- bridge_data.xlsx：芯片（Chips）与机组人员（Crew）定义、能量结晶购买价格（price）及各自内嵌的 effects 数组。
 - bridge_data_README.txt：舰桥表字段、效果写法及排错说明。
 - README.txt：本文件，介绍目录职责和通用工作流。
 
@@ -162,3 +162,5 @@ value 必须是有限数值，且绝对值不能超过 100000。
 当前功能边界：V1.0 提供策划数据、解析校验、Resource 导入。尚未实现舰桥管理界面、Run 中的装配操作和战斗效果结算。
 详细的其它数据源流程见同目录 README.txt。
 
+
+V1.3 价格规则：Chips 和 Crew 两个 Sheet 均需添加 price 正整数列。芯片商店售价与酒馆招募价格直接读取 BridgeDefinition.price，不得在商店/酒馆资源里重复设置。

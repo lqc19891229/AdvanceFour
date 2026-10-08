@@ -112,7 +112,7 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	content.add_child(type_label)
 
 	var price_label := Label.new()
-	price_label.text = "%d 能量结晶" % item.price_energy_crystals
+	price_label.text = "%d 能量结晶" % item.get_price()
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(price_label)
 
@@ -146,6 +146,9 @@ func _refresh_inventory() -> void:
 			var name := String(module_id) if definition == null else definition.display_name
 			parts.append("%s ×%d" % [name, int(inventory[module_id])])
 		lines.append("模块：" + "｜".join(parts))
+	var chips: Dictionary = run_state.get("bridge_chip_inventory")
+	for chip_id in chips:
+		lines.append("芯片 %s ×%d" % [String(chip_id), int(chips[chip_id])])
 	inventory_label.text = "\n".join(lines)
 
 func _purchase_slot(slot_index: int) -> void:

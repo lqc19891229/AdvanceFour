@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TavernDefinition" format=3]
+
+[ext_resource type="Script" path="res://data/definitions/run/tavern_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tavern_id = &"basic_tavern"
+display_name = "星际酒馆"
+candidate_count = 2
+recruit_pool = Array[StringName]([&"crew_human_01", &"crew_machine_01"])

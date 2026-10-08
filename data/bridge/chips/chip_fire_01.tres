@@ -12,6 +12,7 @@ target_filter = &"ALL"
 [resource]
 script = ExtResource("2_bml4b")
 chip_id = &"chip_fire_01"
+price = 80
 display_name = "火控强化 I"
 description = "全舰武器伤害提高"
 modifiers = Array[ExtResource("1_mg3xb")]([SubResource("Resource_8r3nf")])

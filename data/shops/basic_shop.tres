@@ -65,8 +65,22 @@ hull_cells = 1
 price_energy_crystals = 25
 shop_groups = Array[StringName]([&"structure"])
 
+[sub_resource type="Resource" id="FireChip"]
+script = ExtResource("2")
+item_id = &"chip_fire"
+display_name = "火控芯片"
+chip_id = &"chip_fire_01"
+shop_groups = Array[StringName]([&"combat", &"utility"])
+
+[sub_resource type="Resource" id="EnergyChip"]
+script = ExtResource("2")
+item_id = &"chip_energy"
+display_name = "能源芯片"
+chip_id = &"chip_energy_01"
+shop_groups = Array[StringName]([&"systems", &"utility"])
+
 [resource]
 script = ExtResource("1")
 shop_id = &"basic_shop"
 display_name = "补给商店"
-items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("CargoHold"), SubResource("Hull")])
+items = Array[Resource]([SubResource("Armor"), SubResource("Cannon"), SubResource("Engine"), SubResource("Reactor"), SubResource("Radar"), SubResource("CargoHold"), SubResource("Hull"), SubResource("FireChip"), SubResource("EnergyChip")])
