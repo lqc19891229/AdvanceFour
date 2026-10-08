@@ -25,6 +25,7 @@ spawn_interval_seconds = 0.9
 [resource]
 script = ExtResource("1")
 battle_id = &"stage_002"
+difficulty_tier = 2
 display_name = "第二战"
 waves = Array[Resource]([SubResource("Wave1"), SubResource("Wave2"), SubResource("Wave3")])
 preparation_seconds = 2.0
