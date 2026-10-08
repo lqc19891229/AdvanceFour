@@ -304,7 +304,7 @@ func _run() -> void:
 	var shop_screen := shop_scene.instantiate() as Control
 	root.add_child(shop_screen)
 	await process_frame
-	var shop_slots_ui := shop_screen.get_node("Center/Panel/Margin/Content/Slots") as HBoxContainer
+	var shop_slots_ui := shop_screen.get_node("Center/Panel/Margin/Content/Body/Slots") as HBoxContainer
 	var shop_resources := shop_screen.get_node("Center/Panel/Margin/Content/Credits") as Label
 	_check(shop_slots_ui.get_child_count() == 4 and shop_resources.text.contains("能量结晶：500") and shop_resources.text.contains("零件：0"), "Shop screen must render four product cards and both resource balances")
 	var cannon_icon_item := shop_definition.get_item_by_id(&"cannon")
@@ -334,9 +334,12 @@ func _run() -> void:
 	_check(ids_again == generated_ids, "Refreshing the same shop state must preserve all four generated products")
 	shop_screen.call("_refresh")
 	await process_frame
-	shop_slots_ui = shop_screen.get_node("Center/Panel/Margin/Content/Slots") as HBoxContainer
+	shop_slots_ui = shop_screen.get_node("Center/Panel/Margin/Content/Body/Slots") as HBoxContainer
 	var sold_button := shop_slots_ui.get_child(0).get_node("Margin/Content/Buy") as Button
-	_check(sold_button.disabled and sold_button.text == "SOLD", "Purchased product card must remain SOLD after refresh")
+	_check(not sold_button.disabled and sold_button.text == "SOLD", "Purchased product must remain marked SOLD while allowing detail inspection")
+	shop_screen.call("_select_slot", 0)
+	var sold_detail_action := shop_screen.get_node("Center/Panel/Margin/Content/Body/Details/MarginContainer/Column/Action") as Button
+	_check(sold_detail_action.disabled and sold_detail_action.text == "已售出", "Sold product details must prohibit a second purchase")
 	shop_screen.queue_free()
 	await process_frame
 
@@ -656,7 +659,7 @@ func _run() -> void:
 	_check(is_equal_approx(_first_cell(run_state.get("current_ship") as ShipData).current_hp, 20.0), "Entering station must repair all Hull to full for free")
 	_check(int(run_state.get("parts")) == parts_before_station, "Free station repair must not consume parts")
 	var station_resources := station_screen.get_node("Margin/Layout/Resources") as Label
-	var station_craft_list := station_screen.get_node("Margin/Layout/CraftScroll/CraftList") as VBoxContainer
+	var station_craft_list := station_screen.get_node("Margin/Layout/Body/CraftScroll/CraftList") as VBoxContainer
 	_check(station_resources.text.contains("零件：50") and station_craft_list.get_child_count() == 6, "Station screen must show resources and all craft recipes")
 	for recipe_index in range(station_definition.craft_items.size()):
 		var recipe := station_definition.craft_items[recipe_index]

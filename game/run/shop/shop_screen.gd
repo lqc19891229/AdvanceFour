@@ -5,13 +5,17 @@ var embedded_holo := false
 
 const RESULT_SCENE_PATH := "res://game/run/battle_result/battle_result_screen.tscn"
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
+const CARD_UI := preload("res://game/run/ui/holo_card_ui.gd")
+var selected_slot := -1
+var details: PanelContainer
+
 const FALLBACK_SHOP := preload("res://data/shops/basic_shop.tres")
 
 var shop_definition: ShopDefinition
 
 @onready var title: Label = $Center/Panel/Margin/Content/Title
 @onready var credits_label: Label = $Center/Panel/Margin/Content/Credits
-@onready var slots: HBoxContainer = $Center/Panel/Margin/Content/Slots
+@onready var slots: HBoxContainer = $Center/Panel/Margin/Content/Body/Slots
 @onready var inventory_label: Label = $Center/Panel/Margin/Content/Inventory
 @onready var status_label: Label = $Center/Panel/Margin/Content/Status
 @onready var return_button: Button = $Center/Panel/Margin/Content/Return
@@ -21,6 +25,8 @@ func _run_state() -> Node:
 
 func _ready() -> void:
 	return_button.pressed.connect(_return_from_shop)
+	details = CARD_UI.make_details()
+	$Center/Panel/Margin/Content/Body.add_child(details)
 	shop_definition = _resolve_shop_definition()
 	_refresh()
 
@@ -51,6 +57,7 @@ func _refresh() -> void:
 	credits_label.text = "能量结晶：%d｜零件：%d｜仓库：%d / %d" % [int(run_state.get("energy_crystals")), int(run_state.get("parts")), int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity"))]
 	_refresh_slots()
 	_refresh_inventory()
+	_update_details()
 
 func _refresh_slots() -> void:
 	for child in slots.get_children():
@@ -71,7 +78,8 @@ func _refresh_slots() -> void:
 func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool) -> Control:
 	var panel := PanelContainer.new()
 	panel.name = "Slot%d" % (slot_index + 1)
-	panel.custom_minimum_size = Vector2(235, 300)
+	panel.custom_minimum_size = Vector2(140, 275)
+	CARD_UI.style_card(panel, selected_slot == slot_index)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var margin := MarginContainer.new()
@@ -93,7 +101,7 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	content.add_child(slot_label)
 
 	var texture_rect := TextureRect.new()
-	texture_rect.custom_minimum_size = Vector2(180, 110)
+	texture_rect.custom_minimum_size = Vector2(95, 85)
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.texture = item.get_texture()
@@ -102,7 +110,8 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	var name_label := Label.new()
 	name_label.text = item.display_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 20)
+	name_label.add_theme_font_size_override("font_size", 15)
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(name_label)
 
 	var type_label := Label.new()
@@ -122,12 +131,35 @@ func _build_item_card(item: ShopItemDefinition, slot_index: int, purchased: bool
 	var buy_button := Button.new()
 	buy_button.name = "Buy"
 	buy_button.custom_minimum_size = Vector2(0, 42)
-	buy_button.text = "SOLD" if purchased else "购买"
-	buy_button.disabled = purchased or not bool(_run_state().call("can_purchase_shop_slot", shop_definition, slot_index))
+	buy_button.text = "SOLD" if purchased else "查看详情"
+	buy_button.disabled = false
 	buy_button.tooltip_text = "购买后直接进入当前 Run Inventory。"
-	buy_button.pressed.connect(_purchase_slot.bind(slot_index))
+	buy_button.pressed.connect(_select_slot.bind(slot_index))
 	content.add_child(buy_button)
 	return panel
+
+func _select_slot(index: int) -> void:
+	selected_slot = index
+	_refresh_slots()
+	_update_details()
+
+func _update_details() -> void:
+	if details == null or shop_definition == null:
+		return
+	var state := _run_state()
+	if state == null or not state.run_active:
+		return
+	var items: Array = state.call("get_shop_slots", shop_definition)
+	if selected_slot < 0 or selected_slot >= items.size():
+		CARD_UI.show_details(details, "商品详情", "点击左侧商品查看属性与售价。", "选择商品", false, Callable())
+		return
+	var item := items[selected_slot] as ShopItemDefinition
+	if item == null:
+		return
+	var purchased := bool(state.call("is_shop_slot_purchased", shop_definition, selected_slot))
+	var can_buy := bool(state.call("can_purchase_shop_slot", shop_definition, selected_slot))
+	var info := "%s\n%s\n\n价格：%d 能量结晶\n%s" % [item.get_type_label(), item.get_contents_label(), item.get_price(), "已售出" if purchased else "可购买" if can_buy else "余额不足或仓库空间不足"]
+	CARD_UI.show_details(details, item.display_name, info, "已售出" if purchased else "购买", can_buy, _purchase_slot.bind(selected_slot))
 
 func _refresh_inventory() -> void:
 	var run_state := _run_state()

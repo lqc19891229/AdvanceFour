@@ -6,13 +6,16 @@ var embedded_holo := false
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
 const EDITOR_SCENE_PATH := "res://game/ship/editor/ship_editor.tscn"
 const RUN_REFIT_META := &"run_refit_mode"
+const CARD_UI := preload("res://game/run/ui/holo_card_ui.gd")
+var selected_item: StationCraftItemDefinition
+var details: PanelContainer
 
 var station_definition: StationDefinition
 
 @onready var title: Label = $Margin/Layout/Title
 @onready var resources: Label = $Margin/Layout/Resources
 @onready var repair_status: Label = $Margin/Layout/RepairStatus
-@onready var craft_list: VBoxContainer = $Margin/Layout/CraftScroll/CraftList
+@onready var craft_list: VBoxContainer = $Margin/Layout/Body/CraftScroll/CraftList
 @onready var status: Label = $Margin/Layout/Status
 @onready var refit_button: Button = $Margin/Layout/Actions/Refit
 @onready var leave_button: Button = $Margin/Layout/Actions/Leave
@@ -23,6 +26,8 @@ func _run_state() -> Node:
 func _ready() -> void:
 	refit_button.pressed.connect(_open_refit)
 	leave_button.pressed.connect(_leave_station)
+	details = CARD_UI.make_details()
+	$Margin/Layout/Body.add_child(details)
 	station_definition = _resolve_station_definition()
 	var run_state := _run_state()
 	if run_state != null and run_state.run_active:
@@ -61,6 +66,7 @@ func _refresh() -> void:
 	]
 	repair_status.text = "空间站维护服务：已免费将全部 Hull 恢复至满血。"
 	_rebuild_craft_list()
+	_update_details()
 
 func _clear_craft_list() -> void:
 	for child in craft_list.get_children():
@@ -74,8 +80,12 @@ func _rebuild_craft_list() -> void:
 		var item := raw_item as StationCraftItemDefinition
 		if item == null:
 			continue
+		var panel := PanelContainer.new()
+		CARD_UI.style_card(panel, selected_item == item)
+		panel.custom_minimum_size.y = 66
+		craft_list.add_child(panel)
 		var row := HBoxContainer.new()
-		row.custom_minimum_size = Vector2(0, 54)
+		panel.add_child(row)
 		var texture := TextureRect.new()
 		texture.custom_minimum_size = Vector2(48, 48)
 		texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -93,12 +103,28 @@ func _rebuild_craft_list() -> void:
 		row.add_child(label)
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(120, 44)
-		button.text = "制造"
-		button.disabled = not bool(run_state.call("can_craft_station_item", item))
+		button.text = "查看"
+		button.disabled = false
 		button.tooltip_text = "零件不足或仓库空间不足时无法制造。"
-		button.pressed.connect(_craft.bind(item))
+		button.pressed.connect(_select_item.bind(item))
 		row.add_child(button)
-		craft_list.add_child(row)
+
+func _select_item(item: StationCraftItemDefinition) -> void:
+	selected_item = item
+	_rebuild_craft_list()
+	_update_details()
+
+func _update_details() -> void:
+	if details == null:
+		return
+	var state := _run_state()
+	if selected_item == null or state == null:
+		CARD_UI.show_details(details, "制造详情", "选择左侧模块查看制造成本与仓储需求。", "选择模块", false, Callable())
+		return
+	var can_craft := bool(state.call("can_craft_station_item", selected_item))
+	var storage := int(state.call("get_module_storage_cost", selected_item.module_id, selected_item.module_count))
+	var info := "%s\n制造成本：%d 零件\n仓储占用：%d\n\n%s" % [selected_item.get_contents_label(), selected_item.parts_cost, storage, "可以制造" if can_craft else "零件不足或仓库空间不足"]
+	CARD_UI.show_details(details, selected_item.display_name, info, "制造", can_craft, _craft.bind(selected_item))
 
 func _craft(item: StationCraftItemDefinition) -> void:
 	var run_state := _run_state()

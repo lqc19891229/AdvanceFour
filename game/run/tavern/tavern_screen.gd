@@ -3,6 +3,10 @@ extends Control
 signal close_requested
 var embedded_holo := false
 
+const CARD_UI := preload("res://game/run/ui/holo_card_ui.gd")
+var selected_index := -1
+var details: PanelContainer
+
 const MAP := "res://game/run/route/route_map_screen.tscn"
 
 var heading: Label
@@ -29,9 +33,20 @@ func _ready() -> void:
 	layout.add_child(heading)
 	balance = Label.new()
 	layout.add_child(balance)
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 14)
+	layout.add_child(body)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size.x = 550
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(scroll)
 	list = VBoxContainer.new()
-	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	layout.add_child(list)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 10)
+	scroll.add_child(list)
+	details = CARD_UI.make_details()
+	body.add_child(details)
 	feedback = Label.new()
 	layout.add_child(feedback)
 	var leave := Button.new()
@@ -59,20 +74,47 @@ func _refresh() -> void:
 		var crew := db.find_crew(id)
 		if crew == null:
 			continue
+		var panel := PanelContainer.new()
+		CARD_UI.style_card(panel, selected_index == i)
+		panel.custom_minimum_size.y = 94
+		list.add_child(panel)
 		var entry := HBoxContainer.new()
-		entry.custom_minimum_size.y = 76
-		list.add_child(entry)
+		panel.add_child(entry)
 		var description := Label.new()
 		description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		description.text = "%s  |  %s  |  %s  |  %d 能量结晶\n%s" % [crew.display_name, String(crew.race), String(crew.rarity), crew.price, crew.description]
 		entry.add_child(description)
 		var button := Button.new()
 		var hired := bool(state.call("is_tavern_candidate_hired", i))
-		button.text = "已招募" if hired else "招募"
-		button.disabled = hired or not bool(state.call("can_hire_tavern_crew", i))
+		button.text = "查看详情"
+		button.disabled = false
 		button.custom_minimum_size.x = 120
-		button.pressed.connect(_hire.bind(i))
+		button.pressed.connect(_select_candidate.bind(i))
 		entry.add_child(button)
+	_update_details()
+
+func _select_candidate(index: int) -> void:
+	selected_index = index
+	_refresh()
+
+func _update_details() -> void:
+	if details == null:
+		return
+	var state := _state()
+	if state == null or not bool(state.call("is_current_tavern_active")):
+		return
+	var candidates: Array = state.call("get_tavern_candidates")
+	if selected_index < 0 or selected_index >= candidates.size():
+		CARD_UI.show_details(details, "机组详情", "选择左侧人物，查看种族、品质、说明和招募价格。", "选择机组", false, Callable())
+		return
+	var db := preload("res://data/bridge/bridge_database.tres") as BridgeDatabase
+	var crew := db.find_crew(StringName(candidates[selected_index]))
+	if crew == null:
+		return
+	var hired := bool(state.call("is_tavern_candidate_hired", selected_index))
+	var can_hire := bool(state.call("can_hire_tavern_crew", selected_index))
+	var info := "种族：%s\n品质：%s\n\n%s\n\n招募价格：%d 能量结晶\n%s" % [String(crew.race), String(crew.rarity), crew.description, crew.price, "已招募" if hired else "可以招募" if can_hire else "能量结晶不足"]
+	CARD_UI.show_details(details, crew.display_name, info, "已招募" if hired else "招募", can_hire, _hire.bind(selected_index))
 
 func _hire(index: int) -> void:
 	if bool(_state().call("hire_tavern_crew", index)):
