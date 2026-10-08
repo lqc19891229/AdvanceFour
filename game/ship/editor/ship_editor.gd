@@ -4,9 +4,7 @@ const SAVE_PATH := "user://ships/test_ship.json"
 const RUNTIME_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
 const BATTLE_SCENE_PATH := "res://game/combat/battle.tscn"
 const FIRST_BATTLE_DEFINITION_PATH := "res://data/battles/stage_001/battle.tres"
-const PROTOTYPE_ROUTE_PATH := "res://data/routes/prototype_route.tres"
 const ROUTE_MAP_SCENE_PATH := "res://game/run/route/route_map_screen.tscn"
-const BATTLE_DEFINITION_META := &"battle_definition_path"
 const RUN_REFIT_META := &"run_refit_mode"
 
 @onready var grid: ShipGridView = $WorkSections/TopSection/MainLayout/Center/Grid
@@ -15,8 +13,15 @@ const RUN_REFIT_META := &"run_refit_mode"
 @onready var speed_label: Label = $WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/SpeedLabel
 @onready var status_label: Label = $BottomBar/BottomMargin/StatusLabel
 @onready var selected_label: Label = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/SelectedLabel
+@onready var bridge_panel: Control = $WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BridgePanel
+@onready var module_scroll: ScrollContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll
+@onready var bridge_inventory_host: VBoxContainer = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/BridgeInventoryHost
+@onready var modules_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/ModulesTab
+@onready var crew_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/CrewTab
+@onready var chips_tab: Button = $WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs/ChipsTab
 
 var run_refit_mode := false
+var active_resource_tab := "module"
 
 func _run_state() -> Node:
 	return get_node_or_null("/root/RunState")
@@ -25,20 +30,24 @@ func _ready() -> void:
 	var required_paths := [
 		"WorkSections/TopSection/MainLayout/Center/Grid",
 		"WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/ModuleScroll/ModuleButtons",
-		"WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton",
+		"WorkSections/Header/ReturnButton",
 		"WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/StatsScroll/StatsLabel",
-		"WorkSections/BridgeSection/BridgePanel",
+		"WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BridgePanel",
 		"BottomBar/BottomMargin/StatusLabel",
 	]
 	for path in required_paths:
 		if get_node_or_null(NodePath(path)) == null:
 			push_error("ShipEditor scene/script mismatch: missing '%s' in '%s'. Open res://game/ship/editor/ship_editor.tscn and confirm it matches ship_editor.gd; reload the project after updating Git." % [path, get_path()])
 			return
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "保存飞船并返回星图"
 	_build_module_buttons()
 	_bind_common_buttons()
 	grid.ship_changed.connect(_on_grid_ship_changed)
-	$WorkSections/BridgeSection/BridgePanel.bind_editor(grid, _run_state())
+	bridge_panel.bind_editor(grid, _run_state())
+	bridge_panel.get_node("Inventory").reparent(bridge_inventory_host)
+	modules_tab.pressed.connect(_set_resource_tab.bind("module"))
+	crew_tab.pressed.connect(_set_resource_tab.bind("crew"))
+	chips_tab.pressed.connect(_set_resource_tab.bind("chip"))
+	_set_resource_tab("module")
 	grid.selected_module_changed.connect(_on_selected_module_changed)
 	grid.status_message.connect(_show_status)
 	_refresh_selected_label()
@@ -50,16 +59,9 @@ func _ready() -> void:
 		if run_refit_mode:
 			grid.set_run_inventory_enabled(true)
 			_load_run_ship()
-			var current_node := _run_state().call("get_current_route_node") as RunRouteNodeDefinition
-			if bool(_run_state().call("is_route_active")) and current_node != null and current_node.node_type == RunRouteNodeDefinition.NodeType.REFIT:
-				$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "保存飞船并返回星图"
-			else:
-				$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.text = "保存飞船并返回星图"
-			$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.disabled = true
-			$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.disabled = true
 			_refresh_inventory_button_labels()
 			_show_status("Run 整备模式｜能量结晶：%d｜零件：%d｜模块/Hull 安装受库存限制" % [int(_run_state().get("energy_crystals")), int(_run_state().get("parts"))])
-			$WorkSections/BridgeSection/BridgePanel.refresh()
+			bridge_panel.refresh()
 	elif get_tree().has_meta(&"restore_ship_design"):
 		get_tree().remove_meta(&"restore_ship_design")
 		if FileAccess.file_exists(SAVE_PATH):
@@ -71,7 +73,7 @@ func _on_grid_ship_changed() -> void:
 		_run_state().call("update_current_ship", grid.ship)
 	_refresh_stats()
 	_refresh_inventory_button_labels()
-	$WorkSections/BridgeSection/BridgePanel.refresh()
+	bridge_panel.refresh()
 
 func _refresh_inventory_button_labels() -> void:
 	if not run_refit_mode or _run_state() == null:
@@ -171,14 +173,16 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	return "\n".join(lines)
 
 func _bind_common_buttons() -> void:
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/SaveButton.pressed.connect(_save_ship)
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/LoadButton.pressed.connect(_load_ship)
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/MoveButton.pressed.connect(grid.begin_move_selected)
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/RotateButton.pressed.connect(grid.rotate_selection_or_preview)
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/CenterButton.pressed.connect(grid.center_view)
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/ClearButton.pressed.connect(grid.clear_ship)
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/AITestButton.pressed.connect(_start_ai_test)
-	$WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox/BattleButton.pressed.connect(_start_battle)
+	$WorkSections/Header/ReturnButton.pressed.connect(_start_battle)
+
+func _set_resource_tab(kind: String) -> void:
+	active_resource_tab = kind
+	module_scroll.visible = kind == "module"
+	bridge_inventory_host.visible = kind != "module"
+	bridge_panel.set_inventory_filter(kind if kind != "module" else "crew")
+	modules_tab.button_pressed = kind == "module"
+	crew_tab.button_pressed = kind == "crew"
+	chips_tab.button_pressed = kind == "chip"
 
 func _start_battle() -> void:
 	# The editor only edits and saves ships; route selection owns combat entry.

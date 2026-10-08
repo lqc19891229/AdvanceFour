@@ -6,6 +6,7 @@ var ship_grid: ShipGridView
 var run_state: Node
 var selected_kind := ""
 var selected_id := ""
+var inventory_filter := "crew"
 
 @onready var inventory_items: VBoxContainer = $Inventory/InventoryScroll/InventoryItems
 @onready var crew_row: HBoxContainer = $Slots/CrewRow
@@ -15,6 +16,10 @@ var selected_id := ""
 func bind_editor(grid: ShipGridView, state: Node) -> void:
 	ship_grid = grid
 	run_state = state
+	refresh()
+
+func set_inventory_filter(kind: String) -> void:
+	inventory_filter = kind
 	refresh()
 
 func refresh() -> void:
@@ -31,15 +36,17 @@ func refresh() -> void:
 	var crew_count := core.crew_slots if core != null else 0
 	var chip_count := core.chip_slots if core != null else 0
 	var active := run_state != null and bool(run_state.get("run_active"))
-	_add_inventory_heading("机组")
+	if inventory_filter == "crew":
+		_add_inventory_heading("机组")
 	for item in BRIDGE_DB.crew:
 		var count := int(run_state.call("get_bridge_item_count", "crew", String(item.crew_id))) if active else 0
-		if count > 0:
+		if count > 0 and inventory_filter == "crew":
 			_add_inventory_item("crew", String(item.crew_id), item.display_name, count)
-	_add_inventory_heading("芯片")
+	if inventory_filter == "chip":
+		_add_inventory_heading("芯片")
 	for item in BRIDGE_DB.chips:
 		var count := int(run_state.call("get_bridge_item_count", "chip", String(item.chip_id))) if active else 0
-		if count > 0:
+		if count > 0 and inventory_filter == "chip":
 			_add_inventory_item("chip", String(item.chip_id), item.display_name, count)
 	_make_slots(crew_row, "crew", crew_count, "机组")
 	_make_slots(chip_row, "chip", chip_count, "芯片")
@@ -77,7 +84,7 @@ func _make_slots(row: HBoxContainer, kind: String, capacity: int, title: String)
 		if run_state != null and bool(run_state.get("run_active")):
 			id = String(run_state.call("get_bridge_equipped", kind, index))
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(76, 28)
+		button.custom_minimum_size = Vector2(48, 30)
 		button.text = "+" if id.is_empty() else _get_name(kind, id)
 		button.tooltip_text = "点击卸下" if not id.is_empty() else "点击安装"
 		button.pressed.connect(_on_slot_pressed.bind(kind, index, id))

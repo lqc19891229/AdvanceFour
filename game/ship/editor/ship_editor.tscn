@@ -24,22 +24,37 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -48.0
+offset_bottom = -36.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 2
 
+[node name="Header" type="HBoxContainer" parent="WorkSections"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 45)
+
+[node name="EditorTitle" type="Label" parent="WorkSections/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "SHIP EDITOR / 飞船编辑器"
+
+[node name="ReturnButton" type="Button" parent="WorkSections/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(165, 38)
+text = "保存并返回"
+
 [node name="TopSection" type="PanelContainer" parent="WorkSections" unique_id=1488568491]
-custom_minimum_size = Vector2(0, 390)
+custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 4.55
+size_flags_stretch_ratio = 1.0
 
 [node name="MainLayout" type="HBoxContainer" parent="WorkSections/TopSection" unique_id=1503357542]
 layout_mode = 2
 
 [node name="LeftPanel" type="PanelContainer" parent="WorkSections/TopSection/MainLayout" unique_id=1339107356]
-custom_minimum_size = Vector2(154, 0)
+custom_minimum_size = Vector2(265, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Panel")
 
@@ -57,7 +72,30 @@ theme_override_constants/separation = 3
 [node name="Title" type="Label" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=1924441308]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
+text = "资源仓库"
+
+[node name="Tabs" type="HBoxContainer" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox"]
+layout_mode = 2
+
+[node name="ModulesTab" type="Button" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "模块"
+
+[node name="CrewTab" type="Button" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "机组"
+
+[node name="ChipsTab" type="Button" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "芯片"
+
+[node name="BridgeInventoryHost" type="VBoxContainer" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
 
 [node name="SelectedLabel" type="Label" parent="WorkSections/TopSection/MainLayout/LeftPanel/LeftMargin/LeftVBox" unique_id=775045980]
 layout_mode = 2
@@ -79,7 +117,7 @@ size_flags_horizontal = 3
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_bottom = 5
 
 [node name="Grid" type="Control" parent="WorkSections/TopSection/MainLayout/Center" unique_id=1748464696]
 layout_mode = 2
@@ -125,54 +163,9 @@ size_flags_horizontal = 3
 text = "..."
 autowrap_mode = 2
 
-[node name="BattleButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=444833850]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "出航战斗"
-
-[node name="AITestButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=243117368]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "敌舰 AI 测试"
-
-[node name="SaveButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1056825881]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "保存设计"
-
-[node name="LoadButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=664123326]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "加载设计"
-
-[node name="MoveButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1740805426]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "移动已选模块"
-
-[node name="RotateButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=690633682]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "旋转模块（R）"
-
-[node name="CenterButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1744047480]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "视图居中"
-
-[node name="ClearButton" type="Button" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" unique_id=1684689245]
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
-text = "清空飞船"
-
-[node name="BridgeSection" type="PanelContainer" parent="WorkSections" unique_id=1056287592]
-custom_minimum_size = Vector2(0, 138)
+[node name="BridgePanel" parent="WorkSections/TopSection/MainLayout/RightPanel/RightMargin/RightVBox" instance=ExtResource("4_bridge")]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_styles/panel = SubResource("Panel")
-
-[node name="BridgePanel" parent="WorkSections/BridgeSection" unique_id=230267283 instance=ExtResource("4_bridge")]
-layout_mode = 2
 
 [node name="BottomBar" type="PanelContainer" parent="." unique_id=1383893366]
 layout_mode = 1
@@ -180,14 +173,14 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -48.0
+offset_top = -36.0
 grow_horizontal = 2
 grow_vertical = 0
 
 [node name="BottomMargin" type="MarginContainer" parent="BottomBar" unique_id=829487161]
 layout_mode = 2
 theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 12
+theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 8
 
