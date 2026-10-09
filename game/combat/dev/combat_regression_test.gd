@@ -182,6 +182,7 @@ func _test_waves_and_victory() -> void:
 	_check(battle.player.ship_data.is_design_valid(), "No-save battle must load a valid fallback")
 	_check(await _wait_until(func(): return battle.enemies.size() == 1), "First wave must spawn after the preparation timer")
 	_silence(battle.enemies[0])
+	_check(battle.enemies[0].ship_data.is_design_valid() and battle.enemies[0].get_weapon_count() > 0, "Enemies must spawn as valid modular ShipData designs")
 	battle.player.apply_hull_projectile_damage(_core_cell(battle.player), 1.0)
 	_kill(battle.enemies[0])
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.INTERMISSION), "Cleared early wave must enter intermission")
@@ -259,21 +260,21 @@ func _test_friendly_fire() -> void:
 	# This checks collision masks, independently of the ally's moving AI and cell seams.
 	ally.set_physics_process(false)
 	await physics_frame
-	var hp_before := ally.get_hp()
+	var hp_before := ally.get_current_hull_hp()
 	var weapon := shooter.weapon_runtimes[0]
 	shooter.rotation = PI
 	weapon.global_position = ally.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = Vector2.UP.angle_to(Vector2.DOWN)
-	shooter.request_fire()
+	weapon.fire_once()
 	for frame in range(20):
 		await physics_frame
-	_check(ally.get_hp() == hp_before, "Enemy shots must pass through allied Hull without friendly damage")
+	_check(ally.get_current_hull_hp() == hp_before, "Enemy shots must pass through allied Hull without friendly damage")
 	weapon = battle.player.weapon_runtimes[0]
 	battle.player.rotation = PI
 	weapon.global_position = ally.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = ModuleArtLibrary.WEAPON_FORWARD.angle_to(Vector2.DOWN)
-	battle.player.request_fire()
-	_check(await _wait_until(func(): return ally.get_hp() < hp_before), "Player shots must hit the same opposing Hull through battle masks")
+	weapon.fire_once()
+	_check(await _wait_until(func(): return ally.get_current_hull_hp() < hp_before), "Player shots must hit the same opposing Hull through battle masks")
 	# Destroy both sides before resolution in one frame: failure takes precedence.
 	_kill(shooter)
 	_kill(ally)
