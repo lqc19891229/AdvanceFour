@@ -6,6 +6,11 @@
 script = ExtResource("1")
 enemy_id = &"scout"
 display_name = "侦察舰"
-module_ids = Array[StringName]([&"core_bridge", &"energy_smallreactor", &"energy_smallreactor", &"propulsion_smallengine", &"weapon_cannon"])
-module_positions = Array[Vector2i]([Vector2i(0, 0), Vector2i(-1, 1), Vector2i(2, 1), Vector2i(0, 2), Vector2i(0, -1)])
-module_rotations = Array[int]([0, 0, 0, 0, 0])
+collision_radius = 23.0
+max_hp = 70.0
+move_speed = 195.0
+acceleration = 280.0
+turn_speed_degrees = 160.0
+weapon_damage = 6.0
+weapon_interval = 0.9
+muzzle_positions = Array[Vector2]([Vector2(0, -22)])

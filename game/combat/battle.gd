@@ -10,6 +10,8 @@ const BATTLE_DEFINITION_META := &"battle_definition_path"
 const GAME_OVER_SCENE_PATH := "res://game/run/game_over/game_over_screen.tscn"
 const RESULT_SCENE_PATH := "res://game/run/battle_result/battle_result_screen.tscn"
 const SHIP_SCENE := preload("res://game/ship/runtime/ship_runtime.tscn")
+const ENEMY_RUNTIME := preload("res://game/enemy/enemy_runtime.gd")
+const ENEMY_CONTROLLER := preload("res://game/enemy/enemy_controller.gd")
 const DATABASE := preload("res://data/modules/module_database.tres")
 const PLAYER_LAYER := 4
 const ENEMY_LAYER := 8
@@ -22,7 +24,7 @@ const CAMERA_ZOOM_STEP := 1.15
 
 var phase := Phase.PREPARING
 var player: ShipRuntime
-var enemies: Array[ShipRuntime] = []
+var enemies: Array[EnemyRuntime] = []
 var wave_index := -1
 var spawned_in_wave := 0
 var defeated_enemies := 0
@@ -209,22 +211,26 @@ func _spawn_enemy() -> void:
 	if enemy_definition == null:
 		_show_error("当前波次无法解析敌舰配置。")
 		return
-	var enemy_design := enemy_definition.build_design(DATABASE)
-	if enemy_design == null:
-		_show_error("敌舰蓝图无法生成有效飞船：%s" % enemy_definition.display_name)
+	if not enemy_definition.is_valid():
+		_show_error("敌舰配置无效：%s" % enemy_definition.display_name)
 		return
 	var angle := float(wave_index) * 1.1 + TAU * float(spawned_in_wave) / float(wave_count)
 	var location := player.global_position + Vector2.RIGHT.rotated(angle) * maxf(battle_definition.spawn_radius, 180.0)
-	var enemy := _spawn_ship(enemy_design, location, false)
+	var enemy := ENEMY_RUNTIME.new() as EnemyRuntime
+	world.add_child(enemy)
+	enemy.position = location
 	enemy.rotation = Vector2.UP.angle_to(player.global_position - location)
-	var controller := AIShipController.new()
+	enemy.add_to_group(&"enemy_targets")
+	enemy.setup(enemy_definition)
+	enemy.projectile_spawned.connect(_configure_projectile.bind(false))
+	var controller := ENEMY_CONTROLLER.new() as EnemyController
 	enemy.add_child(controller)
 	controller.setup(enemy)
 	enemy.destroyed.connect(_on_enemy_destroyed.bind(enemy))
 	enemies.append(enemy)
 	spawned_in_wave += 1
 
-func _on_enemy_destroyed(enemy: ShipRuntime) -> void:
+func _on_enemy_destroyed(enemy: EnemyRuntime) -> void:
 	if _is_terminal() or not enemies.has(enemy):
 		return
 	enemies.erase(enemy)
