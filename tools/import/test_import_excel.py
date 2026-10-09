@@ -18,6 +18,21 @@ class AuthoringFieldsTest(unittest.TestCase):
         self.assertEqual(parse_size('2x1', '高X宽', 'Weapon', 2, errors, True), (1, 2))
         self.assertEqual(errors, [])
 
+    def test_manually_renamed_weapon_headers(self):
+        # Changing only the Weapon headings must use width x height directly.
+        source = Path(__file__).resolve().parents[1] / "data_source/module_data.xlsx"
+        rows = read_sheet_rows(source, "Weapon")
+        headers = rows[0][:]
+        headers = ["宽X高" if h == "高X宽" else "炮塔宽X高" if h == "炮塔高X宽" else h for h in headers]
+        modified = [headers] + [row[:] for row in rows[1:]]
+        turret_index = headers.index("炮塔宽X高")
+        modified[1][turret_index] = "1x2"
+        errors = []
+        with patch("import_excel.read_sheet_rows", return_value=modified):
+            modules = parse_sheet(source, "Weapon", "WEAPON", "firepower", set(), errors, [])
+        self.assertEqual(errors, [])
+        self.assertEqual(modules[0]["turret_size_cells"], [1, 2])
+
     def test_invalid_sizes(self):
         for text in ("", "0x1", "-1x2", "1.5x2", "1x2x3", "nanx1"):
             errors = []
