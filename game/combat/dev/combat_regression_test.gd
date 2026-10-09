@@ -55,8 +55,12 @@ func _new_battle(counts: Array[int]) -> Battle:
 		_silence(battle.player)
 	return battle
 
-func _silence(ship: EnemyRuntime) -> void:
-	ship.set_physics_process(false)
+func _silence(ship: Node) -> void:
+	if ship is EnemyRuntime:
+		ship.set_physics_process(false)
+	elif ship is ShipRuntime:
+		for weapon in ship.weapon_runtimes:
+			weapon.set_physics_process(false)
 
 func _core_module(ship: ShipRuntime) -> ShipModuleInstance:
 	for module in ship.ship_data.modules:
@@ -83,9 +87,14 @@ func _core_runtime(ship: ShipRuntime) -> HullCellRuntime:
 	var cell := _core_cell(ship)
 	return null if cell == null else ship.get_hull_runtime(cell)
 
-func _kill(ship: EnemyRuntime) -> void:
-	if is_instance_valid(ship):
-		ship.apply_projectile_damage(10000.0)
+func _kill(ship: Node) -> void:
+	if ship is EnemyRuntime:
+		if is_instance_valid(ship):
+			ship.apply_projectile_damage(10000.0)
+	elif ship is ShipRuntime:
+		for cell in _core_cells(ship):
+			if is_instance_valid(ship):
+				ship.apply_hull_projectile_damage(cell, 1000.0)
 
 func _run() -> void:
 	var had_save := FileAccess.file_exists(SAVE_PATH)
@@ -269,7 +278,7 @@ func _test_friendly_fire() -> void:
 	weapon.global_position = ally.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = ModuleArtLibrary.WEAPON_FORWARD.angle_to(Vector2.DOWN)
 	battle.player.request_fire()
-	_check(await _wait_until(func(): return _core_cell(ally).current_hp < hp_before), "Player shots must hit the same opposing Hull through battle masks")
+	_check(await _wait_until(func(): return ally.get_hp() < hp_before), "Player shots must hit the same opposing Hull through battle masks")
 	# Destroy both sides before resolution in one frame: failure takes precedence.
 	_kill(shooter)
 	_kill(ally)
