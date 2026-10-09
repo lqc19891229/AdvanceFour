@@ -6,11 +6,5 @@
 script = ExtResource("1")
 enemy_id = &"scout"
 display_name = "侦察舰"
-collision_radius = 23.0
-max_hp = 70.0
-move_speed = 195.0
-acceleration = 280.0
-turn_speed_degrees = 160.0
-weapon_damage = 6.0
-weapon_interval = 0.9
-muzzle_positions = Array[Vector2]([Vector2(0, -22)])
+approach_distance = 300.0
+retreat_distance = 190.0
