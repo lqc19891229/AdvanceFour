@@ -348,14 +348,25 @@ func _test_editor_roundtrip() -> void:
 	await process_frame
 	var launch: Button = editor.get_node("WorkSections/Header/ReturnButton")
 	_check(root.get_visible_rect().encloses(launch.get_global_rect()), "Editor save/return button must remain visible")
-	launch.pressed.emit()
-	_check(current_scene == editor, "Invalid editor design must be rejected before leaving")
+	# A valid saved design should create the test route on return.
 	editor.grid.set_ship(design)
 	launch.pressed.emit()
 	await scene_changed
 	_check(current_scene.scene_file_path.ends_with("route_map_screen.tscn"), "Editor must return to the map rather than launch combat")
 	_check(run_state.is_route_active() and (run_state.get_current_route_node() as RunRouteNodeDefinition).node_type == RunRouteNodeDefinition.NodeType.SHOP, "Map must initialize shop-first test route without editor combat entry")
 	_check(ShipSerializer.to_dictionary(run_state.current_ship) == ShipSerializer.to_dictionary(design), "Test map must load the saved design")
+	# During an active Run, an unfinished design must be saved and returned without
+	# accidentally allowing the player to enter combat.
+	set_meta(&"run_refit_mode", true)
+	change_scene_to_file("res://game/ship/editor/ship_editor.tscn")
+	await scene_changed
+	var refit_editor := current_scene as Control
+	var unfinished := ShipData.new()
+	(refit_editor.get_node("WorkSections/TopSection/MainLayout/Center/Grid") as ShipGridView).set_ship(unfinished)
+	(refit_editor.get_node("WorkSections/Header/ReturnButton") as Button).pressed.emit()
+	await scene_changed
+	_check(current_scene.scene_file_path.ends_with("route_map_screen.tscn"), "Incomplete Run design must still return to the map")
+	_check(not run_state.current_ship.is_design_valid(), "Returning to map must preserve unfinished Run design")
 	current_scene.queue_free()
 	current_scene = null
 	await process_frame
