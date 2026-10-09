@@ -48,7 +48,7 @@ func _new_battle(counts: Array[int]) -> Battle:
 	# State-machine and mask fixtures issue their own shots; silence spawned AI weapons
 	# before their first physics tick, including while a multi-enemy wave is queued.
 	battle.world.child_entered_tree.connect(func(node: Node):
-		if node is ShipRuntime or node is EnemyRuntime:
+		if node is ShipRuntime:
 			_silence.call_deferred(node)
 	)
 	if is_instance_valid(battle.player):
@@ -56,9 +56,7 @@ func _new_battle(counts: Array[int]) -> Battle:
 	return battle
 
 func _silence(ship: Node) -> void:
-	if ship is EnemyRuntime:
-		ship.set_physics_process(false)
-	elif ship is ShipRuntime:
+	if ship is ShipRuntime:
 		for weapon in ship.weapon_runtimes:
 			weapon.set_physics_process(false)
 
@@ -88,10 +86,7 @@ func _core_runtime(ship: ShipRuntime) -> HullCellRuntime:
 	return null if cell == null else ship.get_hull_runtime(cell)
 
 func _kill(ship: Node) -> void:
-	if ship is EnemyRuntime:
-		if is_instance_valid(ship):
-			ship.apply_projectile_damage(10000.0)
-	elif ship is ShipRuntime:
+	if ship is ShipRuntime:
 		for cell in _core_cells(ship):
 			if is_instance_valid(ship):
 				ship.apply_hull_projectile_damage(cell, 1000.0)
@@ -206,7 +201,7 @@ func _test_waves_and_victory() -> void:
 	enemy.rotation = 0.0
 	weapon.global_position = Vector2(10000.0, 10000.0)
 	weapon.global_rotation = Vector2.UP.angle_to(Vector2.UP)
-	enemy.request_fire()
+	weapon.fire_once()
 	_kill(enemy)
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.RESOLVING), "Final clearance must wait for projectiles")
 	_check(outcomes.is_empty() and battle._has_live_projectiles(), "Live airborne shots must postpone victory")
@@ -242,7 +237,7 @@ func _test_late_projectile_and_failure() -> void:
 	# The last airborne shot destroys the final surviving Core-supporting Hull cell.
 	weapon.global_position = final_core_runtime.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = Vector2.UP.angle_to(Vector2.DOWN)
-	enemy.request_fire()
+	weapon.fire_once()
 	_kill(enemy)
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.DEFEAT), "Last enemy's airborne shot must still be able to defeat the player")
 	_check(outcomes == [false], "Late player destruction must emit defeat, never premature victory")
