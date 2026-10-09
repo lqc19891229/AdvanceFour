@@ -1,0 +1,101 @@
+{
+  "version": 3,
+  "hull_cells": [
+    {
+      "x": 0,
+      "y": -1,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    },
+    {
+      "x": 2,
+      "y": 1,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "hull_type": "basic_hull",
+      "max_hp": 20,
+      "current_hp": 20,
+      "mass": 2
+    }
+  ],
+  "modules": [
+    {
+      "module_id": "core_bridge",
+      "x": 0,
+      "y": 0,
+      "rotation": 0
+    },
+    {
+      "module_id": "energy_smallreactor",
+      "x": -1,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "module_id": "energy_smallreactor",
+      "x": 2,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "module_id": "propulsion_smallengine",
+      "x": 1,
+      "y": 2,
+      "rotation": 0
+    },
+    {
+      "module_id": "weapon_cannon",
+      "x": 0,
+      "y": -1,
+      "rotation": 0
+    }
+  ]
+}
