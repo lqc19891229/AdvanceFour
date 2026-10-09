@@ -132,7 +132,7 @@ func _get_node_tooltip(node: RunRouteNodeDefinition) -> String:
 		RunRouteNodeDefinition.NodeType.TAVERN:
 			return "进入酒馆，花费能量结晶招募机组。"
 		RunRouteNodeDefinition.NodeType.REFIT:
-			return "进入维修改装空间站：免费维修至满血，可用零件制造模块并进入飞船改装。"
+			return "进入空间站：自动免费修复全部船体，可使用零件制造模块。飞船改装请在星图点击「编辑飞船」。"
 		RunRouteNodeDefinition.NodeType.END:
 			return "完成当前 Prototype 航线并返回飞船编辑器。"
 	return ""
