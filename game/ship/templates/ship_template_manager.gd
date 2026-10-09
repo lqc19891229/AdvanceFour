@@ -52,6 +52,14 @@ static func save_template(template_id: String, ship: ShipData) -> Dictionary:
 		return {"ok": false, "error": "飞船设计未满足出航条件，无法保存为模板"}
 	if not OS.has_feature("editor"):
 		return {"ok": false, "error": "模板编辑功能只能在 Godot 编辑器中运行"}
+	if FileAccess.file_exists(path):
+		var backup_path := path + ".bak"
+		var copy_error := DirAccess.copy_absolute(
+			ProjectSettings.globalize_path(path),
+			ProjectSettings.globalize_path(backup_path)
+		)
+		if copy_error != OK:
+			return {"ok": false, "error": "无法备份已有模板：%d" % copy_error}
 	return ShipSerializer.save_to_file(ship, path)
 
 

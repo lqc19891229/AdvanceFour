@@ -9,12 +9,18 @@ var template_id_input: LineEdit
 var status_label: Label
 var module_list: VBoxContainer
 var stats_label: Label
+var confirmation: ConfirmationDialog
+var pending_action := ""
+var loaded_template_id := ""
+var pending_navigation := ""
+var pending_template_id := ""
+var dirty := false
 
 
 func _ready() -> void:
 	_build_ui()
 	_refresh_template_list()
-	_new_design()
+	_reset_design()
 
 
 func _build_ui() -> void:
@@ -95,7 +101,38 @@ func _build_ui() -> void:
 	status_label.text = "仅在 Godot 编辑器内写入项目模板；不会修改当前 Run。"
 	root.add_child(status_label)
 
+	confirmation = ConfirmationDialog.new()
+	confirmation.confirmed.connect(_confirm_pending_action)
+	add_child(confirmation)
 	_build_module_buttons()
+
+
+func _ask_confirmation(message: String, action: String) -> void:
+	pending_action = action
+	confirmation.dialog_text = message
+	confirmation.popup_centered()
+
+
+func _confirm_pending_action() -> void:
+	var action := pending_action
+	pending_action = ""
+	match action:
+		"overwrite":
+			_commit_save(pending_template_id)
+		"delete":
+			_commit_delete(pending_template_id)
+		"new":
+			_reset_design()
+		"load":
+			_commit_load(pending_navigation)
+
+
+func _reset_design() -> void:
+	loaded_template_id = ""
+	template_id_input.text = ""
+	grid.set_ship(ShipData.new())
+	dirty = false
+	_show_status("已新建空白设计。")
 
 
 func _add_button(parent: Node, label: String, handler: Callable) -> void:
@@ -118,9 +155,10 @@ func _build_module_buttons() -> void:
 
 
 func _new_design() -> void:
-	template_id_input.text = ""
-	grid.set_ship(ShipData.new())
-	_show_status("已新建空白设计。")
+	if dirty:
+		_ask_confirmation("当前设计有未保存修改。确定放弃并新建？", "new")
+		return
+	_reset_design()
 
 
 func _refresh_template_list() -> void:
@@ -135,11 +173,21 @@ func _on_template_selected(index: int) -> void:
 
 func _load_selected() -> void:
 	var template_id := template_id_input.text.strip_edges()
+	if dirty:
+		pending_navigation = template_id
+		_ask_confirmation("当前设计有未保存修改。确定放弃并加载模板？", "load")
+		return
+	_commit_load(template_id)
+
+
+func _commit_load(template_id: String) -> void:
 	var result := ShipTemplateManager.load_template(template_id)
 	if not result["ok"]:
 		_show_status("加载失败：" + String(result["error"]))
 		return
 	grid.set_ship(result["ship"] as ShipData)
+	loaded_template_id = template_id
+	dirty = false
 	_show_status("已加载模板：" + template_id)
 
 
@@ -160,28 +208,48 @@ func _save_with_id(template_id: String, require_new: bool) -> void:
 	if require_new and FileAccess.file_exists(path):
 		_show_status("另存为失败：此 ID 已存在，请填写一个新 ID。")
 		return
+	if FileAccess.file_exists(path):
+		pending_template_id = template_id
+		_ask_confirmation("将覆盖已有模板 %s。确定继续？" % template_id, "overwrite")
+		return
+	_commit_save(template_id)
+
+
+func _commit_save(template_id: String) -> void:
 	var result := ShipTemplateManager.save_template(template_id, grid.ship)
 	if not result["ok"]:
 		_show_status("保存失败：" + String(result["error"]))
 		return
+	loaded_template_id = template_id
+	dirty = false
 	_refresh_template_list()
-	_show_status("已保存模板：" + path)
+	_show_status("已保存模板：" + ShipTemplateManager.get_template_path(template_id))
 
 
 func _delete_selected() -> void:
 	var template_id := template_id_input.text.strip_edges()
+	if not FileAccess.file_exists(ShipTemplateManager.get_template_path(template_id)):
+		_show_status("模板不存在：" + template_id)
+		return
+	pending_template_id = template_id
+	_ask_confirmation("确定永久删除模板 %s？" % template_id, "delete")
+
+
+func _commit_delete(template_id: String) -> void:
 	var result := ShipTemplateManager.delete_template(template_id)
 	if not result["ok"]:
 		_show_status("删除失败：" + String(result["error"]))
 		return
 	_refresh_template_list()
-	_new_design()
+	if loaded_template_id == template_id:
+		_reset_design()
 	_show_status("已删除模板：" + template_id)
 
 
 func _update_stats() -> void:
 	if stats_label == null or grid == null:
 		return
+	dirty = true
 	var ship := grid.ship
 	var status := "可出航" if ship.is_design_valid() else ship.get_design_invalid_reason()
 	stats_label.text = "船体格：%d · 设备：%d · 校验：%s" % [

@@ -6,5 +6,6 @@
 script = ExtResource("1")
 enemy_id = &"scout"
 display_name = "侦察舰"
+ship_template_path = "res://data/ships/templates/enemy_scout.json"
 approach_distance = 300.0
 retreat_distance = 190.0

@@ -158,7 +158,7 @@ func _belongs_to_source(candidate: Node) -> bool:
 func _is_target_ship_removed(candidate: Node) -> bool:
 	var node: Node = candidate
 	while node != null:
-		if node is ShipRuntime or node is EnemyRuntime:
+		if node is ShipRuntime:
 			return node.is_removed_from_battle()
 		node = node.get_parent()
 	return false
