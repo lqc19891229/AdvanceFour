@@ -50,7 +50,7 @@ func _refresh() -> void:
 		return
 
 	title.text = shop_definition.display_name
-	credits_label.text = "能量结晶：%d｜零件：%d｜仓库：%d / %d" % [int(run_state.get("energy_crystals")), int(run_state.get("parts")), int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity"))]
+	credits_label.text = "能量结晶：%d｜零件：%d｜仓库不限容量" % [int(run_state.get("energy_crystals")), int(run_state.get("parts"))]
 	if selected_slot < 0:
 		var initial_items: Array = run_state.call("get_shop_slots", shop_definition)
 		for i in range(initial_items.size()):
@@ -145,7 +145,7 @@ func _update_details() -> void:
 		return
 	var purchased := bool(state.call("is_shop_slot_purchased", shop_definition, selected_slot))
 	var can_buy := bool(state.call("can_purchase_shop_slot", shop_definition, selected_slot))
-	var info := "%s\n%s\n\n价格：%d 能量结晶\n%s" % [item.get_type_label(), item.get_contents_label(), item.get_price(), "已售出" if purchased else "可购买" if can_buy else "余额不足或仓库空间不足"]
+	var info := "%s\n%s\n\n价格：%d 能量结晶\n%s" % [item.get_type_label(), item.get_contents_label(), item.get_price(), "已售出" if purchased else "可购买" if can_buy else "能量结晶不足或商品无效"]
 	CARD_UI.show_details(details, item.display_name, info, "已售出" if purchased else "购买", can_buy, _purchase_slot.bind(selected_slot))
 
 func _refresh_inventory() -> void:
@@ -184,7 +184,7 @@ func _purchase_slot(slot_index: int) -> void:
 	if bool(run_state.call("purchase_shop_slot", shop_definition, slot_index)):
 		status_label.text = "已购买：%s" % item.get_contents_label()
 	else:
-		status_label.text = "购买失败：能量结晶不足、仓库空间不足、商品已售出或商品无效。"
+		status_label.text = "购买失败：能量结晶不足、商品已售出或商品无效。"
 	_refresh()
 
 func _return_from_shop() -> void:
