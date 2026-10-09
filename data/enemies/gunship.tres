@@ -6,11 +6,5 @@
 script = ExtResource("1")
 enemy_id = &"gunship"
 display_name = "炮舰"
-collision_radius = 34.0
-max_hp = 145.0
-move_speed = 125.0
-acceleration = 170.0
-turn_speed_degrees = 100.0
-weapon_damage = 8.0
-weapon_interval = 1.4
-muzzle_positions = Array[Vector2]([Vector2(-16, -23), Vector2(16, -23)])
+approach_distance = 330.0
+retreat_distance = 200.0
