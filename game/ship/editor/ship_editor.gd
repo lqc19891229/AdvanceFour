@@ -183,8 +183,8 @@ func _set_resource_tab(kind: String) -> void:
 	chips_tab.button_pressed = kind == "chip"
 
 func _start_battle() -> void:
-	# The editor only edits and saves ships; route selection owns combat entry.
-	if not _save_design_for_departure():
+	# Returning to the route map must not require a battle-ready design.
+	if not _save_design_for_return():
 		return
 	var run_state := _run_state()
 	if run_refit_mode and run_state != null and bool(run_state.call("is_route_active")):
@@ -200,6 +200,19 @@ func _start_scene_with_design(scene_path: String) -> void:
 	if not _save_design_for_departure():
 		return
 	get_tree().change_scene_to_file(scene_path)
+
+func _save_design_for_return() -> bool:
+	if run_refit_mode:
+		var state := _run_state()
+		if state == null or not state.update_current_ship(grid.ship):
+			_show_status("无法保存当前 Run 的整备状态。")
+			return false
+		return true
+	var result := ShipSerializer.save_to_file(grid.ship, SAVE_PATH)
+	if not result["ok"]:
+		_show_status("保存失败：%s" % result["error"])
+		return false
+	return true
 
 func _save_design_for_departure() -> bool:
 	if not grid.ship.is_design_valid():

@@ -141,6 +141,13 @@ func _select_node(node_id: StringName) -> void:
 	var run_state := _run_state()
 	if run_state == null:
 		return
+	var target_node := (run_state.get("route_definition") as RunRouteDefinition).get_node(node_id)
+	if target_node != null and target_node.node_type == RunRouteNodeDefinition.NodeType.BATTLE:
+		var ship := run_state.get("current_ship") as ShipData
+		if ship == null or not ship.is_design_valid():
+			var reason := "当前没有飞船设计" if ship == null else ship.get_design_invalid_reason()
+			hint.text = "无法进入战斗：%s。请点击「编辑飞船」修复后重试。" % reason
+			return
 	var is_current := StringName(run_state.get("current_route_node_id")) == node_id
 	if not is_current and not bool(run_state.call("select_route_node", node_id)):
 		return
