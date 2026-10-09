@@ -1,24 +1,9 @@
-【当前代码说明｜2026-10】
-Godot 4.6.1；项目默认启动 fixed_test_sector 测试星图，动态星图由 RouteMapGenerator.generate() 实现。
-能量结晶用于商店，零件用于维修和空间站制造；战斗胜利直接统一结算，失败重置 Run。
-历史版本内容不等于当前规则。
+《前进四》game — 玩法代码和场景（2026-10-09）
 
-《前进四》game 目录说明
+- combat/：共享战斗容器、波次、战果生成和测试。
+- enemy/：敌方 EnemyController、EnemyShipFactory；敌舰自身也使用 game/ship/runtime/ShipRuntime。
+- ship/：玩家编辑器、独立模板编辑器、通用飞船运行时、外观、炮塔、弹丸、控制器和飞船回归。
+- run/：星图、商店、空间站、酒馆、仓库、战果、Game Over、运行时 UI 和回归。
+- progression/：舰船数值修正。
 
-职责：
-game 保存“游戏如何运行”的代码与场景：Gameplay、Runtime、Controller、Renderer、UI、编辑器与测试场景。
-
-当前子目录：
-- ship/：飞船 Runtime、控制、武器、弹丸、伤害、外观、编辑器与开发测试。
-- combat/：正式 battle 场景、战斗状态机、HUD 与战斗流程测试。
-
-不放入 game：
-- 策划源表与美术源素材：放 tools。
-- 纯数据结构定义：放 data/definitions。
-- 具体模块/敌舰/关卡配置：放 data/modules、data/enemies、data/battles。
-- Runtime 正式 PNG / 音频等素材：放 data/assets。
-- 全项目基础设施：放 core。
-
-判断：
-“这个东西是什么” → data。
-“这个东西怎么在游戏里运行” → game。
+当前默认项目入口为 game/run/route/route_map_screen.tscn。正式数据及素材在 data/，跨场景 RunState 在 core/，源表/导入/验证在 tools/。
