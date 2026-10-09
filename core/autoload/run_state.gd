@@ -341,7 +341,7 @@ func can_store_module(module_id: StringName, count: int = 1) -> bool:
 	var definition := DATABASE.get_by_id(module_id)
 	if definition == null:
 		return false
-	return get_warehouse_used() + get_module_storage_cost(module_id, count) <= get_warehouse_capacity()
+	return true
 
 func store_module(module_id: StringName, count: int = 1) -> bool:
 	if not can_store_module(module_id, count):

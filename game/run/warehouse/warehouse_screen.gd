@@ -45,15 +45,9 @@ func _refresh() -> void:
 		_rebuild_inventory()
 		return
 
-	var used := int(run_state.call("get_warehouse_used"))
-	var capacity := int(run_state.call("get_warehouse_capacity"))
-	var remaining := capacity - used
-	capacity_label.text = "能量结晶：%d｜零件：%d｜模块仓库：%d / %d｜剩余：%d" % [int(run_state.get("energy_crystals")), int(run_state.get("parts")), used, capacity, maxi(remaining, 0)]
-	if remaining < 0:
-		warning_label.text = "仓库超载 %d：无法购买或领取新的模块。" % -remaining
-	else:
-		warning_label.text = ""
-	hull_label.text = "Hull：%d（不占模块仓储）" % int(run_state.get("hull_stock"))
+	capacity_label.text = "能量结晶：%d｜零件：%d｜模块仓库不限容量" % [int(run_state.get("energy_crystals")), int(run_state.get("parts"))]
+	warning_label.text = ""
+	hull_label.text = "Hull：%d" % int(run_state.get("hull_stock"))
 	refit_button.disabled = _find_refit_node_id() == &""
 	_rebuild_inventory()
 
@@ -91,17 +85,15 @@ func _rebuild_inventory() -> void:
 	empty_label.text = "当前分类没有模块。"
 	for definition in entries:
 		var count := int(inventory.get(definition.id, 0))
-		var total_storage := int(run_state.call("get_module_storage_cost", definition.id, count))
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 72)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.text = "%s  ×%d\n%s｜%d×%d｜总占用 %d" % [
+		button.text = "%s  ×%d\n%s｜%d×%d" % [
 			definition.display_name,
 			count,
 			definition.get_type_name(),
 			definition.size.x,
-			definition.size.y,
-			total_storage
+			definition.size.y
 		]
 		button.icon = definition.get_display_texture()
 		button.expand_icon = true
@@ -131,15 +123,12 @@ func _show_detail(definition: ShipModuleDefinition) -> void:
 		_clear_detail()
 		return
 	var count := int(run_state.call("get_module_inventory_count", definition.id))
-	var unit_storage := definition.get_storage_cost()
 	detail_texture.texture = definition.get_display_texture()
 	detail_name.text = definition.display_name
 	detail_type.text = definition.get_type_name()
 	var lines: Array[String] = []
 	lines.append("尺寸：%d×%d" % [definition.size.x, definition.size.y])
-	lines.append("单件仓储：%d" % unit_storage)
 	lines.append("库存数量：%d" % count)
-	lines.append("总仓储占用：%d" % (unit_storage * count))
 	lines.append("能耗：%.1f" % definition.energy_cost)
 	lines.append("")
 	lines.append(definition.description)
@@ -164,8 +153,7 @@ func _show_detail(definition: ShipModuleDefinition) -> void:
 	elif definition is FunctionModuleDefinition:
 		var function_module := definition as FunctionModuleDefinition
 		if function_module.storage_capacity > 0:
-			lines.append("安装后仓储容量：+%d" % function_module.storage_capacity)
-			lines.append("净仓储贡献：+%d" % (function_module.storage_capacity - unit_storage))
+			lines.append("仓储容量属性：%d（当前不限制仓库）" % function_module.storage_capacity)
 		else:
 			lines.append("功能模块：暂无额外参数")
 	elif definition is CoreModuleDefinition:

@@ -50,11 +50,9 @@ func _refresh() -> void:
 		return
 
 	title.text = station_definition.display_name
-	resources.text = "能量结晶：%d｜零件：%d｜仓库：%d / %d" % [
+	resources.text = "能量结晶：%d｜零件：%d｜仓库不限容量" % [
 		int(run_state.get("energy_crystals")),
-		int(run_state.get("parts")),
-		int(run_state.call("get_warehouse_used")),
-		int(run_state.call("get_warehouse_capacity"))
+		int(run_state.get("parts"))
 	]
 	repair_status.text = "空间站维护服务：已免费将全部 Hull 恢复至满血。"
 	if selected_item == null:
@@ -111,11 +109,10 @@ func _update_details() -> void:
 		return
 	var state := _run_state()
 	if selected_item == null or state == null:
-		CARD_UI.show_details(details, "制造详情", "选择左侧模块查看制造成本与仓储需求。", "选择模块", false, Callable())
+		CARD_UI.show_details(details, "制造详情", "选择左侧模块查看制造成本。", "选择模块", false, Callable())
 		return
 	var can_craft := bool(state.call("can_craft_station_item", selected_item))
-	var storage := int(state.call("get_module_storage_cost", selected_item.module_id, selected_item.module_count))
-	var info := "%s\n制造成本：%d 零件\n仓储占用：%d\n\n%s" % [selected_item.get_contents_label(), selected_item.parts_cost, storage, "可以制造" if can_craft else "零件不足或仓库空间不足"]
+	var info := "%s\n制造成本：%d 零件\n\n%s" % [selected_item.get_contents_label(), selected_item.parts_cost, "可以制造" if can_craft else "零件不足或配置无效"]
 	CARD_UI.show_details(details, selected_item.display_name, info, "制造", can_craft, _craft.bind(selected_item))
 
 func _craft(item: StationCraftItemDefinition) -> void:
@@ -123,7 +120,7 @@ func _craft(item: StationCraftItemDefinition) -> void:
 	if run_state != null and bool(run_state.call("craft_station_item", item)):
 		status.text = "制造完成：%s，已送入仓库。" % item.get_contents_label()
 	else:
-		status.text = "制造失败：零件不足、仓库空间不足或配置无效。"
+		status.text = "制造失败：零件不足或配置无效。"
 	_refresh()
 
 func _leave_station() -> void:

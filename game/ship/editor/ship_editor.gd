@@ -98,8 +98,8 @@ func _build_inventory_summary() -> String:
 		return ""
 	var lines: Array[String] = []
 	lines.append("Run 仓库")
-	lines.append("模块仓储：%d / %d" % [int(_run_state().call("get_warehouse_used")), int(_run_state().call("get_warehouse_capacity"))])
-	lines.append("Hull：%d（不计入模块仓储）" % int(_run_state().get("hull_stock")))
+	lines.append("模块仓库：不限容量")
+	lines.append("Hull：%d" % int(_run_state().get("hull_stock")))
 	var inventory: Dictionary = _run_state().get("module_inventory")
 	if inventory.is_empty():
 		lines.append("模块：无")
@@ -111,7 +111,7 @@ func _build_inventory_summary() -> String:
 			var module_id := StringName(raw_id)
 			var definition := grid.definitions.get(String(module_id), null) as ShipModuleDefinition
 			var display_name := String(module_id) if definition == null else definition.display_name
-			lines.append("- %s ×%d｜占用 %d" % [display_name, int(inventory[module_id]), int(_run_state().call("get_module_storage_cost", module_id, int(inventory[module_id])))])
+			lines.append("- %s ×%d" % [display_name, int(inventory[module_id])])
 	return "\n".join(lines)
 
 func _build_module_buttons() -> void:
@@ -162,7 +162,7 @@ func _build_module_tooltip(definition: ShipModuleDefinition) -> String:
 	elif definition is FunctionModuleDefinition:
 		var function_module := definition as FunctionModuleDefinition
 		if function_module.storage_capacity > 0:
-			lines.append("仓储容量：+%d" % function_module.storage_capacity)
+			lines.append("仓储容量属性：%d（当前不限制仓库）" % function_module.storage_capacity)
 		else:
 			lines.append("功能模块：暂无额外参数")
 	elif definition is CoreModuleDefinition:
@@ -359,7 +359,7 @@ Equipment：%d
 
 火力：%.1f
 防御系统：%.1f
-仓储模块容量：%d
+仓储模块属性：%d（当前不限制仓库）
 
 核心：%s
 沉没判定：核心覆盖 Hull 全部损毁

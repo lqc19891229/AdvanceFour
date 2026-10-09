@@ -132,9 +132,7 @@ func _clear_loot_list() -> void:
 func _refresh_loot(result: BattleResult) -> void:
 	_clear_loot_list()
 	var run_state := _run_state()
-	var used := int(run_state.call("get_warehouse_used"))
-	var capacity := int(run_state.call("get_warehouse_capacity"))
-	capacity_label.text = "模块仓库：%d / %d｜剩余：%d" % [used, capacity, maxi(capacity - used, 0)]
+	capacity_label.text = "模块仓库：不限容量"
 	for index in range(result.reward_module_ids.size()):
 		loot_list.add_child(_build_loot_card(result, index))
 	if result.reward_module_ids.is_empty():
@@ -180,12 +178,7 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 	if definition == null:
 		detail.text = "未知模块"
 	else:
-		var storage := int(_run_state().call("get_module_storage_cost", module_id, count))
-		detail.text = "%s｜数量：%d｜仓储占用 %d" % [
-			definition.get_type_name(),
-			count,
-			storage
-		]
+		detail.text = "%s｜数量：%d" % [definition.get_type_name(), count]
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.add_child(detail)
 
@@ -202,7 +195,7 @@ func _build_loot_card(result: BattleResult, index: int) -> Control:
 	take.text = "带走"
 	take.disabled = resolved or not bool(_run_state().call("can_take_loot", index))
 	if not resolved and take.disabled:
-		take.tooltip_text = "仓库空间不足。"
+		take.tooltip_text = "战利品无效或暂时无法领取。"
 	take.pressed.connect(_take.bind(index))
 	actions.add_child(take)
 
