@@ -617,9 +617,10 @@ func _test_saved_design_and_editor() -> void:
 	editor.call("_set_resource_tab", "module")
 	_check(not relocated_bridge.visible, "Returning to module tab hides bridge slots")
 	var launch_button: Button = editor.get_node("WorkSections/Header/ReturnButton")
-	_check(launch_button.get_global_rect().end.y <= root.get_visible_rect().end.y, "Editor battle entry must fit inside the viewport")
-	editor.call("_start_battle")
-	_check(current_scene == editor, "Editor must reject an empty design without leaving")
+	_check(launch_button.get_global_rect().end.y <= root.get_visible_rect().end.y, "Editor return button must fit inside the viewport")
+	# Returning to the map and validating battle readiness are separate paths.
+	# Do not navigate away before the editor UI and AI-test assertions below.
+	_check(not bool(editor.call("_save_design_for_departure")), "Incomplete design must remain invalid for battle entry")
 	_check(editor.speed_label.text.contains("预计最高速度：0.0 px/s"), "Empty design must show zero predicted speed")
 	_check(root.get_visible_rect().encloses(editor.speed_label.get_global_rect()), "Predicted speed must be visible without scrolling")
 	var editable_design := _design()
