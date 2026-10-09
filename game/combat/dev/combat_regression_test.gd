@@ -57,6 +57,7 @@ func _new_battle(counts: Array[int]) -> Battle:
 
 func _silence(ship: Node) -> void:
 	if ship is ShipRuntime:
+		ship.set_physics_process(false)
 		for weapon in ship.weapon_runtimes:
 			weapon.set_physics_process(false)
 
