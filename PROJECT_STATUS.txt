@@ -1,100 +1,28 @@
-《前进四》开发状态 v0.45.1
+《前进四》当前开发状态（2026-10-09）
+工程：Godot 4.6.1。当前为模块化舰船战斗与固定测试路线 Prototype，并非完整 Roguelike 成品。
 
-当前阶段：模块化飞船战斗 Prototype，已建立第一版连续战斗 / 战后整备闭环，尚未形成完整 Roguelike 游戏。
+【实际默认入口】
+project.godot → res://game/run/route/route_map_screen.tscn。
+初次进入星图时，优先从 user://ships/test_ship.json 读取合法的玩家设计；否则使用 Battle.build_starter_design() 的内置示例。然后 RunState.start_run_with_test_route() 建立 fixed_test_sector 固定测试路线。RouteMapGenerator.generate() 已实现，但未接入默认入口。
 
-v0.45.1 删除战斗内结果弹窗；胜利自动进入统一结算，失败立即结束并清空 Run 后显示 Game Over。移除 R 重开和重新挑战，Game Over 仅允许返回整备并恢复永久设计。关卡、击毁数、波次、时长保留在结算摘要。
+【当前实现】
+- 飞船数据：ShipData = Hull Cell + Equipment；ShipSerializer v3 JSON 支持旧格式迁移。
+- 玩家/敌舰共用 ShipRuntime：每格 Hull 独立承伤、模块效率受损、供能优先级、推进和独立炮塔。敌舰由 game/enemy/enemy_controller.gd 控制，玩家由 PlayerShipController 控制。
+- 敌舰配置：data/enemies/scout.tres、gunship.tres 保存身份和 AI 距离；data/ships/templates/enemy_scout.json、enemy_gunship.json 保存船体/设备布局；EnemyShipFactory 经 ShipSerializer 加载，不再使用旧 EnemyRuntime。
+- 编辑器：game/ship/editor 为玩家设计/Run 整备入口；game/ship/template_editor/ship_template_editor.tscn 为开发环境 F6 独立模板编辑器，复用 ShipGridView。模板存 data/ships/templates，和 user://ships/test_ship.json 分离。
+- 模板安全：覆盖与删除需要确认，新建/加载时未保存内容提示；覆盖前尝试保存 .json.bak（本地备份，已忽略 Git）。
+- 战斗：共享 battle.tscn + BattleDefinition/BattleWaveDefinition；胜利自动生成结算并提交结果，进入统一战果、战利品与可选维修页面；失败清空 Run 后进入 Game Over。
+- Run：能量结晶用于交易，零件用于维修/制造；仓库、商店、空间站、酒馆及星图节点有各自场景。测试星图为固定路线；随机路线生成器是非默认功能。
+- 正式模块由 Excel → tools/cache → Godot 导入插件 → data/modules/*.tres 数据链生成。
 
-v0.45.0 合并战利品与胜利结算，移除成长奖励三选一；战损改为按真实船体/模块布局绘制的交互快照，支持选格查看效率、局部/全部维修、缩放和拖动。只有未处理战利品阻止继续，维修可跳过。
+【尚未完成/边界】
+- 开局模板选择未接入星图默认入口；玩家设计仍优先取 user://ships/test_ship.json。
+- 默认测试路线不代表计划中的完整动态 Roguelike 关卡推进。
+- 模板编辑器用于 Godot 开发环境，不提供发布游戏中的项目文件写入。
 
-v0.44.2 补齐武器图标回退与可重建工具；战利品、商店、仓库、空间站优先使用专用图标，武器无专用图标时优先显示炮塔。新增组合图标实际解码与各界面取图回归。
+【验证】
+运行 python3 tools/verify_project.py --godot /path/to/godot
+GitHub Actions：.github/workflows/project-checks.yml。
+文档同步不代表已在本次修改中执行 Godot 测试；实际通过状态以 CI 为准。
 
-v0.44.0 完成维修改装空间站第一版：原 REFIT 路线节点升级为空间站入口，进入后免费将当前飞船全部 Hull 修复至满血；空间站读取 StationDefinition 配方，用零件制造模块，制造结果进入仓库并受容量限制；零件不足或仓库不足时原子失败。空间站仍可进入 Run Refit 编辑器进行改装。
-
-v0.43.0 完成双资源经济系统：移除当前玩法层的 Credits，正式加入能量结晶与零件。能量结晶是宇宙通用交易通货，仅用于商店购买；零件是工程资源，当前用于战后 Hull 维修，1 缺失 Hull HP = 1 零件。BattleDefinition / BattleResult 支持两种资源奖励；stage_001 为 100 能量结晶 + 12 零件，elite_001 为 220 + 30，stage_002 为 150 + 20。空间站制造模块留待 v0.44。
-
-v0.42.0 完成第一版精英战：新增 elite_001 战斗配置包，不新增精英专用运行时代码。精英战仍使用普通 BATTLE 节点和共享 battle.tscn，通过 battle.tres 的更强波次/220 Credits 与 loot.tres 的 4 件不重复高收益掉落表现风险收益差异；Prototype Route 第一战后现有商店、整备、精英战三条分支，最终汇合到第二战。
-
-v0.41.1 整理战斗数据目录：data/battles 改为按 battle_id 建立配置包，每个目录包含 battle.tres 与 loot.tres。Battle 与 Loot 仍是独立 Resource，但物理上归档在一起；普通战、精英战与 Boss 后续均通过这两份数据表达差异，不新增专用战斗代码。
-
-v0.41.0 完成数据驱动随机掉落表：新增 LootTableDefinition / LootTableEntry；BattleDefinition 可引用掉落表，按权重抽取指定数量模块并支持是否重复与数量范围。当前不包含装备稀有度、随机词条或实例品质。
-
-v0.40.0 完成战利品临时区第一版：固定模块奖励不再在胜利提交时自动进入仓库；胜利后进入独立 Loot Screen，玩家逐件选择带走或放弃。带走统一经过仓储容量检查，全部处理完才能继续战果结算和路线。
-
-v0.39.0 完成仓库管理场景：新增 game/run/warehouse，可从 Route Map 随时查看当前模块仓库；支持 Used / Capacity、超载提示、按模块类型筛选、同 ID 堆叠、模块详情与路线合法的“前往整备”。Function Sheet 正式加入 storage_capacity，标准货舱进入 game_data.xlsx，并新增独立 function_cargo_hold.png 贴图，不再使用内建数据/雷达占位图。
-
-v0.38.0 完成模块仓库第一版：Run 默认拥有 12 点基础模块仓储；库存模块按 definition.size.x × size.y 占用容量，Hull 不计入模块仓储。新增 2×2 标准货舱（+16 仓储，未安装时自身占用 4）；商店购买、战斗固定模块奖励、成长模块奖励均受仓储容量约束，容量不足时原子失败。整备界面与商店显示仓储占用。
-
-v0.37.1 完成商店节点四槽化：ShopDefinition 固定 4 个商品槽，按 combat / systems / utility / any 槽规则从商品池无重复生成；生成结果与 SOLD 状态保存在 RunState，刷新或重新进入不会换货；购买后不补货，商品继续直接进入 Run Inventory。商店 UI 改为四张商品卡。
-
-v0.37.0 完成星系路线节点第一版：正式 Run 改为数据化 Prototype 星系航线；第一战后在星图中二选一进入补给商店或整备站，再汇合至第二战并到达航线终点。新增路线 Resource、节点可视化、RunState 节点推进与分支合法性检查。
-
-v0.36.0 完成商店第一版：新增数据化 ShopDefinition / ShopItemDefinition 与独立补给商店场景；stage_001 战果领取成长奖励后可进入商店，用 Credits 购买模块/Hull 并直接写入 Run Inventory。余额不足时原子失败；最终关不显示商店。
-
-v0.35.0 完成战后奖励选择第一版：新增 BattleRewardOption 与 reward_choices 数据；stage_001 在固定 100 Credits 外提供轻型装甲×1 / 机炮×1 / Hull×2 三选一。未领取成长奖励前可维修但不能进入整备或下一战，领取后只将选中项加入 Run Inventory。
-
-v0.34.0 完成 Run Inventory 第一版：当前 Run 新增模块库存与 Hull 库存；战斗支持固定模块/Hull 奖励；Run 整备安装会消耗库存、拆除返还库存、移动/旋转免费，并禁止一键清空绕过规则。stage_001 奖励轻型装甲×1 + Hull×1，stage_002 奖励机炮×1。
-
-v0.33.0 完成局部维修与战后整备第一版：RunState 支持单格 Hull 维修；战果页列出受损 Hull、覆盖 Equipment、当前与修复后模块效率，并允许玩家用 Credits 只修关键区域。维修仍保持 1 缺失 Hull HP = 1 Credit，资金不足时原子失败；Equipment 继续不拥有独立 HP。
-
-v0.32.1 修正 Run 末端流程与文档结构：stage_002 胜利后的战果页新增“结束 Run 并返回设计器”，避免当前最终关卡出现无可用下一步；Victory 提交增加重复结算保护；PROJECT_STRUCTURE 目录树修正。
-
-v0.32.0 完成战后闭环第一版：新增 RunState 与 BattleResult，正式战斗从 Run 战前快照生成玩家飞船；胜利确认结算后保留 Hull 战损并发放 Credits，Retry 恢复本场战前快照，失败不提交战损或奖励。新增 Battle Result Screen、全部维修、Run 整备模式与 stage_002；编辑器在整备模式只修改 RunState.current_ship，不覆盖永久设计。自动验证新增 Run regression。
-
-v0.31.18 完成 human_basic Hull 正式美术第一版：16 张邻接 Tile 已替换为统一金属舰体风格，外露边使用装甲包边与高光，连接边保持无缝延伸，中心使用统一结构面板；Godot 4.6.1 导入与 Ship/Combat 回归通过。
-
-v0.31.17 收口素材管理：删除 tools/art_source 与重复 PNG，模块贴图和 Hull Tile 只在 data/assets 保留唯一一份正式资源；tools 仅保留策划源数据、缓存、导入和验证工具。
-
-v0.31.16 完成 Appearance Hull Tile 第一版：新增 HullAppearanceDefinition、human_basic.tres 与 16 个四方向邻接 Hull Tile；ShipAppearanceRenderer 由程序外壳升级为 mask→Texture2D 拼接，并保留缺图时的程序绘制 fallback。第一版仍不把外观 ID 写入 ShipData / ShipSerializer，Equipment 显示规则与战斗逻辑不变。
-
-v0.31.15 完成项目目录职责重构：tools 负责源数据与生产工具；data 负责 Runtime 正式数据、Definition、配置实例与正式素材；game 只保留 Gameplay/Runtime/Scene；core 只保留跨系统基础设施。移除 data/generated 层级，自动生成模块资源直接归入 data/modules。模块 PNG 从 game 移至 data/assets。v0.31.17 进一步取消 tools 下的重复素材副本，素材统一由 data/assets 单份管理。
-
-已完成：
-- 飞船数据已拆为 Hull Layout + Equipment 两层；网格编辑器可独立铺设基础船体格并在其上安装/移动/旋转设备。
-- Excel → Python → JSON cache → Godot 插件 → .tres 继续负责 Equipment 定义；Equipment 已取消 mass，共通 hp 也已移除，只有 Defense 保留 hp。Hull Cell 独立保存位置、max_hp/current_hp、质量与 hull_type。
-- 玩家移动与转向、核心中心原点、独立炮塔自动选敌与射击。
-- 模块贴图已纳入正式数据链：Excel 各模块 Sheet 使用 texture_path，Weapon 额外使用 turret_texture_path；导入后写入 JSON cache、模块 .tres 与 ModuleDatabase，不再由代码按 module_id 固定拼接路径。
-- 首批模块 PNG 已提交并完成数据挂载；武器视觉拆为底座 + 炮塔。v0.31.11 新增独立 Appearance Layer；v0.31.16 已将 Hull 外壳从程序绘制升级为 16 邻接 Tile 拼接，Core / Weapon / Propulsion 外露，Energy / Defense / Function 被船壳包覆；编辑器仍完整显示 Hull + Equipment。
-- 弹丸 swept ray 改为命中独立 Hull Cell 碰撞体；每个 Hull Cell 独立承伤并支持 HP-overkill 穿透。
-- 武器火力、攻击范围、射击间隔、炮塔转速、弹速、射界和开火角容差已进入 Excel → JSON → .tres 数据链；不同武器可使用独立数值。weapon_cannon 当前射界为 180°。
-- 攻击范围同时用于自动选敌和弹丸最大飞行距离；弹丸记录开火时射程与弹速，走完后消失，最后一帧不越界命中。
-- 除 Defense 外 Equipment 不再拥有 hp；区域最大 HP = ShipHullCell.max_hp + 覆盖该区域的 Defense.hp。多格 Defense 的 hp 平均分配到覆盖区域。Equipment 效率仍取覆盖 Hull Cell 健康度平均值，核心覆盖 Hull 全毁时整船移除。
-- 敌舰 AI：选择最近有效玩家目标、转向追踪、接近与倒车保持距离。
-- 编辑器 → 单敌舰交火测试 → 返回编辑器并恢复设计。
-- 飞船移动已改为纯推力模型：最高速度、加速度与松油减速度只由当前有效引擎推力乘对应 scale 决定；Hull / Equipment 质量不参与移动计算。
-- 当前移动参数为 speed_scale = 2.5、acceleration_scale = 1.0、deceleration_scale = 1.5、reverse_thrust_ratio = 0.5；动力所在 Hull 受损或断电会同步降低有效推力，从而降低最高速度和加减速能力。
-- 飞船编辑器属性顶部显示预计最高速度，随模块布局变化更新，并提示供能不足。
-- 飞船编辑器支持 Hull/Equipment 分层操作：Hull 格独立放置/拆除；Equipment 只能完整安装在 Hull 上，并支持选中、移动、旋转，保留实例 uid。
-- 战斗世界固定星点 / 网格参照，HUD 显示实时速度与坐标，明确前进 / 倒车 / 转向操作。
-- 战斗支持有限波次、逐个生成敌舰、HUD、胜负结算、重开 / 返回；v0.32.0 起正式 Run 可在胜利后进入战果页，携带战损进入维修 / 整备 / 下一战。
-- v0.31.13 将 battle.tscn 正式化为所有关卡共用的战斗容器；新增 BattleDefinition Resource 与 definitions/stage_001.tres。飞船编辑器只负责验证/保存设计并选择关卡配置，不再承载战斗规则。后续普通关卡、精英战与 Boss 战均应复用 battle.tscn，通过 BattleDefinition 数据化差异。
-- v0.31.14 完成敌舰与波次内容数据化：新增 EnemyShipDefinition、BattleWaveDefinition、scout / gunship 蓝图；stage_001 现在直接定义三波敌舰组合。Battle 不再固定调用 build_starter_design() 生成敌舰。显式关卡路径加载失败会进入 ERROR，Retry 保持当前 BattleDefinition，并纳入自动回归。
-- 最终清场后等待空中弹丸结束；核心 Equipment 所覆盖 Hull 全部损毁时判定失败，失败优先于同帧胜利。
-- 自动检查源表完整性、源表与缓存一致性、模块贴图引用以及 Godot 物理 / 场景回归；模块重新导入后 ModuleDatabase 已同步持有 Texture2D 引用。
-- v0.31.8 完成数据导入技术收口：Excel 解析前强制清理旧 cache，避免解析失败时误读历史 modules.json；全部模块先构建验证后再替换 data/modules 资源，写入失败会恢复导入前的模块 .tres 与 ModuleDatabase。
-- 飞船编辑器待放置/移动预览继续使用红绿合法性提示，同时显示模块真实贴图；新增回归覆盖模块贴图数据链、Runtime 视觉与编辑器 weapon base/turret 预览。
-
-当前入口：
-1. F5 运行默认飞船编辑器，完成合法设计，点击“出航战斗”创建 Run。
-2. 清除 stage_001 后自动进入统一结算，战损写入 RunState 并获得 100 能量结晶 + 12 零件；在统一结算页处理战利品并按需维修后返回星图，在补给商店 / 空间站 / 精英战中选择分支，再进入 stage_002。stage_002 胜利后返回星图并选择航线终点结束 Run。失败后 Game Over，结束本次 Run；返回整备恢复永久设计。Esc 可在战斗中放弃当前 Run 并返回设计器。
-3. 可 F6 单独运行 game/combat/battle.tscn；默认使用 data/battles/stage_001/battle.tres，无存档时使用调试示例船。
-4. “敌舰 AI 测试”和旧 ship_movement_test.tscn 保留为独立诊断入口。
-
-下一阶段：
-1. v0.37.x：继续扩展路线节点内容；下一步优先加入维修站 / 随机事件 / 精英战节点，随后补首个模块化 Boss。
-2. 连续战斗与首个模块化 Boss，形成更完整的 Prototype 核心闭环。
-3. 之后再扩展星系航线、商店、事件、模块 Build、局外解锁及正式美术音效。
-4. Appearance 的舰首/舰尾与更强飞船轮廓暂缓，待核心玩法闭环稳定后再继续。
-
-需要设计确认的扩展：
-- 正式战斗已使用 EnemyShipDefinition 敌舰蓝图；当前仅有 scout / gunship 两个 Prototype 蓝图，数值强度与更多敌舰类型仍需后续设计。旧 AI 测试仍是独立诊断入口。
-- AI 距离与转向参数仍为 Prototype 参数；武器射程 / 射速 / 转速 / 弹速 / 开火角容差已进入 Excel。
-- 武器正式射界已实现：安装方向定义射界中心，选敌 / 炮塔旋转 / 开火均受 firing_arc_degrees 约束；引擎喷射空间与全项目阵营数据尚未实现，本场碰撞层已避免己方误伤。
-- 永久存档仍只保存设计模板；RunState 独立保存当前一轮的飞船状态。胜利自动提交战损；失败立即清空 Run，进入 Game Over。
-- Hull Layout 当前仍允许不相邻、不连通与任意空格；Equipment 必须完整覆盖在现有 Hull Cell 上。
-- Appearance 当前只影响战斗显示，不进入 ShipData / Excel / ShipSerializer；编辑器继续作为工程视图显示完整 Hull + Equipment。
-- 第一版 Hull Cell 固定使用 basic_hull：max_hp = 20、mass = 2；Hull 的 mass 暂保留为结构数据，但当前不参与速度或加速度计算。
-- ModuleDefinition 已移除 mass 与共通 hp；只有 DefenseModuleDefinition 保留 hp。Excel 源表也已删除所有 mass 列以及非 Defense 的 hp 列。
-
-验证：
-python3 tools/verify_project.py --godot /path/to/godot
-使用 Godot 4.6.1；自动验证使用临时用户数据，不改写实际玩家设计存档。
+历史版本说明只在 VERSION_HISTORY.txt 保留，不在当前状态文件复述旧规则。
