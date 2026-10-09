@@ -13,6 +13,7 @@ var confirmation: ConfirmationDialog
 var pending_action := ""
 var loaded_template_id := ""
 var pending_navigation := ""
+var pending_template_id := ""
 var dirty := false
 
 
@@ -117,9 +118,9 @@ func _confirm_pending_action() -> void:
 	pending_action = ""
 	match action:
 		"overwrite":
-			_commit_save(template_id_input.text.strip_edges())
+			_commit_save(pending_template_id)
 		"delete":
-			_commit_delete(template_id_input.text.strip_edges())
+			_commit_delete(pending_template_id)
 		"new":
 			_reset_design()
 		"load":
@@ -208,6 +209,7 @@ func _save_with_id(template_id: String, require_new: bool) -> void:
 		_show_status("另存为失败：此 ID 已存在，请填写一个新 ID。")
 		return
 	if FileAccess.file_exists(path):
+		pending_template_id = template_id
 		_ask_confirmation("将覆盖已有模板 %s。确定继续？" % template_id, "overwrite")
 		return
 	_commit_save(template_id)
@@ -229,6 +231,7 @@ func _delete_selected() -> void:
 	if not FileAccess.file_exists(ShipTemplateManager.get_template_path(template_id)):
 		_show_status("模板不存在：" + template_id)
 		return
+	pending_template_id = template_id
 	_ask_confirmation("确定永久删除模板 %s？" % template_id, "delete")
 
 
