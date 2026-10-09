@@ -55,7 +55,7 @@ func _refresh() -> void:
 	var route := run_state.get("route_definition") as RunRouteDefinition
 	var current := run_state.call("get_current_route_node") as RunRouteNodeDefinition
 	top_bar.call("update_resources", int(run_state.get("energy_crystals")), int(run_state.get("parts")), route.display_name)
-	status.text = "仓库：%d / %d    ｜    当前节点：%s" % [int(run_state.call("get_warehouse_used")), int(run_state.call("get_warehouse_capacity")), "无" if current == null else current.display_name]
+	status.text = "仓库不限容量    ｜    当前节点：%s" % ["无" if current == null else current.display_name]
 	hint.text = "固定测试航线：商店 → 维修站 → 战斗。点击当前节点进入，飞船编辑与战斗入口分离。" if route.route_id == &"fixed_test_sector" else "选择高亮节点继续前进。路线一旦选择，本层另一分支将不可返回。"
 	_rebuild_map(route)
 
