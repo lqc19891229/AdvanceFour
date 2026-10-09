@@ -8,7 +8,7 @@ extends Resource
 @export var retreat_distance := 180.0
 
 func is_valid() -> bool:
-	return enemy_id != &"" and not display_name.strip_edges().is_empty() and approach_distance >= 0.0 and retreat_distance >= 0.0 and (ship_template_path.is_empty() or (ship_template_path.begins_with("res://data/ships/templates/") and ship_template_path.ends_with(".json") and FileAccess.file_exists(ship_template_path)))
+	return enemy_id != &"" and not display_name.strip_edges().is_empty() and approach_distance >= 0.0 and retreat_distance >= 0.0 and (ship_template_path.begins_with("res://data/ships/templates/") and ship_template_path.ends_with(".json") and FileAccess.file_exists(ship_template_path))
 
 func get_invalid_reason() -> String:
-	return "" if is_valid() else "敌舰配置无效：需要 ID、名称、有效的模板路径及 AI 距离。"
+	return "" if is_valid() else "敌舰配置无效：需要 ID、名称、已存在的 JSON 模板及 AI 距离。"
