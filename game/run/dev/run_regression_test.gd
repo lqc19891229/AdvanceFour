@@ -195,7 +195,7 @@ func _run() -> void:
 			loot_detail_has_size = true
 		if loot_text.contains("仓储占用"):
 			loot_detail_has_storage = true
-	_check(not loot_detail_has_size and loot_detail_has_storage, "Loot card must omit module dimensions while keeping storage usage")
+	_check(not loot_detail_has_size and not loot_detail_has_storage, "Loot cards should not display storage cost")
 	var first_loot_id := stage_one_loot_ids[0]
 	var discarded_loot_id := stage_one_loot_ids[1]
 	var third_loot_id := stage_one_loot_ids[2]
@@ -372,8 +372,8 @@ func _run() -> void:
 	for i in range(12):
 		_check(bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse must accept modules while capacity remains")
 	_check(int(run_state.call("get_warehouse_used")) == 12 and int(run_state.call("get_warehouse_remaining")) == 0, "Twelve 1x1 modules must fill the base warehouse")
-	_check(not bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse must reject a module that exceeds capacity")
-	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 12, "Failed warehouse storage must preserve inventory atomically")
+	_check(bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse must accept items beyond old capacity")
+	_check(int(run_state.call("get_module_inventory_count", &"weapon_cannon")) == 13, "Unlimited warehouse must retain every acquired module")
 	run_state.set("energy_crystals", 500)
 	var cannon_shop_item := shop_definition.get_item_by_id(&"cannon")
 	_check(cannon_shop_item != null and not bool(run_state.call("can_purchase_shop_item", cannon_shop_item)), "A full warehouse must block module purchases")
@@ -400,7 +400,7 @@ func _run() -> void:
 	var warehouse_item_list := warehouse_screen.get_node("Margin/Layout/Body/InventoryPanel/InventoryMargin/InventoryLayout/ItemScroll/ItemList") as VBoxContainer
 	var warehouse_detail_body := warehouse_screen.get_node("Margin/Layout/Body/DetailPanel/DetailMargin/DetailLayout/Body") as Label
 	var warehouse_refit := warehouse_screen.get_node("Margin/Layout/Footer/Refit") as Button
-	_check(warehouse_capacity_label.text.contains("5 / 12"), "Warehouse screen must show used and total capacity")
+	_check(warehouse_capacity_label.text.contains("不限容量"), "Warehouse screen must show unlimited capacity")
 	_check(warehouse_item_list.get_child_count() == 2, "Warehouse screen must stack inventory by module ID")
 	warehouse_screen.call("_select_module", &"weapon_cannon")
 	var warehouse_cannon_texture := warehouse_screen.get_node("Margin/Layout/Body/DetailPanel/DetailMargin/DetailLayout/Texture") as TextureRect
@@ -411,10 +411,10 @@ func _run() -> void:
 			_check((child as Button).icon == cannon_definition.icon_texture, "Warehouse cannon list must display the combined UI icon")
 		if child is Button and (child as Button).text.contains("标准货舱"):
 			cargo_button = child as Button
-	_check(cargo_button != null and cargo_button.text.contains("2×2") and cargo_button.text.contains("总占用 4"), "Cargo hold list entry must show size and storage footprint")
+	_check(cargo_button != null and cargo_button.text.contains("2×2") and not cargo_button.text.contains("总占用"), "Cargo hold list must omit storage footprint")
 	cargo_button.pressed.emit()
 	await process_frame
-	_check(warehouse_detail_body.text.contains("安装后仓储容量：+16") and warehouse_detail_body.text.contains("净仓储贡献：+12"), "Cargo hold detail must show installed and net storage contribution")
+	_check(warehouse_detail_body.text.contains("当前不限制仓库"), "Cargo hold details must clarify unlimited warehouse")
 	var function_filter := warehouse_screen.get_node("Margin/Layout/Filters/Function") as Button
 	function_filter.pressed.emit()
 	await process_frame
@@ -681,12 +681,11 @@ func _run() -> void:
 	var armor_before := int(run_state.call("get_module_inventory_count", &"defense_lightarmor"))
 	_check(not bool(run_state.call("craft_station_item", armor_recipe)) and int(run_state.call("get_module_inventory_count", &"defense_lightarmor")) == armor_before, "Station crafting must fail atomically when parts are insufficient")
 	run_state.set("parts", 100)
-	while int(run_state.call("get_warehouse_remaining")) > 0:
-		if not bool(run_state.call("store_module", &"weapon_cannon", 1)):
-			break
+	for i in range(20):
+		_check(bool(run_state.call("store_module", &"weapon_cannon", 1)), "Warehouse must keep accepting modules without a capacity limit")
 	var parts_before_full_craft := int(run_state.get("parts"))
 	var cargo_recipe := station_definition.get_craft_item(&"cargo_hold")
-	_check(not bool(run_state.call("craft_station_item", cargo_recipe)) and int(run_state.get("parts")) == parts_before_full_craft, "Station crafting must not spend parts when warehouse capacity is insufficient")
+	_check(bool(run_state.call("craft_station_item", cargo_recipe)) and int(run_state.get("parts")) == parts_before_full_craft - cargo_recipe.parts_cost, "Station crafting must work beyond the old warehouse capacity")
 	_check(station_screen.get_node_or_null("Margin/Layout/Actions") == null and not station_screen.has_method("_open_refit"), "Station must have no bottom action buttons or direct refit entry")
 	station_screen.queue_free()
 	await process_frame
@@ -761,7 +760,7 @@ func _run() -> void:
 	loot_list = result_screen.get_node("%LootList") as VBoxContainer
 	var full_take := loot_list.get_child(0).find_child("Take", true, false) as Button
 	var full_discard := loot_list.get_child(0).find_child("Discard", true, false) as Button
-	_check(full_take.disabled and not full_discard.disabled and (result_screen.get_node("%EndRun") as Button).disabled, "Full warehouse must disable taking loot but keep discard available and gate the exit")
+	_check(not full_take.disabled and not full_discard.disabled and (result_screen.get_node("%EndRun") as Button).disabled, "Unlimited warehouse must allow taking loot while unresolved loot gates exit")
 	snapshot = result_screen.get_node("%Snapshot") as ShipDamageSnapshot
 	result_screen.call("_select_cell", destroyed_cell.grid_position)
 	repair_selected = result_screen.get_node("%RepairSelected") as Button
@@ -771,7 +770,7 @@ func _run() -> void:
 	repair_selected.pressed.emit()
 	_check(snapshot.ship.get_hull_cell_at(destroyed_cell.grid_position).current_hp == 20.0 and int(run_state.get("parts")) == 0, "A destroyed Hull must be repairable from the snapshot with exactly its missing-HP cost")
 	full_discard.pressed.emit()
-	_check(not bool(run_state.call("has_pending_loot")) and not (result_screen.get_node("%EndRun") as Button).disabled and int(run_state.call("get_warehouse_used")) == 12, "Discarding the only drop must unlock End Run without changing a full warehouse")
+	_check(not bool(run_state.call("has_pending_loot")) and not (result_screen.get_node("%EndRun") as Button).disabled and int(run_state.call("get_warehouse_used")) == 12, "Discarding the only drop must unlock End Run without changing inventory")
 	result_screen.queue_free()
 	await process_frame
 
