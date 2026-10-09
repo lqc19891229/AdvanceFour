@@ -1,429 +1,57 @@
-《前进四》项目目录规划 V0.44.0
+《前进四》当前项目结构（2026-10-09，按 main 的目录与文件）
+Godot 4.6.1；默认场景 res://game/run/route/route_map_screen.tscn。
 
 res://
-├─ core/                                  # 跨系统基础设施
-│  └─ autoload/                           # DataManager / RunState 等跨场景入口
-│
-├─ data/                                  # Runtime 正式数据与素材
-│  ├─ definitions/                        # 数据结构定义
-│  │  ├─ module/
-│  │  ├─ ship/
-│  │  ├─ combat/
-│  │  ├─ run/                             # Shop 等 Run 数据定义
-│  │  └─ appearance/
-│  ├─ assets/
-│  │  ├─ modules/
-│  │  └─ ship/hull/human_basic/
-│  ├─ appearances/
-│  │  └─ hull/human_basic.tres
-│  ├─ modules/
-│  │  ├─ energy/
-│  │  ├─ propulsion/
-│  │  ├─ weapon/
-│  │  ├─ defense/
-│  │  ├─ function/
-│  │  └─ core/
-│  ├─ enemies/
-│  │  ├─ scout.tres
-│  │  └─ gunship.tres
-│  ├─ shops/
-│  │  └─ basic_shop.tres
-│  ├─ routes/
-│  │  └─ prototype_route.tres
-│  └─ battles/
-│     ├─ stage_001/
-│     │  ├─ battle.tres
-│     │  └─ loot.tres
-│     ├─ elite_001/
-│     │  ├─ battle.tres
-│     │  └─ loot.tres
-│     └─ stage_002/
-│        ├─ battle.tres
-│        └─ loot.tres
-│
-├─ game/                                  # Gameplay 执行逻辑与场景
-│  ├─ combat/
-│  │  ├─ battle.gd
-│  │  ├─ battle.tscn
-│  │  ├─ battle_backdrop.gd
-│  │  └─ dev/
-│  ├─ run/
-│  │  ├─ battle_result/
-│  │  ├─ shop/
-│  │  ├─ route/
-│  │  └─ dev/
-│  └─ ship/
-│     ├─ appearance/
-│     ├─ editor/
-│     ├─ runtime/
-│     ├─ controller/
-│     ├─ weapon/
-│     ├─ projectile/
-│     ├─ damage/
-│     └─ dev/
-│
-├─ tools/
-│  ├─ data_source/
-│  ├─ cache/
-│  ├─ import/
-│  └─ verify_project.py
-│
-├─ addons/
-│  └─ advance_four_data_importer/
-└─ project.godot
+├── .github/workflows/project-checks.yml        # CI 验证
+├── addons/advance_four_data_importer/           # 数据导入插件
+├── core/autoload/run_state.gd                    # 跨场景 Run 状态
+├── data/
+│   ├── definitions/{appearance,bridge,combat,module,run,ship}/
+│   ├── assets/{modules,ship/hull/human_basic,ui}/
+│   ├── appearances/hull/                         # 外观 Resource
+│   ├── modules/{core,defense,energy,function,propulsion,weapon}/
+│   ├── bridge/{chips,crew}/                      # 船员与芯片
+│   ├── battles/{elite_001,stage_001,stage_002,test_elite,test_normal}/
+│   ├── enemies/{scout.tres,gunship.tres}/         # 身份和 AI 配置
+│   ├── ships/templates/                          # ShipSerializer JSON 飞船模板
+│   ├── routes/                                   # 航线 Resource
+│   ├── shops/                                    # 商店 Resource
+│   ├── stations/                                 # 空间站 Resource
+│   └── taverns/                                  # 酒馆 Resource
+├── game/
+│   ├── combat/{battle.gd,battle.tscn,dev/}
+│   ├── enemy/{enemy_controller.gd,enemy_ship_factory.gd}
+│   ├── progression/
+│   ├── run/{battle_result,dev,game_over,route,shop,station,tavern,ui,warehouse}/
+│   └── ship/{appearance,controller,damage,dev,editor,projectile,runtime,template_editor,templates,weapon}/
+├── tools/{cache,data_source,import}/
+├── tools/verify_project.py
+├── project.godot
+├── README.txt / PROJECT_STATUS.txt / PROJECT_STRUCTURE.txt / WORKFLOW.txt
+└── VERSION_HISTORY.txt
 
+【边界】
+tools：Excel 源表、JSON 中间缓存、导入与验证工具；不作为运行时数据源。
+data：定义、实例、正式素材、玩家/敌人可共用的飞船模板。
+game：玩法逻辑、控制器、编辑器、渲染器、UI、测试。
+core：跨场景全局状态服务。
+addons：编辑器导入流程。
+用户可写存档：user://ships/test_ship.json，不在 res://data/ 内。
 
-========================================
-一、四个核心目录的边界
-========================================
+【关键数据链】
+Equipment：tools/data_source/module_data.xlsx → tools/import/import_excel.py → tools/cache/modules.json → addons/advance_four_data_importer/ → data/modules/*.tres + module_database.tres。
+舰船：data/ships/templates/*.json → ShipSerializer → ShipData → ShipRuntime。
+敌舰：data/enemies/*.tres (EnemyShipDefinition.ship_template_path) → EnemyShipFactory → ShipSerializer → ShipData → ShipRuntime；EnemyController 负责接近/后退，不直接处理物理或武器。
+玩家：星图启动取 user://ships/test_ship.json 的有效设计，否则使用 Battle.build_starter_design()；运行时复制到 RunState.current_ship。
+战斗：BattleDefinition + BattleWaveDefinition → game/combat/battle.gd；胜利自动结算，失败进入 Game Over。
+编辑器：game/ship/editor 处理用户设计/Run 库存改装；game/ship/template_editor 是独立开发工具，共用 ShipGridView，不写 RunState。
 
-1. tools：生产与验证内容
-   - 策划源表、缓存、导入脚本、验证工具。
-   - 不保存 PNG / 音频等正式游戏素材，也不作为游戏 Runtime 的正式资源路径。
+【当前运行规则】
+Run 货币为 energy_crystals（交易）与 parts（维修、制造），不是旧 Credits。
+游戏默认固定测试航线；RouteMapGenerator.generate() 不用于默认开局。
+战利品与维修合并在 battle_result_screen；胜利无需二次确认，失败不能 Retry。
+旧 EnemyRuntime 与 Python __pycache__ 已从仓库清理。
 
-2. data：描述内容
-   - 游戏运行时加载的数据结构、配置实例和正式素材。
-   - definitions 是数据“类型/结构”；modules/enemies/battles 是具体实例。
-   - assets 是 Runtime 正式素材。
-   - 不再存在 generated 层级。
-   - 自动生成文件直接归入对应业务目录。
-
-3. game：执行内容
-   - 场景、Node、Controller、Runtime、Renderer、Gameplay、UI、开发测试。
-   - 不保存策划源数据、纯 Definition 类或正式 PNG 素材。
-
-4. core：支撑整个项目
-   - 跨场景、跨系统共享的底层服务。
-   - 不放 Ship / Weapon / Battle 等具体玩法规则。
-
-判断：
-“它是什么？” → data
-“它怎么运行？” → game
-“它怎么被制作出来？” → tools
-“所有系统都需要的底层能力？” → core
-
-
-========================================
-二、数据链
-========================================
-
-模块数值：
-tools/data_source/game_data.xlsx
-→ tools/import/import_excel.py
-→ tools/cache/modules.json
-→ addons/advance_four_data_importer
-→ data/modules/<type>/<module_id>.tres
-→ data/modules/module_database.tres
-
-模块素材：
-data/assets/modules/
-→ ModuleDefinition.texture / Weapon.turret_texture
-
-Hull 素材：
-data/assets/ship/hull/human_basic/
-→ HullAppearanceDefinition
-→ ShipAppearanceRenderer
-
-说明：
-Excel 的 texture_path / turret_texture_path 直接填写 data/assets 下的 Runtime 正式素材路径；
-导入器不再依赖旧 game/ship/art/modules 路径。
-
-
-========================================
-三、数据定义与实例
-========================================
-
-data/definitions/module/
-- ModuleDefinition 及 Energy/Propulsion/Weapon/Defense/Function/Core 子类
-- ModuleDatabase 类型
-
-data/definitions/ship/
-- ShipData
-- ShipHullCell
-- ShipModuleInstance
-- ShipSerializer
-
-data/definitions/combat/
-- BattleDefinition
-- BattleWaveDefinition
-- EnemyShipDefinition
-- BattleResult
-
-具体实例：
-- data/modules/
-- data/enemies/
-- data/battles/
-
-definitions 不承担 Gameplay 执行。
-
-
-========================================
-四、正式战斗结构
-========================================
-
-data/battles/stage_001/battle.tres
-↓
-BattleDefinition
-↓
-BattleWaveDefinition
-↓
-EnemyShipDefinition（data/enemies）
-↓
-ShipData
-↓
-game/combat/battle.tscn / Battle
-
-Battle 只执行配置，不定义具体关卡内容。
-重新挑战保持当前 BattleDefinition。
-显式 battle_definition_path 无效时进入 ERROR，不回退默认关卡。
-
-
-========================================
-五、飞船分层
-========================================
-
-Data：
-ShipData
-├─ Hull Layout → ShipHullCell
-└─ Equipment → ShipModuleInstance → ModuleDefinition
-
-Runtime：
-ShipRuntime
-├─ HullCellRuntime
-├─ WeaponRuntime
-├─ ProjectileRuntime
-├─ Player / AI Controller
-└─ Appearance Layer
-
-数据结构属于 data，运行实体属于 game。
-
-
-========================================
-六、自动生成规则
-========================================
-
-不通过 generated 目录区分自动生成内容。
-
-当前自动生成：
-- data/modules/<type>/*.tres
-- data/modules/module_database.tres
-
-来源：
-- tools/data_source/game_data.xlsx
-
-生成器：
-- tools/import/import_excel.py
-- addons/advance_four_data_importer
-
-这些文件是否允许手工修改，由 data/modules README 明确规定。
-
-
-========================================
-七、验证
-========================================
-
-统一入口：
+【验证】
 python3 tools/verify_project.py --godot /path/to/godot
-
-Godot：4.6.1
-
-至少覆盖：
-- Excel / cache 一致性
-- 模块资源与正式素材引用
-- Ship 回归
-- Combat 回归
-- 自定义 BattleDefinition / 自动战后流转
-- 非法 BattleDefinition
-
-
-========================================
-八、Appearance Hull Tile 第一版
-========================================
-
-默认资源：
-data/appearances/hull/human_basic.tres
-
-定义：
-data/definitions/appearance/hull_appearance_definition.gd
-
-素材：
-data/assets/ship/hull/human_basic/hull_0000.png ～ hull_1111.png
-
-邻接 bit：
-UP=1、RIGHT=2、DOWN=4、LEFT=8。
-
-ShipAppearanceRenderer 根据 Hull Layout 计算 mask，直接使用 tiles[mask]。
-Tile 缺失时单格回退原程序绘制，不影响战斗逻辑。
-第一版默认 human_basic，不修改 ShipData / ShipSerializer。
-
-
-========================================
-九、素材唯一来源规则
-========================================
-
-1. PNG、音频等游戏素材只保存在 data/assets。
-2. tools 不再保存 art_source，也不维护与 data/assets 重复的素材副本。
-3. game 与 data Resource 统一引用 data/assets。
-4. 当前仓库内素材采用“单份正式文件”策略。
-5. 未来若出现 PSD / Aseprite / Blender 等制作工程文件，再单独设计源码素材管理，不与 Runtime PNG 混为一谈。
-
-
-========================================
-十、v0.37 Run / 路线闭环
-========================================
-
-core/autoload/run_state.gd
-- 当前 Run 的跨场景状态。
-- current_ship：当前真实飞船状态。
-- battle_entry_ship：当前战斗开场快照。
-- currency：当前 Credits。
-- completed_battles：已完成战斗。
-- last_result：最近一次已记录战斗结果。
-
-data/definitions/combat/battle_result.gd
-- 战斗结果数据：胜负、battle_id、战后 ShipData、奖励、击毁数、下一战路径。
-
-正式流程：
-Ship Editor
-→ RunState.start_run_with_route()
-→ stage_001
-→ Victory
-→ BattleResult
-→ RunState.commit_victory()
-→ Battle Result Screen
-→ Route Map
-→ Shop / Run Refit
-→ Route Map
-→ stage_002
-→ Route End
-
-Route：
-- data/definitions/run/run_route_node_definition.gd：路线节点类型、目标资源、下一节点和星图位置。
-- data/definitions/run/run_route_definition.gd：路线节点集合、起点与连接合法性。
-- data/routes/prototype_route.tres：当前正式 Prototype 航线。
-- game/run/route/：星图展示与节点选择。
-- RunState 记录当前路线节点和已完成节点；正式 Run 通过路线决定战斗 / 商店 / 整备 / 终点。
-- 当前路线：stage_001 → [Shop / Refit] → stage_002 → End。
-
-Shop：
-- data/definitions/run/shop_item_definition.gd：单个商品内容与 Credits 价格。
-- data/definitions/run/shop_definition.gd：数据化商店商品表。
-- data/shops/basic_shop.tres：当前 Prototype 固定补给商店。
-- game/run/shop/：商店场景与购买 UI。
-- RunState.purchase_shop_item()：原子扣 Credits 并写入 Run Inventory。
-- v0.37.1 起每个商店节点固定 4 个商品槽；首次进入时按 combat / systems / utility / any 槽规则从商品池无重复生成。
-- 生成结果和每槽 SOLD 状态由 RunState.shop_node_states 按路线节点保存；刷新/重新进入不会换货，购买后不补货。
-- 最终关不显示商店。
-
-战后结算（v0.45.0）：
-- game/run/battle_result/battle_result_screen：统一战利品与战斗胜利结算。
-- ship_damage_snapshot.gd：只读飞船布局与损伤绘制；选格信号交给结算页处理维修。
-- 已移除成长奖励三选一及相关 Resource / 状态接口。
-- 未处理战利品阻止继续；维修可跳过。
-
-Run Inventory：
-- RunState.module_inventory：module_id → 数量。
-- RunState.hull_stock：可新增 Hull Cell 数量。
-- BattleDefinition / BattleResult 支持固定模块与 Hull 奖励。
-- Run Refit 安装消耗库存，拆除返还库存，移动 / 旋转免费。
-- 普通设计模式不受 Run Inventory 限制。
-
-局部维修：
-- RunState.get_repair_cost_for_cell(position)：按单格缺失 Hull HP 计算费用。
-- RunState.repair_cell(position)：只维修选中 Hull Cell。
-- Battle Result Screen：显示受损 Hull、覆盖 Equipment、当前效率与修复后预计效率。
-- 当前规则：1 缺失 Hull HP = 1 Credit；资金不足时不改变 Credits 或 Hull HP。
-
-规则：
-- Victory：提交战损并发放奖励。
-- Defeat：不提交战损，不发奖励。
-- Game Over：失败清空 Run，返回整备后恢复永久设计。
-- Run Refit：只修改 RunState.current_ship，不覆盖 user://ships/test_ship.json。
-
-
-模块仓库（v0.38.0）
-- RunState.module_inventory 继续作为模块仓库账本。
-- 基础仓储容量：12。
-- 模块仓储占用固定由 ShipModuleDefinition.get_storage_cost() = size.x × size.y 计算；旋转不改变占用。
-- Hull Stock 独立保存，不计入模块仓储。
-- FunctionModuleDefinition.storage_capacity > 0 的已安装模块会增加飞船仓储容量。
-- 当前标准货舱 function_cargo_hold：2×2，+16 仓储，自身进入仓库时占 4。
-- 商店模块购买、固定战斗模块奖励、成长模块奖励都必须先通过仓储容量检查。
-- 整备拆下模块仍允许写回仓库；若因此形成超载，新的商店购买/模块奖励会被阻止，直到玩家重新安装或消耗模块。
-
-
-Warehouse Screen（v0.39.0）
-- game/run/warehouse/warehouse_screen.tscn：模块仓库管理场景。
-- game/run/warehouse/warehouse_screen.gd：类型筛选、堆叠库存、容量/超载显示、模块详情与路线合法整备跳转。
-- Route Map 增加“查看仓库”入口；进入/返回仓库本身不推进路线节点。
-- “前往整备”只有当前路线允许 REFIT 时才可用；不会绕过路线选择。
-- game_data.xlsx 的 Function Sheet 正式增加 storage_capacity；标准货舱由 Excel → JSON → .tres 正式数据链生成。
-- data/assets/modules/function_cargo_hold.png：标准货舱正式模块贴图。
-
-
-战利品临时区（v0.40.0）
-- game/run/battle_result/battle_result_screen.tscn：战斗胜利后的统一结算与模块战利品处理场景。
-- BattleDefinition.reward_module_ids / reward_module_counts 当前作为固定模块掉落清单。
-- commit_victory() 不再自动把固定模块奖励写入仓库。
-- BattleResult 保存每件掉落的 loot_resolved / loot_taken 状态。
-- RunState.take_loot()：仓储容量允许时将指定战利品写入 module_inventory。
-- RunState.discard_loot()：放弃指定战利品，不改变仓库。
-- 有未处理 Loot 时阻止路线选择与下一战。
-- 当前为固定掉落清单；随机掉落池与权重属于后续版本。
-
-
-随机掉落表（v0.41.0）
-- data/definitions/combat/loot_table_entry.gd：单个候选模块、权重与数量范围。
-- data/definitions/combat/loot_table_definition.gd：掉落数量、重复规则、候选池与加权抽取。
-- data/loot_tables/stage_001_loot.tres / stage_002_loot.tres：当前两场战斗正式掉落池。
-- BattleDefinition.loot_table：战斗引用掉落表；保留旧 reward_module_ids 作为兼容回退接口。
-- Battle 在胜利时 roll() 一次，实际结果写入 BattleResult，进入 Loot Screen 后不再重新抽取。
-- 固定 seed 的 roll(seed) 用于自动测试；正式战斗使用随机种子。
-- 当前不设计装备稀有度；weight 仅表示掉落概率权重，不代表品质。
-
-
-战斗配置包（v0.41.1）
-- data/battles/<battle_id>/battle.tres：该场战斗的 BattleDefinition。
-- data/battles/<battle_id>/loot.tres：该场战斗的 LootTableDefinition。
-- BattleDefinition 直接引用同目录 loot.tres。
-- 删除独立 data/loot_tables/ 目录。
-- 普通战 / 精英战 / Boss 仍统一使用共享 battle.tscn + BattleDefinition + LootTableDefinition。
-- “精英”首先作为数据强度差异表达：更强 battle.tres + 更高收益 loot.tres；除非未来 UI/规则明确需要，不新增 EliteBattle 专用运行时代码。
-
-
-精英战（v0.42.0）
-- data/battles/elite_001/battle.tres：精英战 BattleDefinition。
-- data/battles/elite_001/loot.tres：精英战 LootTableDefinition。
-- elite_001 仍是 RunRouteNodeDefinition.NodeType.BATTLE，不新增 ELITE_BATTLE。
-- 精英强度完全由 battle.tres 表达：3 波共 12 艘敌舰、更短生成间隔、220 Credits。
-- 精英收益完全由 loot.tres 表达：drop_count = 4、禁止重复，并提高机炮 / 动力 / 能源 / 标准货舱等高价值模块权重。
-- Prototype Route：battle_001 后可选 shop_001 / refit_001 / elite_001，三条分支均汇合到 battle_002。
-
-
-双资源经济（v0.43.0）
-- RunState.energy_crystals：能量结晶，通用交易通货。
-- RunState.parts：零件，工程维修 / 制造资源。
-- BattleDefinition.reward_energy_crystals / reward_parts：每场战斗的数据化双资源奖励。
-- BattleResult 保存本场实际双资源奖励，commit_victory() 一次性写入 RunState。
-- ShopItemDefinition.price_energy_crystals：商店商品只以能量结晶定价。
-- repair_cell() / repair_all()：当前只消耗零件，规则为 1 缺失 Hull HP = 1 零件。
-- 能量结晶与零件的增减均由 RunState API 负责，UI 不直接修改资源。
-- v0.43 不实现模块制造；空间站以零件制造模块属于 v0.44。
-
-
-维修改装空间站（v0.44.0）
-- data/definitions/run/station_definition.gd：空间站配置与制造列表。
-- data/definitions/run/station_craft_item_definition.gd：模块制造配方，包含 module_id / module_count / parts_cost。
-- data/stations/basic_station.tres：Prototype 基础空间站。
-- game/run/station/station_screen.tscn：空间站 UI 与制造入口。
-- REFIT 路线节点继续保留原 NodeType，但必须配置 StationDefinition target_path。
-- 进入空间站自动调用免费全修，不消耗零件。
-- 制造模块只消耗零件，先检查仓储容量再扣资源并写入仓库。
-- 空间站可进入 Ship Editor Run Refit 模式；离开后完成当前路线节点。
-
-
-自动战后流转（v0.45.1）
-- battle.tscn 不再包含 ResultOverlay。
-- 胜利 → 自动提交 BattleResult → 统一战后结算。
-- 失败 → 清空 Run → game/run/game_over/game_over_screen.tscn。
-- Game Over 仅保留返回整备；移除战斗 R 重开。
+CI：.github/workflows/project-checks.yml。此文件描述当前目录，不存放历史版本规则；版本历史见 VERSION_HISTORY.txt。
