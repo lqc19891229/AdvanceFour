@@ -7,16 +7,21 @@ from import_excel import parse_size, parse_point, parse_sheet, read_sheet_rows
 
 
 class AuthoringFieldsTest(unittest.TestCase):
-    def test_height_first_sizes(self):
+    def test_width_first_sizes(self):
         for text in ("2x1", "2X1", " 2 × 1 "):
             errors = []
-            self.assertEqual(parse_size(text, "高X宽", "Weapon", 2, errors), (1, 2))
+            self.assertEqual(parse_size(text, "宽x高", "Weapon", 2, errors), (2, 1))
             self.assertEqual(errors, [])
+
+    def test_legacy_height_first_sizes(self):
+        errors = []
+        self.assertEqual(parse_size('2x1', '高X宽', 'Weapon', 2, errors, True), (1, 2))
+        self.assertEqual(errors, [])
 
     def test_invalid_sizes(self):
         for text in ("", "0x1", "-1x2", "1.5x2", "1x2x3", "nanx1"):
             errors = []
-            parse_size(text, "高X宽", "Weapon", 2, errors)
+            parse_size(text, "宽x高", "Weapon", 2, errors)
             self.assertTrue(errors, text)
             self.assertIn("Weapon!第 2 行", errors[0])
 
