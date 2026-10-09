@@ -178,7 +178,8 @@ func get_ship_for_battle(battle_path: String) -> ShipData:
 	return _clone_ship(battle_entry_ship)
 
 func update_current_ship(ship: ShipData) -> bool:
-	if not run_active or ship == null or not ship.is_design_valid():
+	# The editor may save incomplete designs; battle entry validates readiness.
+	if not run_active or ship == null:
 		return false
 	var copy := _clone_ship(ship)
 	if copy == null:
