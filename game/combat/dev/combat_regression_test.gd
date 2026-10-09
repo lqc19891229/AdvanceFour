@@ -48,7 +48,7 @@ func _new_battle(counts: Array[int]) -> Battle:
 	# State-machine and mask fixtures issue their own shots; silence spawned AI weapons
 	# before their first physics tick, including while a multi-enemy wave is queued.
 	battle.world.child_entered_tree.connect(func(node: Node):
-		if node is ShipRuntime or node is EnemyRuntime:
+		if node is ShipRuntime:
 			_silence.call_deferred(node)
 	)
 	if is_instance_valid(battle.player):
@@ -56,9 +56,8 @@ func _new_battle(counts: Array[int]) -> Battle:
 	return battle
 
 func _silence(ship: Node) -> void:
-	if ship is EnemyRuntime:
+	if ship is ShipRuntime:
 		ship.set_physics_process(false)
-	elif ship is ShipRuntime:
 		for weapon in ship.weapon_runtimes:
 			weapon.set_physics_process(false)
 
@@ -88,10 +87,7 @@ func _core_runtime(ship: ShipRuntime) -> HullCellRuntime:
 	return null if cell == null else ship.get_hull_runtime(cell)
 
 func _kill(ship: Node) -> void:
-	if ship is EnemyRuntime:
-		if is_instance_valid(ship):
-			ship.apply_projectile_damage(10000.0)
-	elif ship is ShipRuntime:
+	if ship is ShipRuntime:
 		for cell in _core_cells(ship):
 			if is_instance_valid(ship):
 				ship.apply_hull_projectile_damage(cell, 1000.0)
@@ -187,6 +183,7 @@ func _test_waves_and_victory() -> void:
 	_check(battle.player.ship_data.is_design_valid(), "No-save battle must load a valid fallback")
 	_check(await _wait_until(func(): return battle.enemies.size() == 1), "First wave must spawn after the preparation timer")
 	_silence(battle.enemies[0])
+	_check(battle.enemies[0].ship_data.is_design_valid() and battle.enemies[0].get_weapon_count() > 0, "Enemies must spawn as valid modular ShipData designs")
 	battle.player.apply_hull_projectile_damage(_core_cell(battle.player), 1.0)
 	_kill(battle.enemies[0])
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.INTERMISSION), "Cleared early wave must enter intermission")
@@ -206,7 +203,7 @@ func _test_waves_and_victory() -> void:
 	enemy.rotation = 0.0
 	weapon.global_position = Vector2(10000.0, 10000.0)
 	weapon.global_rotation = Vector2.UP.angle_to(Vector2.UP)
-	enemy.request_fire()
+	weapon.fire_once()
 	_kill(enemy)
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.RESOLVING), "Final clearance must wait for projectiles")
 	_check(outcomes.is_empty() and battle._has_live_projectiles(), "Live airborne shots must postpone victory")
@@ -242,7 +239,7 @@ func _test_late_projectile_and_failure() -> void:
 	# The last airborne shot destroys the final surviving Core-supporting Hull cell.
 	weapon.global_position = final_core_runtime.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = Vector2.UP.angle_to(Vector2.DOWN)
-	enemy.request_fire()
+	weapon.fire_once()
 	_kill(enemy)
 	_check(await _wait_until(func(): return battle.phase == Battle.Phase.DEFEAT), "Last enemy's airborne shot must still be able to defeat the player")
 	_check(outcomes == [false], "Late player destruction must emit defeat, never premature victory")
@@ -264,21 +261,21 @@ func _test_friendly_fire() -> void:
 	# This checks collision masks, independently of the ally's moving AI and cell seams.
 	ally.set_physics_process(false)
 	await physics_frame
-	var hp_before := ally.get_hp()
+	var hp_before := ally.get_current_hull_hp()
 	var weapon := shooter.weapon_runtimes[0]
 	shooter.rotation = PI
 	weapon.global_position = ally.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = Vector2.UP.angle_to(Vector2.DOWN)
-	shooter.request_fire()
+	weapon.fire_once()
 	for frame in range(20):
 		await physics_frame
-	_check(ally.get_hp() == hp_before, "Enemy shots must pass through allied Hull without friendly damage")
+	_check(ally.get_current_hull_hp() == hp_before, "Enemy shots must pass through allied Hull without friendly damage")
 	weapon = battle.player.weapon_runtimes[0]
 	battle.player.rotation = PI
 	weapon.global_position = ally.global_position + Vector2(0.0, -100.0)
 	weapon.global_rotation = ModuleArtLibrary.WEAPON_FORWARD.angle_to(Vector2.DOWN)
-	battle.player.request_fire()
-	_check(await _wait_until(func(): return ally.get_hp() < hp_before), "Player shots must hit the same opposing Hull through battle masks")
+	weapon.fire_once()
+	_check(await _wait_until(func(): return ally.get_current_hull_hp() < hp_before), "Player shots must hit the same opposing Hull through battle masks")
 	# Destroy both sides before resolution in one frame: failure takes precedence.
 	_kill(shooter)
 	_kill(ally)
