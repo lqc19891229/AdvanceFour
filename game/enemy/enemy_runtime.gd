@@ -49,17 +49,17 @@ func _physics_process(delta: float) -> void:
 	global_position += velocity * delta
 	cooldown = maxf(cooldown - delta, 0.0)
 	if is_instance_valid(target) and not target.is_queued_for_deletion() and global_position.distance_to(target.global_position) <= definition.weapon_range:
+		for mount in weapon_runtimes:
+			var aim := target.global_position - mount.global_position
+			if not aim.is_zero_approx():
+				mount.global_rotation = Vector2.UP.angle_to(aim)
 		request_fire()
 
 func request_fire() -> void:
 	if removed or definition == null or cooldown > 0.0:
 		return
 	for mount in weapon_runtimes:
-		var direction := Vector2.UP.rotated(global_rotation)
-		if is_instance_valid(target):
-			direction = (target.global_position - mount.global_position).normalized()
-		if direction.is_zero_approx():
-			direction = Vector2.UP.rotated(global_rotation)
+		var direction := Vector2.UP.rotated(mount.global_rotation)
 		var projectile := PROJECTILE_SCENE.instantiate() as ProjectileRuntime
 		get_parent().add_child(projectile)
 		projectile.setup(mount.global_position, direction, definition.weapon_damage, self, definition.weapon_range, definition.projectile_speed)
