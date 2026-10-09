@@ -77,9 +77,15 @@ HEADER_ALIASES = {
     "描述": "description",
     "宽度": "width",
     "高度": "height",
+    "宽X高": "size",
+    "宽x高": "size",
+    "宽×高": "size",
     "高X宽": "size",
     "高x宽": "size",
     "高×宽": "size",
+    "炮塔宽X高": "turret_size",
+    "炮塔宽x高": "turret_size",
+    "炮塔宽×高": "turret_size",
     "炮塔高X宽": "turret_size",
     "炮塔高x宽": "turret_size",
     "炮塔高×宽": "turret_size",
@@ -226,12 +232,12 @@ def normalize_headers(row: list[Any]) -> list[str]:
 
 
 def parse_size(value: Any, field: str, sheet: str, row: int, errors: list[str]) -> tuple[int, int]:
-    """Authoring order is height x width; runtime order remains x/y (width/height)."""
+    """Dimensions are width x height in the new spreadsheets."""
     match = re.fullmatch(r"\s*([0-9]+)\s*[xX×]\s*([0-9]+)\s*", str(value))
     if not match or int(match[1]) <= 0 or int(match[2]) <= 0:
-        errors.append(f"{sheet}!第 {row} 行：{field} 必须填写正整数高x宽，例如 2x1")
+        errors.append(f"{sheet}!第 {row} 行：{field} 必须填写正整数宽x高，例如 2x1")
         return (0, 0)
-    return (int(match[2]), int(match[1]))
+    return (int(match[1]), int(match[2]))
 
 
 def parse_point(value: Any, field: str, sheet: str, row: int, errors: list[str]) -> list[float]:
@@ -314,7 +320,7 @@ def parse_sheet(
 
         display_name = str(get("display_name") or "").strip()
         description = str(get("description") or "").strip()
-        width, height = parse_size(get("size"), "高X宽", sheet_name, row_idx, errors)
+        width, height = parse_size(get("size"), "宽x高", sheet_name, row_idx, errors)
         energy_cost = as_float(get("energy_cost"), "energy_cost", sheet_name, row_idx, errors)
         hp = (
             as_float(get("hp"), "hp", sheet_name, row_idx, errors)
@@ -362,7 +368,7 @@ def parse_sheet(
         weapon_values: dict[str, Any] = {}
         turret_texture_path = ""
         if module_type == "WEAPON":
-            turret_width, turret_height = parse_size(get("turret_size"), "炮塔高X宽", sheet_name, row_idx, errors)
+            turret_width, turret_height = parse_size(get("turret_size"), "炮塔宽x高", sheet_name, row_idx, errors)
             weapon_values["turret_size_cells"] = [turret_width, turret_height]
             weapon_values["turret_pivot"] = parse_point(get("turret_pivot"), "炮塔轴点", sheet_name, row_idx, errors)
             weapon_values["turret_muzzle"] = parse_point(get("turret_muzzle"), "炮口", sheet_name, row_idx, errors)
